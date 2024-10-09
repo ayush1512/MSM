@@ -1,0 +1,16 @@
+This is prodct scanner experiment 2 by using YOLO so it gose by:
+1. I am going to install YOLOv8
+2. I will use Roboflow for dataset creation
+3. YOLO model will have two layer first layer will ditect Name place and Price place
+4. Second layer will scan word's in writen in name and price
+
+
+                                        | layer1 place scanner |
+                                                    |
+                                                    |
+                                                   \ /
+                                        | layer2 word scanner  |
+                                                    |
+                                                    |
+                                                   \ /
+                                        |         result       |
