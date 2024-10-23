@@ -43,8 +43,7 @@ def preprocess_image(image_file):
 pytesseract.pytesseract.tesseract_cmd = r'C:/Program Files/Tesseract-OCR/tesseract.exe'  # Adjust path as necessary
 
 def perform_ocr(img):
-    # Perform OCR on the preprocessed image
-    custom_config = r'--oem 3 --psm 6 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:-'
+    custom_config = r'--oem 3 --psm 6 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:-/'
     text = pytesseract.image_to_string(img, config=custom_config)
     return text.strip()
 
@@ -58,8 +57,8 @@ def parse_text(text):
 
 def parse_with_regex(text):
     batch_pattern = r'(?:SL|5L|6L|GL|Batch|Lot|B\.?|L\.?)\s*(?:NO|WO)\.?\s*:?\s*([A-Z0-9-]+)'
-    mfg_pattern = r'(?:Mfg\.?|Manufacturing\.?|MFD\.?|M\.?|MF\.?|MFOD\.?|MFO\.?)\s*(\d{1,2}[-/]\d{1,2}[-/]\d{2,4})'
-    exp_pattern = r'(?:Exp|Expiry|Expiration|EXP|EX)\s*:?\s*(\d{1,2}[-/]\d{1,2}[-/]\d{2,4})'
+    mfg_pattern = r'(?:Mfg\.?|Manufacturing\.?|MFD\.?|M\.?|MF\.?|MFOD\.?|MFO\.?)\s*([A-Z]{3,4}\.?\s*\d{4}|\d{1,2}[-/]\d{1,2}[-/]\d{2,4})'
+    exp_pattern = r'(?:Exp|Expiry|Expiration|EXP|EX)\s*:?\s*([A-Z]{3,4}\.?\s*\d{4}|\d{1,2}[-/]\d{1,2}[-/]\d{2,4})'
     
     parsed_info = {}
     
@@ -92,7 +91,7 @@ def is_date(string):
         r'\d{2}\d{2}\d{2,4}', 
         r'\d{2,4}[-/]\d{1,2}', 
         r'[O0]\d[-/]\d{4}', 
-        r'[A-Z]{3}\.?\d{4}'
+        r'[A-Z]{3,4}\.?\s*\d{4}'
     ]
     
     for pattern in date_patterns:
@@ -107,7 +106,7 @@ def is_price(string):
     if match:
         try:
             price = float(match.group(1))
-            return price
+            return "{:.2f}".format(price)  # Format price to always have 2 decimal places
         except ValueError:
             return None
     return None
