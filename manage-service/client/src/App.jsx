@@ -9,6 +9,8 @@ import { Logout } from "./Pages/Logout";
 import { Error } from "./Pages/Error";
 import { Navbar } from "./components/Navbar";
 import MedicineSection from "./Pages/MedicineSection";
+import Productscanner from "./Pages/Productscanner";
+import Prescriptionreader from "./Pages/Prescriptionreader";
 // import { Register_Local } from "./Pages/Register_localStorage";
 const App = () => {
   return (
@@ -22,7 +24,9 @@ const App = () => {
         <Route path='/register' element={<Register />} />
         <Route path='/login' element={<Login />} />
         <Route path='/logout' element={<Logout />} />
-        <Route path='/medicinsection' element={<MedicineSection/>}/>
+        {/* <Route path='/medicinsection' element={<MedicineSection/>}/> */}
+        <Route path="/product" element={<Productscanner/>}/>
+         <Route path="/prescription" element={<Prescriptionreader/>}/>
         <Route path="*" element={<Error />} />
       </ Routes>
     </BrowserRouter>
