@@ -5,6 +5,8 @@ import numpy as np
 from datetime import datetime
 import re
 import json
+from ultralytics import YOLO
+import matplotlib.pyplot as plt
 
 app = Flask(__name__)
 
@@ -15,29 +17,41 @@ app = Flask(__name__)
 # nltk.download('maxent_ne_chunker', quiet=True)
 # nltk.download('words', quiet=True)
 
-def preprocess_image(image_file):
-    # Read the image
-    img = cv2.imdecode(np.fromstring(image_file.read(), np.uint8), cv2.IMREAD_COLOR)
+# Function to cut image
+def cut_image(file):
+    model = YOLO("best.pt")
+    img = cv2.imdecode(np.frombuffer(file.read(), np.uint8), cv2.IMREAD_COLOR)
+    results = model(img)
+    cropped_images = []
+    for i, (x1, y1, x2, y2) in enumerate(results[0].boxes.xyxy):
+        x1, y1, x2, y2 = map(int, [x1, y1, x2, y2])
+        cropped_image = img[y1:y2, x1:x2]
+        cropped_images.append(cropped_image)
+   
+    return cropped_images
+
+
+def preprocess_image(cropped_image):
+    for img_array in cropped_image:
     
-    # Convert to grayscale
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    
-    # Convert to black and white using Otsu's thresholding
-    _, bw = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    
-    # Perform connected component analysis
-    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(bw, connectivity=8)
-    
-    # Create an output image to store the filtered components
-    filtered_img = np.zeros_like(bw)
-    
-    # Filter out small connected components
-    min_size = 100  # Minimum size of connected components to keep
-    for i in range(1, num_labels):  # Skip the background component
-        if stats[i, cv2.CC_STAT_AREA] >= min_size:
-            filtered_img[labels == i] = 255
-    
-    return filtered_img
+        img = cv2.cvtColor(img_array, cv2.COLOR_BGR2GRAY)
+        
+        # Convert to black and white using Otsu's thresholding
+        _, bw = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        
+        # Perform connected component analysis
+        num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(bw, connectivity=8)
+        
+        # Create an output image to store the filtered components
+        filtered_img = np.zeros_like(bw)
+        
+        # Filter out small connected components
+        min_size = 100  # Minimum size of connected components to keep
+        for i in range(1, num_labels):  # Skip the background component
+            if stats[i, cv2.CC_STAT_AREA] >= min_size:
+                filtered_img[labels == i] = 255
+        
+        return filtered_img
 
 # Set the path to Tesseract-OCR executable (only needed for Windows or custom installs)
 pytesseract.pytesseract.tesseract_cmd = r'C:/Program Files/Tesseract-OCR/tesseract.exe'  # Adjust path as necessary
@@ -178,7 +192,8 @@ def upload_image():
         return jsonify({"error": "No selected file"}), 400
 
     if file:
-        img = preprocess_image(file)
+        cropped_image = cut_image(file)
+        img = preprocess_image(cropped_image)
         extracted_text = perform_ocr(img)
         parsed_info = parse_text(extracted_text)
         json_output = json.dumps(parsed_info, indent=4)
