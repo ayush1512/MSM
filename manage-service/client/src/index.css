@@ -2,7 +2,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  /* font-family: Urbanist, system-ui, Avenir, helvetica, Arial, Helvetica, sans-serif; */
+  font-family: 'Urbanist', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'Noto Sans', sans-serif;
   color-scheme: light;
 }
 
@@ -58,8 +58,8 @@ li {
   margin: 0;
 }
 
-.container .logo-brand a{
-     font-size: 3rem;
+.container .logo-brand a {
+  font-size: 3rem;
 }
 
 .grid {
@@ -135,7 +135,7 @@ a.active {
     & img {
       width: 70%;
       height: auto;
-      border-radius:10px;
+      border-radius: 10px;
     }
   }
 }
@@ -162,10 +162,11 @@ a.active {
       border: none;
     }
 
-    & h2{
+    & h2 {
       font-size: 2.5rem;
     }
-    & p{
+
+    & p {
       text-transform: capitalize;
     }
   }

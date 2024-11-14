@@ -6,16 +6,17 @@ from datetime import datetime
 import re
 import json
 from ultralytics import YOLO
+from flask_cors import CORS
 import matplotlib.pyplot as plt
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})  # Allow all origins
 
 # Ensure all necessary NLTK data is downloaded (only needed if NLTK is used)
 # import nltk
 # nltk.download('punkt', quiet=True)
 # nltk.download('averaged_perceptron_tagger', quiet=True)
 # nltk.download('maxent_ne_chunker', quiet=True)
-# nltk.download('words', quiet=True)
 
 # Function to cut image
 def cut_image(file):
@@ -29,7 +30,6 @@ def cut_image(file):
         cropped_images.append(cropped_image)
    
     return cropped_images
-
 
 def preprocess_image(cropped_image):
     for img_array in cropped_image:
