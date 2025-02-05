@@ -18,7 +18,7 @@ api_key = os.getenv('TOGETHER_API_KEY')
 class ImageProcessor:
     def __init__(self, api_key):
         self.client = Together(api_key=api_key)
-        self.prompt = "Extract text from the image such as Batch No., Mfg. Date, Expiry Date, Price etc."
+        self.prompt = "Extract text from the image and provide the following details: Batch No., Mfg Date, Exp Date, MRP Ex: Batch No: 1234, Mfg Date: 12/2021, Exp Date: 12/2023, MRP: 100.00"
         self.model = "meta-llama/Llama-Vision-Free"
 
     def get_mime_type(self, image_path):
@@ -54,30 +54,32 @@ class ImageProcessor:
         
         patterns = {
             'BNo': [
-                r'B\.? ?NO\.?/? ?([A-Za-z0-9]+)',
-                r'Batch ?No\.?/? ?([A-Za-z0-9]+)',
-                r'Batch ?number:? ?([A-Za-z0-9]+)',
-                r'\*\s*Batch\s*No\.?:\s*([A-Za-z0-9]+)',
-                r'BATCH ?NO\.?/? ?([A-Za-z0-9]+)',
-                r'BNO\.?/? ?([A-Za-z0-9]+)',
-                r'B\.?NO\.?/? ?([A-Za-z0-9]+)'
+            r'B\.? ?NO\.?/? ?([A-Za-z0-9]+)',
+            r'Batch ?No\.?/? ?([A-Za-z0-9]+)',
+            r'Batch ?number:? ?([A-Za-z0-9]+)',
+            r'\*\s*Batch\s*No\.?:\s*([A-Za-z0-9]+)',
+            r'BATCH ?NO\.?/? ?([A-Za-z0-9]+)',
+            r'BNO\.?/? ?([A-Za-z0-9]+)',
+            r'B\.?NO\.?/? ?([A-Za-z0-9]+)'
             ],
             'MfgD': [
-                r'(?:MFD|Mfg\.? Date|M\.? Date):? ?(\d{2}/\d{4})',
-                r'\*\s*Mfg\.?\s*Date:\s*(\d{2}/\d{4})',
-                r'MFG\.? ?DATE:? ?(\d{2}/\d{4})',
-                r'MANUFACTURING ?DATE:? ?(\d{2}/\d{4})'
+            r'(?:MFD|Mfg\.? Date|M\.? Date):? ?(\d{2}/\d{4})',
+            r'\*\s*Mfg\.?\s*Date:\s*(\d{2}/\d{4})',
+            r'MFG\.? ?DATE:? ?(\d{2}/\d{4})',
+            r'MANUFACTURING ?DATE:? ?(\d{2}/\d{4})'
             ],
             'ExpD': [
-                r'(?:EXP|Exp\.? Date|Expiry Date):? ?(\d{2}/\d{4})',
-                r'\*\s*Expiry\s*Date:\s*(\d{2}/\d{4})',
-                r'EXPIRY ?DATE:? ?(\d{2}/\d{4})',
-                r'EXP\.? ?DATE:? ?(\d{2}/\d{4})'
+            r'(?:EXP|Exp\.? Date|Expiry Date|Expiration Date):? ?(\d{2}/\d{4})',
+            r'\*\s*Expiry\s*Date:\s*(\d{2}/\d{4})',
+            r'EXPIRY ?DATE:? ?(\d{2}/\d{4})',
+            r'EXP\.? ?DATE:? ?(\d{2}/\d{4})'
             ],
             'MRP': [
-                r'(?:Price|Mrp|MRP):? ?(\d+\.\d{2})',
-                r'PRICE:? ?(\d+\.\d{2})',
-                r'MAXIMUM ?RETAIL ?PRICE:? ?(\d+\.\d{2})'
+            r'(?:Price|Mrp|MRP|Rs\.?|₹):? ?(\d+\.\d{2})',
+            r'PRICE:? ?(\d+\.\d{2})',
+            r'MAXIMUM ?RETAIL ?PRICE:? ?(\d+\.\d{2})',
+            r'Rs\.? ?(\d+\.\d{2})',
+            r'₹ ?(\d+\.\d{2})'
             ]
         }
         
