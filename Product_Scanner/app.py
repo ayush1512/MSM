@@ -3,6 +3,11 @@ from together import Together
 import base64
 import os
 import imghdr
+import re
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
 
@@ -19,7 +24,7 @@ class ImageProcessor:
     def get_mime_type(self, image_path):
         """Determine MIME type based on the actual image format"""
         img_type = imghdr.what(image_path)
-        if img_type:
+        if (img_type):
             return f'image/{img_type}'
         # Fallback for detection based on file extension
         extension = os.path.splitext(image_path)[1].lower()
@@ -36,6 +41,57 @@ class ImageProcessor:
         """Encode the image in base64"""
         with open(image_path, "rb") as image_file:
             return base64.b64encode(image_file.read()).decode('utf-8')
+
+    def extract_useful_info(self, text):
+        """Extract information from formatted text"""
+        logging.debug(f"Extracting useful info from text: {text}")
+        info = {
+            'BNo': None,
+            'MfgD': None,
+            'ExpD': None,
+            'MRP': None
+        }
+        
+        patterns = {
+            'BNo': [
+                r'B\.? ?NO\.?/? ?([A-Za-z0-9]+)',
+                r'Batch ?No\.?/? ?([A-Za-z0-9]+)',
+                r'Batch ?number:? ?([A-Za-z0-9]+)',
+                r'\*\s*Batch\s*No\.?:\s*([A-Za-z0-9]+)',
+                r'BATCH ?NO\.?/? ?([A-Za-z0-9]+)',
+                r'BNO\.?/? ?([A-Za-z0-9]+)',
+                r'B\.?NO\.?/? ?([A-Za-z0-9]+)'
+            ],
+            'MfgD': [
+                r'(?:MFD|Mfg\.? Date|M\.? Date):? ?(\d{2}/\d{4})',
+                r'\*\s*Mfg\.?\s*Date:\s*(\d{2}/\d{4})',
+                r'MFG\.? ?DATE:? ?(\d{2}/\d{4})',
+                r'MANUFACTURING ?DATE:? ?(\d{2}/\d{4})'
+            ],
+            'ExpD': [
+                r'(?:EXP|Exp\.? Date|Expiry Date):? ?(\d{2}/\d{4})',
+                r'\*\s*Expiry\s*Date:\s*(\d{2}/\d{4})',
+                r'EXPIRY ?DATE:? ?(\d{2}/\d{4})',
+                r'EXP\.? ?DATE:? ?(\d{2}/\d{4})'
+            ],
+            'MRP': [
+                r'(?:Price|Mrp|MRP):? ?(\d+\.\d{2})',
+                r'PRICE:? ?(\d+\.\d{2})',
+                r'MAXIMUM ?RETAIL ?PRICE:? ?(\d+\.\d{2})'
+            ]
+        }
+        
+        for key, pattern_list in patterns.items():
+            if isinstance(pattern_list, str):
+                pattern_list = [pattern_list]
+            for pattern in pattern_list:
+                match = re.search(pattern, text, re.IGNORECASE | re.MULTILINE)
+                if match:
+                    info[key] = match.group(1).strip()
+                    logging.debug(f"Found {key}: {info[key]}")
+                    break
+        
+        return info
 
     def analyze_image(self, image_path):
         """Analyze the image using the Together API"""
@@ -69,7 +125,10 @@ class ImageProcessor:
                 content = chunk.choices[0].delta.content if hasattr(chunk.choices[0].delta, 'content') else None
                 if content:
                     response_text += content
-        return response_text
+        logging.debug(f"API response text: {response_text}")
+        
+        useful_info = self.extract_useful_info(response_text)
+        return useful_info
 
 @app.route('/process_image', methods=['POST'])
 def process_image():
@@ -84,8 +143,8 @@ def process_image():
     image_file.save(image_path)
 
     processor = ImageProcessor(api_key)
-    markdown_content = processor.analyze_image(image_path)
-    return jsonify({"markdown": markdown_content})
+    useful_info = processor.analyze_image(image_path)
+    return jsonify(useful_info)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
