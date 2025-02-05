@@ -18,7 +18,7 @@ api_key = os.getenv('TOGETHER_API_KEY')
 class ImageProcessor:
     def __init__(self, api_key):
         self.client = Together(api_key=api_key)
-        self.prompt = "Extract text from the image and provide the following details: Batch No., Mfg Date, Exp Date, MRP Ex: Batch No: 1234, Mfg Date: 12/2021, Exp Date: 12/2023, MRP: 100.00"
+        self.prompt = "Extract text from the image and provide the following details: Batch No., Mfg Date, Exp Date, MRP. Make sure the dates are converted into MM/YYYY format. For Example: Batch No: 1234, Mfg Date: 12/2021, Exp Date: 12/2023, MRP: 100.00"
         self.model = "meta-llama/Llama-Vision-Free"
 
     def get_mime_type(self, image_path):
