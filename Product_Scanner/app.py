@@ -4,6 +4,10 @@ import base64
 import os
 import imghdr
 import re
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
 
@@ -14,7 +18,7 @@ api_key = os.getenv('TOGETHER_API_KEY')
 class ImageProcessor:
     def __init__(self, api_key):
         self.client = Together(api_key=api_key)
-        self.prompt = "Extract text from the image and provide the following details: Batch No., Mfg. Date, Exp. Date, MRP. Make sure the dates are converted into MM/YYYY format. For Example: Batch No: 1234, Mfg Date: 12/2021, Exp Date: 12/2023, MRP: 100.00"
+        self.prompt = "Extract text from the image and provide the following details: Batch No., Mfg. Date, Exp. Date, MRP. Make sure the dates are converted into numerical MM/YYYY format. For Example: Batch No: 1234, Mfg Date: 12/2021, Exp Date: 12/2023, MRP: 100.00"
         self.model = "meta-llama/Llama-Vision-Free"
 
     def get_mime_type(self, image_path):
@@ -40,6 +44,7 @@ class ImageProcessor:
 
     def extract_useful_info(self, text):
         """Extract information from formatted text"""
+        logging.debug(f"Extracting useful info from text: {text}")
         info = {
             'BNo': None,
             'MfgD': None,
@@ -51,6 +56,7 @@ class ImageProcessor:
             'BNo': [
             r'B\.? ?NO\.?/? ?([A-Za-z0-9]+)',
             r'Batch ?No\.?/? ?([A-Za-z0-9]+)',
+            r'Batch ?no\.?/? ?([A-Za-z0-9]+)',
             r'Batch ?number:? ?([A-Za-z0-9]+)',
             r'\*\s*Batch\s*No\.?:\s*([A-Za-z0-9]+)',
             r'BATCH ?NO\.?/? ?([A-Za-z0-9]+)',
@@ -85,6 +91,7 @@ class ImageProcessor:
                 match = re.search(pattern, text, re.IGNORECASE | re.MULTILINE)
                 if match:
                     info[key] = match.group(1).strip()
+                    logging.debug(f"Found {key}: {info[key]}")
                     break
         
         # Ensure the headers are arranged in the format of BNo, MfgD, ExpD, MRP
@@ -120,6 +127,7 @@ class ImageProcessor:
                     if content:
                         response_text += content
 
+            logging.debug(f"API response text: {response_text}")
             extracted_info = self.extract_useful_info(response_text)
             for key in aggregated_info:
                 if extracted_info[key]:
