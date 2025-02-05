@@ -4,10 +4,6 @@ import base64
 import os
 import imghdr
 import re
-import logging
-
-# Configure logging
-logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
 
@@ -18,7 +14,7 @@ api_key = os.getenv('TOGETHER_API_KEY')
 class ImageProcessor:
     def __init__(self, api_key):
         self.client = Together(api_key=api_key)
-        self.prompt = "Extract text from the image and provide the following details: Batch No., Mfg Date, Exp Date, MRP. Make sure the dates are converted into MM/YYYY format. For Example: Batch No: 1234, Mfg Date: 12/2021, Exp Date: 12/2023, MRP: 100.00"
+        self.prompt = "Extract text from the image and provide the following details: Batch No., Mfg. Date, Exp. Date, MRP. Make sure the dates are converted into MM/YYYY format. For Example: Batch No: 1234, Mfg Date: 12/2021, Exp Date: 12/2023, MRP: 100.00"
         self.model = "meta-llama/Llama-Vision-Free"
 
     def get_mime_type(self, image_path):
@@ -44,7 +40,6 @@ class ImageProcessor:
 
     def extract_useful_info(self, text):
         """Extract information from formatted text"""
-        logging.debug(f"Extracting useful info from text: {text}")
         info = {
             'BNo': None,
             'MfgD': None,
@@ -90,47 +85,49 @@ class ImageProcessor:
                 match = re.search(pattern, text, re.IGNORECASE | re.MULTILINE)
                 if match:
                     info[key] = match.group(1).strip()
-                    logging.debug(f"Found {key}: {info[key]}")
                     break
         
-        return info
+        # Ensure the headers are arranged in the format of BNo, MfgD, ExpD, MRP
+        ordered_info = {key: info[key] for key in ['BNo', 'MfgD', 'ExpD', 'MRP']}
+        return ordered_info
 
-    def analyze_image(self, image_path):
-        """Analyze the image using the Together API"""
+    def analyze_image(self, image_path, num_requests=3):
+        """Analyze the image multiple times and aggregate results."""
         base64_image = self.encode_image(image_path)
         mime_type = self.get_mime_type(image_path)
-
-        # Request to the API
-        stream = self.client.chat.completions.create(
-            model=self.model,
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": self.prompt},
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:{mime_type};base64,{base64_image}"
-                            },
-                        },
-                    ],
-                }
-            ],
-            stream=True,
-        )
-
-        # Process the streaming response
-        response_text = ""
-        for chunk in stream:
-            if hasattr(chunk, 'choices') and chunk.choices:
-                content = chunk.choices[0].delta.content if hasattr(chunk.choices[0].delta, 'content') else None
-                if content:
-                    response_text += content
-        logging.debug(f"API response text: {response_text}")
         
-        useful_info = self.extract_useful_info(response_text)
-        return useful_info
+        aggregated_info = {'BNo': set(), 'MfgD': set(), 'ExpD': set(), 'MRP': set()}
+
+        for _ in range(num_requests):
+            stream = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": self.prompt},
+                            {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{base64_image}"}}
+                        ],
+                    }
+                ],
+                stream=True,
+            )
+
+            response_text = ""
+            for chunk in stream:
+                if hasattr(chunk, 'choices') and chunk.choices:
+                    content = chunk.choices[0].delta.content if hasattr(chunk.choices[0].delta, 'content') else None
+                    if content:
+                        response_text += content
+
+            extracted_info = self.extract_useful_info(response_text)
+            for key in aggregated_info:
+                if extracted_info[key]:
+                    aggregated_info[key].add(extracted_info[key])
+
+        # Convert sets to lists for JSON serialization
+        final_info = {key: list(values) if values else None for key, values in aggregated_info.items()}
+        return final_info
 
 @app.route('/process_image', methods=['POST'])
 def process_image():
