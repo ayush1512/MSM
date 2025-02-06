@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from together import Together
 import base64
 import os
@@ -9,7 +9,7 @@ import logging
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates')
 
 # Get the API key from an environment variable
 api_key = os.getenv('TOGETHER_API_KEY')
@@ -18,7 +18,7 @@ api_key = os.getenv('TOGETHER_API_KEY')
 class ImageProcessor:
     def __init__(self, api_key):
         self.client = Together(api_key=api_key)
-        self.prompt = "Extract text from the image and provide the following details: Batch No., Mfg. Date, Exp. Date, MRP. Make sure the dates are converted into numerical MM/YYYY format. For Example: Batch No: 1234, Mfg Date: 12/2021, Exp Date: 12/2023, MRP: 100.00"
+        self.prompt = "Extract text from the image and provide the following details: Batch No., Mfg. Date, Exp. Date, MRP. Make sure the dates are converted into numerical MM/YYYY format strictly. For Example: Batch No: 1234, Mfg Date: 12/2021, Exp Date: 12/2023, MRP: 100.00"
         self.model = "meta-llama/Llama-Vision-Free"
 
     def get_mime_type(self, image_path):
@@ -55,6 +55,8 @@ class ImageProcessor:
         patterns = {
             'BNo': [
             r'B\.? ?NO\.?/? ?([A-Za-z0-9]+)',
+            r'^(?:\* \*\*)\Batch ?No\.?/? ?([A-Za-z0-9]+)',
+            r'^(?:\*\*)\Batch ?No\.?/? ?([A-Za-z0-9]+)',
             r'Batch ?No\.?/? ?([A-Za-z0-9]+)',
             r'Batch ?no\.?/? ?([A-Za-z0-9]+)',
             r'Batch ?number:? ?([A-Za-z0-9]+)',
@@ -67,13 +69,21 @@ class ImageProcessor:
             r'(?:MFD|Mfg\.? Date|M\.? Date):? ?(\d{2}/\d{4})',
             r'\*\s*Mfg\.?\s*Date:\s*(\d{2}/\d{4})',
             r'MFG\.? ?DATE:? ?(\d{2}/\d{4})',
-            r'MANUFACTURING ?DATE:? ?(\d{2}/\d{4})'
+            r'MANUFACTURING ?DATE:? ?(\d{2}/\d{4})',
+            r'(?:MFD|Mfg\.? Date|M\.? Date):? ?(\d{2}/\d{2})',
+            r'\*\s*Mfg\.?\s*Date:\s*(\d{2}/\d{2})',
+            r'MFG\.? ?DATE:? ?(\d{2}/\d{2})',
+            r'MANUFACTURING ?DATE:? ?(\d{2}/\d{2})'
             ],
             'ExpD': [
             r'(?:EXP|Exp\.? Date|Expiry Date|Expiration Date):? ?(\d{2}/\d{4})',
             r'\*\s*Expiry\s*Date:\s*(\d{2}/\d{4})',
             r'EXPIRY ?DATE:? ?(\d{2}/\d{4})',
-            r'EXP\.? ?DATE:? ?(\d{2}/\d{4})'
+            r'EXP\.? ?DATE:? ?(\d{2}/\d{4})',
+            r'(?:EXP|Exp\.? Date|Expiry Date|Expiration Date):? ?(\d{2}/\d{2})',
+            r'\*\s*Expiry\s*Date:\s*(\d{2}/\d{2})',
+            r'EXPIRY ?DATE:? ?(\d{2}/\d{2})',
+            r'EXP\.? ?DATE:? ?(\d{2}/\d{2})'
             ],
             'MRP': [
             r'(?:Price|Mrp|MRP|Rs\.?|₹):? ?(\d+\.\d{2})',
@@ -136,6 +146,10 @@ class ImageProcessor:
         # Convert sets to lists for JSON serialization
         final_info = {key: list(values) if values else None for key, values in aggregated_info.items()}
         return final_info
+
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 @app.route('/process_image', methods=['POST'])
 def process_image():
