@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, render_template
-from together import Together
+import together  # Changed import statement
 import base64
 import os
 import imghdr
@@ -13,11 +13,13 @@ app = Flask(__name__)
 
 # Get the API key from an environment variable
 api_key = os.getenv('TOGETHER_API_KEY')
+# Initialize the API key
+together.api_key = api_key  # Changed API key initialization
 
 # Class to process images
 class ImageProcessor:
     def __init__(self, api_key):
-        self.client = Together(api_key=api_key)
+        self.api_key = api_key
         self.prompt = "Extract text from the image and provide the following details: Batch No., Mfg. Date, Exp. Date, MRP. Make sure the dates are converted into numerical MM/YYYY format strictly. For Example: Batch No: 1234, Mfg Date: 12/2021, Exp Date: 12/2023, MRP: 100.00"
         self.model = "meta-llama/Llama-Vision-Free"
 
@@ -26,7 +28,6 @@ class ImageProcessor:
         img_type = imghdr.what(image_path)
         if (img_type):
             return f'image/{img_type}'
-        # Fallback for detection based on file extension
         extension = os.path.splitext(image_path)[1].lower()
         mime_types = {
             '.png': 'image/png',
@@ -36,7 +37,7 @@ class ImageProcessor:
             '.webp': 'image/webp'
         }
         return mime_types.get(extension, 'image/jpeg')
-
+    
     def encode_image(self, image_path):
         """Encode the image in base64"""
         with open(image_path, "rb") as image_file:
@@ -120,7 +121,7 @@ class ImageProcessor:
         ordered_info = {key: info[key] for key in ['BNo', 'MfgD', 'ExpD', 'MRP']}
         return ordered_info
 
-    def analyze_image(self, image_path, num_requests=3  ):
+    def analyze_image(self, image_path, num_requests=3):
         """Analyze the image multiple times and aggregate results."""
         base64_image = self.encode_image(image_path)
         mime_type = self.get_mime_type(image_path)
@@ -128,7 +129,8 @@ class ImageProcessor:
         aggregated_info = {'BNo': set(), 'MfgD': set(), 'ExpD': set(), 'MRP': set()}
 
         for _ in range(num_requests):
-            stream = self.client.chat.completions.create(
+            # Updated API call syntax
+            response = together.Complete.create(
                 model=self.model,
                 messages=[
                     {
@@ -143,7 +145,7 @@ class ImageProcessor:
             )
 
             response_text = ""
-            for chunk in stream:
+            for chunk in response:
                 if hasattr(chunk, 'choices') and chunk.choices:
                     content = chunk.choices[0].delta.content if hasattr(chunk.choices[0].delta, 'content') else None
                     if content:
@@ -155,10 +157,9 @@ class ImageProcessor:
                 if extracted_info[key]:
                     aggregated_info[key].add(extracted_info[key])
 
-        # Convert sets to lists for JSON serialization
         final_info = {key: list(values) if values else None for key, values in aggregated_info.items()}
         return final_info
-
+    
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -170,11 +171,9 @@ def process_image():
 
     image_file = request.files['image']
     
-    # Use a more secure filename
     import uuid
     safe_filename = str(uuid.uuid4()) + os.path.splitext(image_file.filename)[1]
     
-    # Use the tmp directory that Render provides
     tmp_dir = '/tmp'
     if not os.path.exists(tmp_dir):
         os.makedirs(tmp_dir)
@@ -185,12 +184,10 @@ def process_image():
         processor = ImageProcessor(api_key)
         useful_info = processor.analyze_image(image_path)
         
-        # Clean up the temporary file
         os.remove(image_path)
         
         return jsonify(useful_info)
     except Exception as e:
-        # Clean up the temporary file even if there's an error
         if os.path.exists(image_path):
             os.remove(image_path)
         return jsonify({"error": str(e)}), 500
