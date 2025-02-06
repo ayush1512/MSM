@@ -169,15 +169,28 @@ def process_image():
         return jsonify({"error": "No image file provided"}), 400
 
     image_file = request.files['image']
+    
+    # Use a more secure filename
+    import uuid
+    safe_filename = str(uuid.uuid4()) + os.path.splitext(image_file.filename)[1]
+    
+    # Use the tmp directory that Render provides
     tmp_dir = '/tmp'
     if not os.path.exists(tmp_dir):
         os.makedirs(tmp_dir)
-    image_path = os.path.join(tmp_dir, image_file.filename)
+    image_path = os.path.join(tmp_dir, safe_filename)
     image_file.save(image_path)
 
-    processor = ImageProcessor(api_key)
-    useful_info = processor.analyze_image(image_path)
-    return jsonify(useful_info)
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    try:
+        processor = ImageProcessor(api_key)
+        useful_info = processor.analyze_image(image_path)
+        
+        # Clean up the temporary file
+        os.remove(image_path)
+        
+        return jsonify(useful_info)
+    except Exception as e:
+        # Clean up the temporary file even if there's an error
+        if os.path.exists(image_path):
+            os.remove(image_path)
+        return jsonify({"error": str(e)}), 500
