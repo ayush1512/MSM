@@ -120,7 +120,7 @@ class ImageProcessor:
         ordered_info = {key: info[key] for key in ['BNo', 'MfgD', 'ExpD', 'MRP']}
         return ordered_info
 
-    def analyze_image(self, image_path, num_requests=1):
+    def analyze_image(self, image_path, num_requests=3  ):
         """Analyze the image multiple times and aggregate results."""
         base64_image = self.encode_image(image_path)
         mime_type = self.get_mime_type(image_path)
