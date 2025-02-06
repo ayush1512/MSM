@@ -104,6 +104,17 @@ class ImageProcessor:
                     info[key] = match.group(1).strip()
                     logging.debug(f"Found {key}: {info[key]}")
                     break
+                
+         # # If only one date is found, set it as ExpD
+        # if info['MfgD'] and not info['ExpD']:
+        #     info['ExpD'] = info['MfgD']
+        #     info['MfgD'] = None
+        #     logging.debug(f"Single date found, setting ExpD: {info['ExpD']}")
+
+        # # Set MfgD strictly as null if ExpD equals MfgD
+        # if info['ExpD'] == info['MfgD']:
+        #     info['MfgD'] = None
+        #     logging.debug(f"ExpD equals MfgD, setting MfgD to null")               
         
         # Ensure the headers are arranged in the format of BNo, MfgD, ExpD, MRP
         ordered_info = {key: info[key] for key in ['BNo', 'MfgD', 'ExpD', 'MRP']}
