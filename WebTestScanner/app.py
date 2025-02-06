@@ -13,8 +13,10 @@ app = Flask(__name__)
 
 # Get the API key from an environment variable
 api_key = os.getenv('TOGETHER_API_KEY')
+if not api_key:
+    raise ValueError("TOGETHER_API_KEY environment variable is missing!")
 # Initialize the API key
-together.api_key = api_key  # Changed API key initialization
+together.api_key = api_key
 
 # Class to process images
 class ImageProcessor:
@@ -26,7 +28,7 @@ class ImageProcessor:
     def get_mime_type(self, image_path):
         """Determine MIME type based on the actual image format"""
         img_type = imghdr.what(image_path)
-        if (img_type):
+        if img_type:
             return f'image/{img_type}'
         extension = os.path.splitext(image_path)[1].lower()
         mime_types = {
@@ -55,71 +57,32 @@ class ImageProcessor:
         
         patterns = {
             'BNo': [
-            r'B\.? ?NO\.?/? ?([A-Za-z0-9]+)',
-            r'^(?:\* \*\*)\Batch ?No\.?/? ?([A-Za-z0-9]+)',
-            r'^(?:\*\*)\Batch ?No\.?/? ?([A-Za-z0-9]+)',
-            r'Batch ?No\.?/? ?([A-Za-z0-9]+)',
-            r'Batch ?no\.?/? ?([A-Za-z0-9]+)',
-            r'Batch ?number:? ?([A-Za-z0-9]+)',
-            r'\*\s*Batch\s*No\.?:\s*([A-Za-z0-9]+)',
-            r'BATCH ?NO\.?/? ?([A-Za-z0-9]+)',
-            r'BNO\.?/? ?([A-Za-z0-9]+)',
-            r'B\.?NO\.?/? ?([A-Za-z0-9]+)',
-            r'Batch ?No\.?:? ?([A-Za-z0-9]+)'
+                r'Batch ?No\.?/? ?([A-Za-z0-9]+)',
+                r'BATCH ?NO\.?/? ?([A-Za-z0-9]+)'
             ],
             'MfgD': [
-            r'(?:MFD|Mfg\.? Date|M\.? Date):? ?(\d{2}/\d{4})',
-            r'\*\s*Mfg\.?\s*Date:\s*(\d{2}/\d{4})',
-            r'MFG\.? ?DATE:? ?(\d{2}/\d{4})',
-            r'MANUFACTURING ?DATE:? ?(\d{2}/\d{4})',
-            r'(?:MFD|Mfg\.? Date|M\.? Date):? ?(\d{2}/\d{2})',
-            r'\*\s*Mfg\.?\s*Date:\s*(\d{2}/\d{2})',
-            r'MFG\.? ?DATE:? ?(\d{2}/\d{2})',
-            r'MANUFACTURING ?DATE:? ?(\d{2}/\d{2})'
+                r'Mfg\.? Date:? ?(\d{2}/\d{4})',
+                r'MANUFACTURING ?DATE:? ?(\d{2}/\d{4})'
             ],
             'ExpD': [
-            r'(?:EXP|Exp\.? Date|Expiry Date|Expiration Date):? ?(\d{2}/\d{4})',
-            r'\*\s*Expiry\s*Date:\s*(\d{2}/\d{4})',
-            r'EXPIRY ?DATE:? ?(\d{2}/\d{4})',
-            r'EXP\.? ?DATE:? ?(\d{2}/\d{4})',
-            r'(?:EXP|Exp\.? Date|Expiry Date|Expiration Date):? ?(\d{2}/\d{2})',
-            r'\*\s*Expiry\s*Date:\s*(\d{2}/\d{2})',
-            r'EXPIRY ?DATE:? ?(\d{2}/\d{2})',
-            r'EXP\.? ?DATE:? ?(\d{2}/\d{2})'
+                r'Exp\.? Date:? ?(\d{2}/\d{4})',
+                r'EXPIRY ?DATE:? ?(\d{2}/\d{4})'
             ],
             'MRP': [
-            r'(?:Price|Mrp|MRP|Rs\.?|₹):? ?(\d+\.\d{2})',
-            r'PRICE:? ?(\d+\.\d{2})',
-            r'MAXIMUM ?RETAIL ?PRICE:? ?(\d+\.\d{2})',
-            r'Rs\.? ?(\d+\.\d{2})',
-            r'₹ ?(\d+\.\d{2})'
+                r'MRP:? ?(\d+\.\d{2})',
+                r'₹ ?(\d+\.\d{2})'
             ]
         }
         
         for key, pattern_list in patterns.items():
-            if isinstance(pattern_list, str):
-                pattern_list = [pattern_list]
             for pattern in pattern_list:
                 match = re.search(pattern, text, re.IGNORECASE | re.MULTILINE)
                 if match:
                     info[key] = match.group(1).strip()
                     logging.debug(f"Found {key}: {info[key]}")
                     break
-        
-        # # If only one date is found, set it as ExpD
-        # if info['MfgD'] and not info['ExpD']:
-        #     info['ExpD'] = info['MfgD']
-        #     info['MfgD'] = None
-        #     logging.debug(f"Single date found, setting ExpD: {info['ExpD']}")
 
-        # # Set MfgD strictly as null if ExpD equals MfgD
-        # if info['ExpD'] == info['MfgD']:
-        #     info['MfgD'] = None
-        #     logging.debug(f"ExpD equals MfgD, setting MfgD to null")
-
-        # Ensure the headers are arranged in the format of BNo, MfgD, ExpD, MRP
-        ordered_info = {key: info[key] for key in ['BNo', 'MfgD', 'ExpD', 'MRP']}
-        return ordered_info
+        return info
 
     def analyze_image(self, image_path, num_requests=3):
         """Analyze the image multiple times and aggregate results."""
@@ -129,7 +92,6 @@ class ImageProcessor:
         aggregated_info = {'BNo': set(), 'MfgD': set(), 'ExpD': set(), 'MRP': set()}
 
         for _ in range(num_requests):
-            # Updated API call syntax
             response = together.Complete.create(
                 model=self.model,
                 messages=[
@@ -183,11 +145,13 @@ def process_image():
     try:
         processor = ImageProcessor(api_key)
         useful_info = processor.analyze_image(image_path)
-        
         os.remove(image_path)
-        
         return jsonify(useful_info)
     except Exception as e:
         if os.path.exists(image_path):
             os.remove(image_path)
         return jsonify({"error": str(e)}), 500
+
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5000))  # Default to 5000 if PORT is not set
+    app.run(host="0.0.0.0", port=port, debug=True)
