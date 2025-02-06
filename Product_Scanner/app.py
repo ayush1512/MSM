@@ -63,7 +63,8 @@ class ImageProcessor:
             r'\*\s*Batch\s*No\.?:\s*([A-Za-z0-9]+)',
             r'BATCH ?NO\.?/? ?([A-Za-z0-9]+)',
             r'BNO\.?/? ?([A-Za-z0-9]+)',
-            r'B\.?NO\.?/? ?([A-Za-z0-9]+)'
+            r'B\.?NO\.?/? ?([A-Za-z0-9]+)',
+            r'Batch ?No\.?:? ?([A-Za-z0-9]+)'
             ],
             'MfgD': [
             r'(?:MFD|Mfg\.? Date|M\.? Date):? ?(\d{2}/\d{4})',
