@@ -166,18 +166,19 @@ def index():
 @app.route('/process_image', methods=['POST'])
 def process_image():
     if 'image' not in request.files:
+        logging.error("No image file provided in request")
         return jsonify({"error": "No image file provided"}), 400
 
     image_file = request.files['image']
-    tmp_dir = '/tmp'
-    if not os.path.exists(tmp_dir):
-        os.makedirs(tmp_dir)
-    image_path = os.path.join(tmp_dir, image_file.filename)
-    image_file.save(image_path)
+    
+    try:
+        processor = ImageProcessor(api_key)
+        useful_info = processor.analyze_image(image_file)
 
-    processor = ImageProcessor(api_key)
-    useful_info = processor.analyze_image(image_path)
-    return jsonify(useful_info)
+        return jsonify(useful_info)
+    except Exception as e:
+        logging.error(f"Error processing image: {str(e)}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
