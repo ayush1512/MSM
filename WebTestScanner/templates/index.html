@@ -7,7 +7,8 @@
     <title>Product Scanner by ayush1512</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
-    <link rel="icon" href="WebTestScanner\templates\components\logo.png"/>
+    <link rel="icon" href="./components/logo.png"/>
+    <meta property="og:image" content="./components/logo.png"/>
     <style>
         * {
             margin: 0;
@@ -485,6 +486,7 @@
 
             // Hide the upload area
             uploadArea.style.display = 'none';
+            previewContainer.style.display = 'none';
 
             startTimer();
             processBtn.disabled = true;
