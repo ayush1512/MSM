@@ -522,8 +522,9 @@
             if (cropper) {
                 cropper.destroy();
                 cropper = null;
+            } else if(data){
                 location.reload();
-            }
+            } else {
             fileInput.value = '';
             imagePreview.src = '';
             previewContainer.style.display = 'none';
@@ -531,7 +532,8 @@
             resetBtn.style.display = 'none';
             resultsDiv.style.display = 'none';
             errorDiv.style.display = 'none';
-            stopTimer();
+            stopTimer()
+            }
         });
 
         function startTimer() {
