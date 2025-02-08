@@ -3,6 +3,7 @@ from together import Together
 import base64
 import os
 import re
+import imghdr
 import logging
 import json  # Add this import
 
