@@ -2,7 +2,6 @@ from flask import Flask, request, jsonify, render_template
 from together import Together
 import base64
 import os
-import imghdr
 import re
 import logging
 import json  # Add this import
@@ -138,7 +137,7 @@ class ImageProcessor:
 
                 response_text = ""
                 for chunk in response:
-                    if hasattr(chunk.choices[0], 'text'):
+                    if hasattr(chunk, 'choices') and len(chunk.choices) > 0 and hasattr(chunk.choices[0], 'text'):
                         response_text += chunk.choices[0].text
 
                 logging.debug(f"API response text: {response_text}")
