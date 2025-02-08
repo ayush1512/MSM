@@ -4,9 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Processor</title>
+    <title>Product Scanner by ayush1512</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <link rel="icon" href="WebTestScanner\templates\components\logo.png"/>
     <style>
         * {
             margin: 0;
@@ -481,6 +482,9 @@
 
         processBtn.addEventListener('click', async () => {
             if (!cropper) return;
+
+            // Hide the upload area
+            uploadArea.style.display = 'none';
 
             startTimer();
             processBtn.disabled = true;
