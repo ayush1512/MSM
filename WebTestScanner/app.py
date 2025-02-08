@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, render_template
-import together  # Changed import statement
+import together
 import base64
 import os
 import imghdr
@@ -16,10 +16,9 @@ app = Flask(__name__)
 api_key = os.getenv('TOGETHER_API_KEY')
 if not api_key:
     raise ValueError("TOGETHER_API_KEY environment variable is missing!")
-# Initialize the API key
+# Initialize the API client
 together.api_key = api_key
 
-# Class to process images
 class ImageProcessor:
     def __init__(self, api_key):
         self.api_key = api_key
@@ -58,20 +57,44 @@ class ImageProcessor:
         
         patterns = {
             'BNo': [
-                r'Batch ?No\.?/? ?([A-Za-z0-9]+)',
-                r'BATCH ?NO\.?/? ?([A-Za-z0-9]+)'
+            r'B\.? ?NO\.?/? ?([A-Za-z0-9]+)',
+            r'^(?:\* \*\*)\Batch ?No\.?/? ?([A-Za-z0-9]+)',
+            r'^(?:\*\*)\Batch ?No\.?/? ?([A-Za-z0-9]+)',
+            r'Batch ?No\.?/? ?([A-Za-z0-9]+)',
+            r'Batch ?no\.?/? ?([A-Za-z0-9]+)',
+            r'Batch ?number:? ?([A-Za-z0-9]+)',
+            r'\*\s*Batch\s*No\.?:\s*([A-Za-z0-9]+)',
+            r'BATCH ?NO\.?/? ?([A-Za-z0-9]+)',
+            r'BNO\.?/? ?([A-Za-z0-9]+)',
+            r'B\.?NO\.?/? ?([A-Za-z0-9]+)',
+            r'Batch ?No\.?:? ?([A-Za-z0-9]+)'
             ],
             'MfgD': [
-                r'Mfg\.? Date:? ?(\d{2}/\d{4})',
-                r'MANUFACTURING ?DATE:? ?(\d{2}/\d{4})'
+            r'(?:MFD|Mfg\.? Date|M\.? Date):? ?(\d{2}/\d{4})',
+            r'\*\s*Mfg\.?\s*Date:\s*(\d{2}/\d{4})',
+            r'MFG\.? ?DATE:? ?(\d{2}/\d{4})',
+            r'MANUFACTURING ?DATE:? ?(\d{2}/\d{4})',
+            r'(?:MFD|Mfg\.? Date|M\.? Date):? ?(\d{2}/\d{2})',
+            r'\*\s*Mfg\.?\s*Date:\s*(\d{2}/\d{2})',
+            r'MFG\.? ?DATE:? ?(\d{2}/\d{2})',
+            r'MANUFACTURING ?DATE:? ?(\d{2}/\d{2})'
             ],
             'ExpD': [
-                r'Exp\.? Date:? ?(\d{2}/\d{4})',
-                r'EXPIRY ?DATE:? ?(\d{2}/\d{4})'
+            r'(?:EXP|Exp\.? Date|Expiry Date|Expiration Date):? ?(\d{2}/\d{4})',
+            r'\*\s*Expiry\s*Date:\s*(\d{2}/\d{4})',
+            r'EXPIRY ?DATE:? ?(\d{2}/\d{4})',
+            r'EXP\.? ?DATE:? ?(\d{2}/\d{4})',
+            r'(?:EXP|Exp\.? Date|Expiry Date|Expiration Date):? ?(\d{2}/\d{2})',
+            r'\*\s*Expiry\s*Date:\s*(\d{2}/\d{2})',
+            r'EXPIRY ?DATE:? ?(\d{2}/\d{2})',
+            r'EXP\.? ?DATE:? ?(\d{2}/\d{2})'
             ],
             'MRP': [
-                r'MRP:? ?(\d+\.\d{2})',
-                r'₹ ?(\d+\.\d{2})'
+            r'(?:Price|Mrp|MRP|Rs\.?|₹):? ?(\d+\.\d{2})',
+            r'PRICE:? ?(\d+\.\d{2})',
+            r'MAXIMUM ?RETAIL ?PRICE:? ?(\d+\.\d{2})',
+            r'Rs\.? ?(\d+\.\d{2})',
+            r'₹ ?(\d+\.\d{2})'
             ]
         }
         
@@ -93,36 +116,42 @@ class ImageProcessor:
         aggregated_info = {'BNo': set(), 'MfgD': set(), 'ExpD': set(), 'MRP': set()}
 
         for _ in range(num_requests):
-            response = together.Complete.create(
-                model=self.model,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": self.prompt},
-                            {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{base64_image}"}}
-                        ],
-                    }
-                ],
-                stream=True,
-            )
+            try:
+                # Updated API call using the newer syntax
+                response = together.Inference.chat(
+                    model=self.model,
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": self.prompt},
+                                {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{base64_image}"}}
+                            ],
+                        }
+                    ],
+                    stream=True
+                )
 
-            response_text = ""
-            for chunk in response:
-                if hasattr(chunk, 'choices') and chunk.choices:
-                    content = chunk.choices[0].delta.content if hasattr(chunk.choices[0].delta, 'content') else None
-                    if content:
-                        response_text += content
+                response_text = ""
+                for chunk in response:
+                    if hasattr(chunk, 'choices') and chunk.choices:
+                        content = chunk.choices[0].delta.content if hasattr(chunk.choices[0].delta, 'content') else None
+                        if content:
+                            response_text += content
 
-            logging.debug(f"API response text: {response_text}")
-            extracted_info = self.extract_useful_info(response_text)
-            for key in aggregated_info:
-                if extracted_info[key]:
-                    aggregated_info[key].add(extracted_info[key])
+                logging.debug(f"API response text: {response_text}")
+                extracted_info = self.extract_useful_info(response_text)
+                for key in aggregated_info:
+                    if extracted_info[key]:
+                        aggregated_info[key].add(extracted_info[key])
+                        
+            except Exception as e:
+                logging.error(f"Error in API call: {str(e)}")
+                continue
 
         final_info = {key: list(values) if values else None for key, values in aggregated_info.items()}
         return final_info
-    
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -151,10 +180,9 @@ def process_image():
     except Exception as e:
         if os.path.exists(image_path):
             os.remove(image_path)
+        logging.error(f"Error processing image: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # Use the Render-assigned port
+    port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
-
-
