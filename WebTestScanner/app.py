@@ -16,7 +16,7 @@ api_key = os.getenv('TOGETHER_API_KEY')
 
 class ImageProcessor:
     def __init__(self, api_key):
-        self.client = Together(api_key=api_key)  # Initialize Together client correctly
+        self.client = Together(api_key=api_key)
         self.prompt = "Extract text from the image and provide the following details: Batch No., Mfg. Date, Exp. Date, MRP. Make sure the dates are converted into numerical MM/YYYY format strictly. For Example: Batch No: 1234, Mfg Date: 12/2021, Exp Date: 12/2023, MRP: 100.00"
         self.model = "meta-llama/Llama-Vision-Free"
 
@@ -103,7 +103,6 @@ class ImageProcessor:
                     logging.debug(f"Found {key}: {info[key]}")
                     break
         
-        # Ensure the headers are arranged in the format of BNo, MfgD, ExpD, MRP
         ordered_info = {key: info[key] for key in ['BNo', 'MfgD', 'ExpD', 'MRP']}
         return ordered_info
 
@@ -116,10 +115,10 @@ class ImageProcessor:
 
         for _ in range(num_requests):
             try:
-                # Using the correct client method
-                stream = self.client.chat.completions.create(
+                # Using the correct API method
+                stream = self.client.inference(
                     model=self.model,
-                    messages=[
+                    prompt=[
                         {
                             "role": "user",
                             "content": [
