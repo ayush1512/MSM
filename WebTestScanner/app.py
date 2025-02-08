@@ -115,30 +115,34 @@ class ImageProcessor:
 
         for _ in range(num_requests):
             try:
-                # Using the correct API method
-                stream = self.client.inference(
+                # Create the messages array with the image and prompt
+                messages = [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": self.prompt},
+                            {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{base64_image}"}}
+                        ]
+                    }
+                ]
+
+                # Make the API call using the completions endpoint
+                response = self.client.completions.create(
                     model=self.model,
-                    prompt=[
-                        {
-                            "role": "user",
-                            "content": [
-                                {"type": "text", "text": self.prompt},
-                                {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{base64_image}"}}
-                            ],
-                        }
-                    ],
-                    stream=True,
+                    prompt=json.dumps(messages),  # Convert messages to JSON string
+                    max_tokens=500,
+                    temperature=0.7,
+                    stream=True
                 )
 
                 response_text = ""
-                for chunk in stream:
-                    if hasattr(chunk, 'choices') and chunk.choices:
-                        content = chunk.choices[0].delta.content if hasattr(chunk.choices[0].delta, 'content') else None
-                        if content:
-                            response_text += content
+                for chunk in response:
+                    if hasattr(chunk.choices[0], 'text'):
+                        response_text += chunk.choices[0].text
 
                 logging.debug(f"API response text: {response_text}")
                 extracted_info = self.extract_useful_info(response_text)
+                
                 for key in aggregated_info:
                     if extracted_info[key]:
                         aggregated_info[key].add(extracted_info[key])
@@ -149,6 +153,7 @@ class ImageProcessor:
 
         final_info = {key: list(values) if values else None for key, values in aggregated_info.items()}
         return final_info
+
 
 @app.route('/')
 def index():
