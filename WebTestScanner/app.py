@@ -5,6 +5,7 @@ import os
 import imghdr
 import re
 import logging
+import json  # Add this import
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
