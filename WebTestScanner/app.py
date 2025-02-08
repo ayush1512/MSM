@@ -118,7 +118,7 @@ class ImageProcessor:
         for _ in range(num_requests):
             try:
                 # Updated API call using the correct Together API method
-                response = together.chat(
+                response = self.client.chat.completions.create(
                     model=self.model,
                     messages=[
                         {
