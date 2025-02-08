@@ -2,19 +2,19 @@ from flask import Flask, request, jsonify, render_template
 from together import Together
 import base64
 import os
-import re
 import imghdr
+import re
 import logging
-import json  # Add this import
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
-app = Flask(__name__, template_folder='templates')
+app = Flask(__name__)
 
 # Get the API key from an environment variable
 api_key = os.getenv('TOGETHER_API_KEY')
 
+# Class to process images
 class ImageProcessor:
     def __init__(self, api_key):
         self.client = Together(api_key=api_key)
@@ -24,8 +24,9 @@ class ImageProcessor:
     def get_mime_type(self, image_path):
         """Determine MIME type based on the actual image format"""
         img_type = imghdr.what(image_path)
-        if img_type:
+        if (img_type):
             return f'image/{img_type}'
+        # Fallback for detection based on file extension
         extension = os.path.splitext(image_path)[1].lower()
         mime_types = {
             '.png': 'image/png',
@@ -35,7 +36,7 @@ class ImageProcessor:
             '.webp': 'image/webp'
         }
         return mime_types.get(extension, 'image/jpeg')
-    
+
     def encode_image(self, image_path):
         """Encode the image in base64"""
         with open(image_path, "rb") as image_file:
@@ -53,44 +54,44 @@ class ImageProcessor:
         
         patterns = {
             'BNo': [
-                r'B\.? ?NO\.?/? ?([A-Za-z0-9]+)',
-                r'^(?:\* \*\*)\Batch ?No\.?/? ?([A-Za-z0-9]+)',
-                r'^(?:\*\*)\Batch ?No\.?/? ?([A-Za-z0-9]+)',
-                r'Batch ?No\.?/? ?([A-Za-z0-9]+)',
-                r'Batch ?no\.?/? ?([A-Za-z0-9]+)',
-                r'Batch ?number:? ?([A-Za-z0-9]+)',
-                r'\*\s*Batch\s*No\.?:\s*([A-Za-z0-9]+)',
-                r'BATCH ?NO\.?/? ?([A-Za-z0-9]+)',
-                r'BNO\.?/? ?([A-Za-z0-9]+)',
-                r'B\.?NO\.?/? ?([A-Za-z0-9]+)',
-                r'Batch ?No\.?:? ?([A-Za-z0-9]+)'
+            r'B\.? ?NO\.?/? ?([A-Za-z0-9]+)',
+            r'^(?:\* \*\*)\Batch ?No\.?/? ?([A-Za-z0-9]+)',
+            r'^(?:\*\*)\Batch ?No\.?/? ?([A-Za-z0-9]+)',
+            r'Batch ?No\.?/? ?([A-Za-z0-9]+)',
+            r'Batch ?no\.?/? ?([A-Za-z0-9]+)',
+            r'Batch ?number:? ?([A-Za-z0-9]+)',
+            r'\*\s*Batch\s*No\.?:\s*([A-Za-z0-9]+)',
+            r'BATCH ?NO\.?/? ?([A-Za-z0-9]+)',
+            r'BNO\.?/? ?([A-Za-z0-9]+)',
+            r'B\.?NO\.?/? ?([A-Za-z0-9]+)',
+            r'Batch ?No\.?:? ?([A-Za-z0-9]+)'
             ],
             'MfgD': [
-                r'(?:MFD|Mfg\.? Date|M\.? Date):? ?(\d{2}/\d{4})',
-                r'\*\s*Mfg\.?\s*Date:\s*(\d{2}/\d{4})',
-                r'MFG\.? ?DATE:? ?(\d{2}/\d{4})',
-                r'MANUFACTURING ?DATE:? ?(\d{2}/\d{4})',
-                r'(?:MFD|Mfg\.? Date|M\.? Date):? ?(\d{2}/\d{2})',
-                r'\*\s*Mfg\.?\s*Date:\s*(\d{2}/\d{2})',
-                r'MFG\.? ?DATE:? ?(\d{2}/\d{2})',
-                r'MANUFACTURING ?DATE:? ?(\d{2}/\d{2})'
+            r'(?:MFD|Mfg\.? Date|M\.? Date):? ?(\d{2}/\d{4})',
+            r'\*\s*Mfg\.?\s*Date:\s*(\d{2}/\d{4})',
+            r'MFG\.? ?DATE:? ?(\d{2}/\d{4})',
+            r'MANUFACTURING ?DATE:? ?(\d{2}/\d{4})',
+            r'(?:MFD|Mfg\.? Date|M\.? Date):? ?(\d{2}/\d{2})',
+            r'\*\s*Mfg\.?\s*Date:\s*(\d{2}/\d{2})',
+            r'MFG\.? ?DATE:? ?(\d{2}/\d{2})',
+            r'MANUFACTURING ?DATE:? ?(\d{2}/\d{2})'
             ],
             'ExpD': [
-                r'(?:EXP|Exp\.? Date|Expiry Date|Expiration Date):? ?(\d{2}/\d{4})',
-                r'\*\s*Expiry\s*Date:\s*(\d{2}/\d{4})',
-                r'EXPIRY ?DATE:? ?(\d{2}/\d{4})',
-                r'EXP\.? ?DATE:? ?(\d{2}/\d{4})',
-                r'(?:EXP|Exp\.? Date|Expiry Date|Expiration Date):? ?(\d{2}/\d{2})',
-                r'\*\s*Expiry\s*Date:\s*(\d{2}/\d{2})',
-                r'EXPIRY ?DATE:? ?(\d{2}/\d{2})',
-                r'EXP\.? ?DATE:? ?(\d{2}/\d{2})'
+            r'(?:EXP|Exp\.? Date|Expiry Date|Expiration Date):? ?(\d{2}/\d{4})',
+            r'\*\s*Expiry\s*Date:\s*(\d{2}/\d{4})',
+            r'EXPIRY ?DATE:? ?(\d{2}/\d{4})',
+            r'EXP\.? ?DATE:? ?(\d{2}/\d{4})',
+            r'(?:EXP|Exp\.? Date|Expiry Date|Expiration Date):? ?(\d{2}/\d{2})',
+            r'\*\s*Expiry\s*Date:\s*(\d{2}/\d{2})',
+            r'EXPIRY ?DATE:? ?(\d{2}/\d{2})',
+            r'EXP\.? ?DATE:? ?(\d{2}/\d{2})'
             ],
             'MRP': [
-                r'(?:Price|Mrp|MRP|Rs\.?|₹):? ?(\d+\.\d{2})',
-                r'PRICE:? ?(\d+\.\d{2})',
-                r'MAXIMUM ?RETAIL ?PRICE:? ?(\d+\.\d{2})',
-                r'Rs\.? ?(\d+\.\d{2})',
-                r'₹ ?(\d+\.\d{2})'
+            r'(?:Price|Mrp|MRP|Rs\.?|₹):? ?(\d+\.\d{2})',
+            r'PRICE:? ?(\d+\.\d{2})',
+            r'MAXIMUM ?RETAIL ?PRICE:? ?(\d+\.\d{2})',
+            r'Rs\.? ?(\d+\.\d{2})',
+            r'₹ ?(\d+\.\d{2})'
             ]
         }
         
@@ -104,10 +105,22 @@ class ImageProcessor:
                     logging.debug(f"Found {key}: {info[key]}")
                     break
         
+        # # If only one date is found, set it as ExpD
+        # if info['MfgD'] and not info['ExpD']:
+        #     info['ExpD'] = info['MfgD']
+        #     info['MfgD'] = None
+        #     logging.debug(f"Single date found, setting ExpD: {info['ExpD']}")
+
+        # # Set MfgD strictly as null if ExpD equals MfgD
+        # if info['ExpD'] == info['MfgD']:
+        #     info['MfgD'] = None
+        #     logging.debug(f"ExpD equals MfgD, setting MfgD to null")
+
+        # Ensure the headers are arranged in the format of BNo, MfgD, ExpD, MRP
         ordered_info = {key: info[key] for key in ['BNo', 'MfgD', 'ExpD', 'MRP']}
         return ordered_info
 
-    def analyze_image(self, image_path, num_requests=3):
+    def analyze_image(self, image_path, num_requests=1):
         """Analyze the image multiple times and aggregate results."""
         base64_image = self.encode_image(image_path)
         mime_type = self.get_mime_type(image_path)
@@ -115,58 +128,36 @@ class ImageProcessor:
         aggregated_info = {'BNo': set(), 'MfgD': set(), 'ExpD': set(), 'MRP': set()}
 
         for _ in range(num_requests):
-            try:
-                # Create the messages array with the image and prompt
-                messages = [
+            stream = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
                     {
                         "role": "user",
                         "content": [
                             {"type": "text", "text": self.prompt},
                             {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{base64_image}"}}
-                        ]
+                        ],
                     }
-                ]
+                ],
+                stream=True,
+            )
 
-                # Make the API call using the completions endpoint
-                response = self.client.completions.create(
-                    model=self.model,
-                    prompt=json.dumps(messages),  # Convert messages to JSON string
-                    max_tokens=500,
-                    temperature=0.7,
-                    stream=True
-                )
+            response_text = ""
+            for chunk in stream:
+                if hasattr(chunk, 'choices') and chunk.choices:
+                    content = chunk.choices[0].delta.content if hasattr(chunk.choices[0].delta, 'content') else None
+                    if content:
+                        response_text += content
 
-                response_text = ""
-                for chunk in response:
-                    if hasattr(chunk, 'choices') and len(chunk.choices) > 0 and hasattr(chunk.choices[0], 'text'):
-                        response_text += chunk.choices[0].text
+            logging.debug(f"API response text: {response_text}")
+            extracted_info = self.extract_useful_info(response_text)
+            for key in aggregated_info:
+                if extracted_info[key]:
+                    aggregated_info[key].add(extracted_info[key])
 
-                logging.debug(f"API response text: {response_text}")
-                if not response_text:
-                    logging.error("Empty response text from API")
-                    continue
-
-                # Check if the response is in JSON format
-                try:
-                    response_json = json.loads(response_text)
-                    logging.debug(f"API response JSON: {response_json}")
-                except json.JSONDecodeError:
-                    logging.error("Response text is not valid JSON")
-                    continue
-
-                extracted_info = self.extract_useful_info(response_text)
-                
-                for key in aggregated_info:
-                    if extracted_info[key]:
-                        aggregated_info[key].add(extracted_info[key])
-                        
-            except Exception as e:
-                logging.error(f"Error in API call: {str(e)}")
-                continue
-
+        # Convert sets to lists for JSON serialization
         final_info = {key: list(values) if values else None for key, values in aggregated_info.items()}
         return final_info
-
 
 @app.route('/')
 def index():
@@ -184,16 +175,9 @@ def process_image():
     image_path = os.path.join(tmp_dir, image_file.filename)
     image_file.save(image_path)
 
-    try:
-        processor = ImageProcessor(api_key)
-        useful_info = processor.analyze_image(image_path)
-        os.remove(image_path)
-        return jsonify(useful_info)
-    except Exception as e:
-        if os.path.exists(image_path):
-            os.remove(image_path)
-        logging.error(f"Error processing image: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+    processor = ImageProcessor(api_key)
+    useful_info = processor.analyze_image(image_path)
+    return jsonify(useful_info)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
