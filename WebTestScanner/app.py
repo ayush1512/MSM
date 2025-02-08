@@ -142,6 +142,18 @@ class ImageProcessor:
                         response_text += chunk.choices[0].text
 
                 logging.debug(f"API response text: {response_text}")
+                if not response_text:
+                    logging.error("Empty response text from API")
+                    continue
+
+                # Check if the response is in JSON format
+                try:
+                    response_json = json.loads(response_text)
+                    logging.debug(f"API response JSON: {response_json}")
+                except json.JSONDecodeError:
+                    logging.error("Response text is not valid JSON")
+                    continue
+
                 extracted_info = self.extract_useful_info(response_text)
                 
                 for key in aggregated_info:
