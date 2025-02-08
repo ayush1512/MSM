@@ -1,27 +1,22 @@
 from flask import Flask, request, jsonify, render_template
-import together
+from together import Together
 import base64
 import os
 import imghdr
 import re
 import logging
-import gunicorn
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates')
 
 # Get the API key from an environment variable
 api_key = os.getenv('TOGETHER_API_KEY')
-if not api_key:
-    raise ValueError("TOGETHER_API_KEY environment variable is missing!")
-# Initialize the API client
-together.api_key = api_key
 
 class ImageProcessor:
     def __init__(self, api_key):
-        self.api_key = api_key
+        self.client = Together(api_key=api_key)  # Initialize Together client correctly
         self.prompt = "Extract text from the image and provide the following details: Batch No., Mfg. Date, Exp. Date, MRP. Make sure the dates are converted into numerical MM/YYYY format strictly. For Example: Batch No: 1234, Mfg Date: 12/2021, Exp Date: 12/2023, MRP: 100.00"
         self.model = "meta-llama/Llama-Vision-Free"
 
@@ -57,56 +52,60 @@ class ImageProcessor:
         
         patterns = {
             'BNo': [
-            r'B\.? ?NO\.?/? ?([A-Za-z0-9]+)',
-            r'^(?:\* \*\*)\Batch ?No\.?/? ?([A-Za-z0-9]+)',
-            r'^(?:\*\*)\Batch ?No\.?/? ?([A-Za-z0-9]+)',
-            r'Batch ?No\.?/? ?([A-Za-z0-9]+)',
-            r'Batch ?no\.?/? ?([A-Za-z0-9]+)',
-            r'Batch ?number:? ?([A-Za-z0-9]+)',
-            r'\*\s*Batch\s*No\.?:\s*([A-Za-z0-9]+)',
-            r'BATCH ?NO\.?/? ?([A-Za-z0-9]+)',
-            r'BNO\.?/? ?([A-Za-z0-9]+)',
-            r'B\.?NO\.?/? ?([A-Za-z0-9]+)',
-            r'Batch ?No\.?:? ?([A-Za-z0-9]+)'
+                r'B\.? ?NO\.?/? ?([A-Za-z0-9]+)',
+                r'^(?:\* \*\*)\Batch ?No\.?/? ?([A-Za-z0-9]+)',
+                r'^(?:\*\*)\Batch ?No\.?/? ?([A-Za-z0-9]+)',
+                r'Batch ?No\.?/? ?([A-Za-z0-9]+)',
+                r'Batch ?no\.?/? ?([A-Za-z0-9]+)',
+                r'Batch ?number:? ?([A-Za-z0-9]+)',
+                r'\*\s*Batch\s*No\.?:\s*([A-Za-z0-9]+)',
+                r'BATCH ?NO\.?/? ?([A-Za-z0-9]+)',
+                r'BNO\.?/? ?([A-Za-z0-9]+)',
+                r'B\.?NO\.?/? ?([A-Za-z0-9]+)',
+                r'Batch ?No\.?:? ?([A-Za-z0-9]+)'
             ],
             'MfgD': [
-            r'(?:MFD|Mfg\.? Date|M\.? Date):? ?(\d{2}/\d{4})',
-            r'\*\s*Mfg\.?\s*Date:\s*(\d{2}/\d{4})',
-            r'MFG\.? ?DATE:? ?(\d{2}/\d{4})',
-            r'MANUFACTURING ?DATE:? ?(\d{2}/\d{4})',
-            r'(?:MFD|Mfg\.? Date|M\.? Date):? ?(\d{2}/\d{2})',
-            r'\*\s*Mfg\.?\s*Date:\s*(\d{2}/\d{2})',
-            r'MFG\.? ?DATE:? ?(\d{2}/\d{2})',
-            r'MANUFACTURING ?DATE:? ?(\d{2}/\d{2})'
+                r'(?:MFD|Mfg\.? Date|M\.? Date):? ?(\d{2}/\d{4})',
+                r'\*\s*Mfg\.?\s*Date:\s*(\d{2}/\d{4})',
+                r'MFG\.? ?DATE:? ?(\d{2}/\d{4})',
+                r'MANUFACTURING ?DATE:? ?(\d{2}/\d{4})',
+                r'(?:MFD|Mfg\.? Date|M\.? Date):? ?(\d{2}/\d{2})',
+                r'\*\s*Mfg\.?\s*Date:\s*(\d{2}/\d{2})',
+                r'MFG\.? ?DATE:? ?(\d{2}/\d{2})',
+                r'MANUFACTURING ?DATE:? ?(\d{2}/\d{2})'
             ],
             'ExpD': [
-            r'(?:EXP|Exp\.? Date|Expiry Date|Expiration Date):? ?(\d{2}/\d{4})',
-            r'\*\s*Expiry\s*Date:\s*(\d{2}/\d{4})',
-            r'EXPIRY ?DATE:? ?(\d{2}/\d{4})',
-            r'EXP\.? ?DATE:? ?(\d{2}/\d{4})',
-            r'(?:EXP|Exp\.? Date|Expiry Date|Expiration Date):? ?(\d{2}/\d{2})',
-            r'\*\s*Expiry\s*Date:\s*(\d{2}/\d{2})',
-            r'EXPIRY ?DATE:? ?(\d{2}/\d{2})',
-            r'EXP\.? ?DATE:? ?(\d{2}/\d{2})'
+                r'(?:EXP|Exp\.? Date|Expiry Date|Expiration Date):? ?(\d{2}/\d{4})',
+                r'\*\s*Expiry\s*Date:\s*(\d{2}/\d{4})',
+                r'EXPIRY ?DATE:? ?(\d{2}/\d{4})',
+                r'EXP\.? ?DATE:? ?(\d{2}/\d{4})',
+                r'(?:EXP|Exp\.? Date|Expiry Date|Expiration Date):? ?(\d{2}/\d{2})',
+                r'\*\s*Expiry\s*Date:\s*(\d{2}/\d{2})',
+                r'EXPIRY ?DATE:? ?(\d{2}/\d{2})',
+                r'EXP\.? ?DATE:? ?(\d{2}/\d{2})'
             ],
             'MRP': [
-            r'(?:Price|Mrp|MRP|Rs\.?|₹):? ?(\d+\.\d{2})',
-            r'PRICE:? ?(\d+\.\d{2})',
-            r'MAXIMUM ?RETAIL ?PRICE:? ?(\d+\.\d{2})',
-            r'Rs\.? ?(\d+\.\d{2})',
-            r'₹ ?(\d+\.\d{2})'
+                r'(?:Price|Mrp|MRP|Rs\.?|₹):? ?(\d+\.\d{2})',
+                r'PRICE:? ?(\d+\.\d{2})',
+                r'MAXIMUM ?RETAIL ?PRICE:? ?(\d+\.\d{2})',
+                r'Rs\.? ?(\d+\.\d{2})',
+                r'₹ ?(\d+\.\d{2})'
             ]
         }
         
         for key, pattern_list in patterns.items():
+            if isinstance(pattern_list, str):
+                pattern_list = [pattern_list]
             for pattern in pattern_list:
                 match = re.search(pattern, text, re.IGNORECASE | re.MULTILINE)
                 if match:
                     info[key] = match.group(1).strip()
                     logging.debug(f"Found {key}: {info[key]}")
                     break
-
-        return info
+        
+        # Ensure the headers are arranged in the format of BNo, MfgD, ExpD, MRP
+        ordered_info = {key: info[key] for key in ['BNo', 'MfgD', 'ExpD', 'MRP']}
+        return ordered_info
 
     def analyze_image(self, image_path, num_requests=3):
         """Analyze the image multiple times and aggregate results."""
@@ -117,8 +116,8 @@ class ImageProcessor:
 
         for _ in range(num_requests):
             try:
-                # Updated API call using the correct Together API method
-                response = self.completions.create(
+                # Using the correct client method
+                stream = self.client.chat.completions.create(
                     model=self.model,
                     messages=[
                         {
@@ -129,11 +128,11 @@ class ImageProcessor:
                             ],
                         }
                     ],
-                    stream=True
+                    stream=True,
                 )
 
                 response_text = ""
-                for chunk in response:
+                for chunk in stream:
                     if hasattr(chunk, 'choices') and chunk.choices:
                         content = chunk.choices[0].delta.content if hasattr(chunk.choices[0].delta, 'content') else None
                         if content:
@@ -162,14 +161,10 @@ def process_image():
         return jsonify({"error": "No image file provided"}), 400
 
     image_file = request.files['image']
-    
-    import uuid
-    safe_filename = str(uuid.uuid4()) + os.path.splitext(image_file.filename)[1]
-    
     tmp_dir = '/tmp'
     if not os.path.exists(tmp_dir):
         os.makedirs(tmp_dir)
-    image_path = os.path.join(tmp_dir, safe_filename)
+    image_path = os.path.join(tmp_dir, image_file.filename)
     image_file.save(image_path)
 
     try:
@@ -183,6 +178,5 @@ def process_image():
         logging.error(f"Error processing image: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
