@@ -117,8 +117,8 @@ class ImageProcessor:
 
         for _ in range(num_requests):
             try:
-                # Updated API call using the newer syntax
-                response = together.Inference.chat(
+                # Updated API call using the correct Together API method
+                response = together.chat(
                     model=self.model,
                     messages=[
                         {
