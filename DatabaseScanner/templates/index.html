@@ -590,6 +590,7 @@
             // Hide the upload area
             uploadArea.style.display = 'none';
             previewContainer.style.display = 'none';
+            processBtn.style.display = 'none';
 
             startTimer();
             processBtn.disabled = true;
@@ -628,8 +629,6 @@
             if (cropper) {
                 cropper.destroy();
                 cropper = null;
-            } else if (resultsDiv.style.display === 'block') {
-                location.reload();
             } else {
                 fileInput.value = '';
                 imagePreview.src = '';
@@ -640,6 +639,9 @@
                 errorDiv.style.display = 'none';
                 stopTimer();
             }
+            if (resultsDiv.style.display === 'block') {
+                location.reload();
+            } 
         });
 
         function startTimer() {

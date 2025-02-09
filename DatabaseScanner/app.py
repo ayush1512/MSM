@@ -188,16 +188,10 @@ def index():
 @app.route('/process_image', methods=['POST'])
 def process_image():
     if 'image' not in request.files:
-        logging.error("No image file provided in the request")
         return jsonify({"error": "No image file provided"}), 400
-
-    if 'cropped_image' not in request.files:
-        logging.error("No cropped image file provided in the request")
-        return jsonify({"error": "No cropped image file provided"}), 400
 
     try:
         image_file = request.files['image']
-        logging.debug("Received image file for processing")
         
         # Upload the complete image to Cloudinary first
         upload_result = cloudinary.uploader.upload(
@@ -240,12 +234,11 @@ def process_image():
             'extracted_info': extracted_info
         }
         
-        logging.debug(f"Returning response: {response}")
         return jsonify(response), 201
 
     except Exception as e:
         logging.error(f"Error processing image: {str(e)}")
-        logging.error("Exception details:", exc_info=True)
+        logging.error(f"Exception details:", exc_info=True)
             
         return jsonify({
             "error": "Failed to process image",
