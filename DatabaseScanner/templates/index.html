@@ -527,6 +527,8 @@
         const resultsDiv = document.querySelector('.results');
         const errorDiv = document.querySelector('.error');
 
+        let originalImageFile;
+
         // Upload handling
         uploadArea.addEventListener('click', () => fileInput.click());
         uploadArea.addEventListener('dragover', (e) => {
@@ -554,6 +556,8 @@
                 showError('Please upload an image file.');
                 return;
             }
+
+            originalImageFile = file;
 
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -595,9 +599,10 @@
 
             try {
                 const croppedCanvas = cropper.getCroppedCanvas();
-                const blob = await new Promise(resolve => croppedCanvas.toBlob(resolve, 'image/jpeg'));
+                const croppedBlob = await new Promise(resolve => croppedCanvas.toBlob(resolve, 'image/jpeg'));
                 const formData = new FormData();
-                formData.append('image', blob, 'cropped-image.jpg');
+                formData.append('image', originalImageFile);
+                formData.append('cropped_image', croppedBlob, 'cropped-image.jpg');
 
                 const response = await fetch('/process_image', {
                     method: 'POST',

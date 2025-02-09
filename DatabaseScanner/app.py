@@ -188,12 +188,18 @@ def index():
 @app.route('/process_image', methods=['POST'])
 def process_image():
     if 'image' not in request.files:
+        logging.error("No image file provided in the request")
         return jsonify({"error": "No image file provided"}), 400
+
+    if 'cropped_image' not in request.files:
+        logging.error("No cropped image file provided in the request")
+        return jsonify({"error": "No cropped image file provided"}), 400
 
     try:
         image_file = request.files['image']
+        logging.debug("Received image file for processing")
         
-        # Upload to Cloudinary first
+        # Upload the complete image to Cloudinary first
         upload_result = cloudinary.uploader.upload(
             image_file,
             folder="product_images",
@@ -206,9 +212,14 @@ def process_image():
             logging.error("Invalid Cloudinary upload response")
             return jsonify({"error": "Failed to upload image to cloud storage"}), 500
 
-        # Process image with Together API using the Cloudinary URL
+        # Process the cropped image with Together API
+        cropped_image_file = request.files['cropped_image']
+        cropped_image_data = cropped_image_file.read()
+        cropped_image_base64 = base64.b64encode(cropped_image_data).decode('utf-8')
+        cropped_image_url = f"data:image/jpeg;base64,{cropped_image_base64}"
+
         processor = ImageProcessor(together_api_key)
-        extracted_info = processor.analyze_image_url(upload_result['secure_url'])
+        extracted_info = processor.analyze_image_url(cropped_image_url)
         
         logging.debug(f"Extracted info from Together API: {extracted_info}")
         
@@ -229,11 +240,12 @@ def process_image():
             'extracted_info': extracted_info
         }
         
+        logging.debug(f"Returning response: {response}")
         return jsonify(response), 201
 
     except Exception as e:
         logging.error(f"Error processing image: {str(e)}")
-        logging.error(f"Exception details:", exc_info=True)
+        logging.error("Exception details:", exc_info=True)
             
         return jsonify({
             "error": "Failed to process image",
