@@ -1,0 +1,42 @@
+
+.medicine-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 80px;
+    justify-content: center;
+    /* padding: 30px; */
+    
+   
+ 
+    
+  }
+  
+  
+  .medicine-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 250px;
+    text-align: center;
+    /* padding: 20px; */
+    padding-left: 20px;
+    padding-right: 20px;
+    /* gap: 80px; */
+    
+    
+  }
+  
+  .medicine-image {
+    width: 400px;
+    height: 400px;
+    object-fit: contain;
+    padding-left: 50px;
+    padding-right: 50px;
+  }
+  
+  .medicine-name {
+    margin-top: 0px;
+    font-size: 26px;
+    font-weight: bold;
+  }
+  

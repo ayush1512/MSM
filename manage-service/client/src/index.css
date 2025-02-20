@@ -1,0 +1,173 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Urbanist', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'Noto Sans', sans-serif;
+  color-scheme: light;
+}
+
+:root {
+  --bg-color: #f4f3ff;
+  --btn-color: #646cff;
+  --dark-color: #242424;
+  --helper-color: #99b9ff;
+}
+
+html {
+  font-size: 72.5%;
+}
+
+/* Base style -- jo har jagah apply hota h */
+
+body {
+  margin: 0;
+  min-width: 32rem;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 3.0rem;
+  line-height: 1.1;
+  font-weight: bold;
+}
+
+p,
+li,
+label,
+textarea {
+  font-size: 1.8rem;
+  line-height: 1.56;
+  letter-spacing: 0.1rem;
+  word-spacing: 0.06rem;
+}
+
+a {
+  font-weight: 500;
+  font-size: 1.8rem;
+  letter-spacing: 0.1rem;
+  text-decoration: inherit;
+}
+
+li {
+  list-style: none;
+}
+
+.container {
+  max-width: 200rem;
+  padding: 4rem 2.4rem;
+  margin: 0;
+}
+
+.container .logo-brand a {
+  font-size: 3rem;
+}
+
+.grid {
+  display: grid;
+  gap: 6.4rem;
+}
+
+.grid-two-cols {
+  grid-template-columns: repeat(2, 5fr);
+  /* 2 cols aur same size ke - 1fr */
+}
+
+.grid-three-cols {
+  grid-template-columns: repeat(1, 1fr);
+  /* 2 cols aur same size ke - 1fr */
+}
+
+.grid-four-cols {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* Module Rules/Reusable */
+button {
+  text-transform: capitalize;
+  padding: 0.6rem 1.2rem;
+  font-size: 1.7rem;
+  font-weight: 500;
+  background-color: var(--btn-color);
+  border-radius: 0.8rem;
+  border: .1rem solid transparent;
+  cursor: pointer;
+  letter-spacing: 0.1rem;
+  transition: border-color 0.3s;
+}
+
+.secondary-btn {
+  background-color: transparent;
+  box-shadow: inset 0 0 0 0.2rem var(--btn-color);
+  margin-left: 3.2rem;
+}
+
+/* State rules */
+button:hover {
+  box-shadow: inset 0 0 0 0.2rem var(--bg-color);
+  /*  border: 0.2rem solid #fff;  -- iss transition ko krne ke liye iska use kiya h */
+}
+
+a:hover,
+a.active {
+  color: #535bf2;
+}
+
+/* Hero section  */
+.section-hero {
+  & .grid {
+    align-items: center;
+  }
+
+  .hero-content {
+    & p {
+      margin: 2.4rem 0 4.8rem 0;
+
+      &:first-child {
+        margin: 0 0 1.2rem 0;
+      }
+    }
+  }
+
+  .hero-image {
+    display: flex;
+    justify-content: center;
+
+    & img {
+      width: 70%;
+      height: auto;
+      border-radius: 10px;
+    }
+  }
+}
+
+/* end section */
+
+.section-analytics {
+  margin: 9.6rem 0;
+
+  & .container {
+    background-color: var(--bg-color);
+    border-radius: 1rem;
+  }
+
+  & .grid {
+    color: var(--dark-color);
+  }
+
+  & .div1 {
+    text-align: center;
+    border-right: 0.2rem solid var(--dark-color);
+
+    &:last-child {
+      border: none;
+    }
+
+    & h2 {
+      font-size: 2.5rem;
+    }
+
+    & p {
+      text-transform: capitalize;
+    }
+  }
+}
