@@ -10,7 +10,7 @@ const AdminLogin = ({ setIsAuthenticated }) => {
   const handleLogin = (e) => {
     e.preventDefault();
     // Check credentials (for demonstration, using hardcoded credentials)
-    if (username === "admin" && password === "admin") {
+    if (username === "Saurabh" && password === "moyemoye"||username === "Sakchi" && password === "moyemoye2") {
       setIsAuthenticated(true);
       navigate("/admin/dashboard");
     } else {
