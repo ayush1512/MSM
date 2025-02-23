@@ -1,8 +1,7 @@
 Product_Scanner/venv
-/venv
-/venv/Lib
-/node_modules
-/env
+venv
+venv/Lib
+node_modules
 /Description_Scanner/msm-1
 /runs
 .env
