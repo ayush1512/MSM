@@ -5,3 +5,4 @@ node_modules
 /Description_Scanner/msm-1
 /runs
 .env
+__pycache__
