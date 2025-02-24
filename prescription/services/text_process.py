@@ -10,7 +10,7 @@ import asyncio
 from models.prescription import Prescription
 
 load_dotenv()
-class TextProsses:
+class TextProcess:
     def __init__(self):
         self.client = Together(api_key=os.getenv("TOGETHER_API_KEY"))
         self.model = "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free"
@@ -140,7 +140,7 @@ class TextProsses:
             logging.error(f"JSON string cleaning error: {str(e)}")
             return json_string
 
-    def analyze_text(self, raw_text, db_service=None):
+    def analyze_text(self, raw_text, db_service=None, image_data=None):
         """Analyze prescription text and optionally save to database"""
         try:
             response = self.client.chat.completions.create(
@@ -164,13 +164,15 @@ class TextProsses:
                     # Save to database if db_service is provided
                     if db_service:
                         try:
-                            prescription = Prescription(parsed_json)
+                            prescription = Prescription(parsed_json, image_data)
                             prescription_id = db_service.save_prescription(prescription.to_dict())
                             parsed_json['_id'] = prescription_id
+                            parsed_json['image_data'] = image_data
                         except Exception as e:
                             logging.error(f"Database save error: {str(e)}")
                     
                     return {"success": True, "prescription_id": prescription_id, "data": parsed_json}
+
                 except json.JSONDecodeError as je:
                     logging.error(f"JSON parsing error: {str(je)}")
                     return {"error": "Invalid JSON format in response", "raw_result": result}

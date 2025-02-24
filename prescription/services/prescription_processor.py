@@ -1,6 +1,6 @@
 from .cloudinary_service import upload_to_cloudinary
 from .together_ai_service import TogetherAIService
-from .text_prosses import TextProsses
+from .text_process import TextProcess  # Fixed class name
 from .db_service import DatabaseService
 import logging
 import re
@@ -8,7 +8,7 @@ import re
 class PrescriptionProcessor:
     def __init__(self):
         self.ai_service = TogetherAIService()
-        self.extractor = TextProsses()
+        self.extractor = TextProcess()  # Fixed class instantiation
         self.db_service = DatabaseService()
     
     def process_prescription_image(self, image_file):
@@ -19,18 +19,25 @@ class PrescriptionProcessor:
             if not upload_result:
                 raise Exception("Failed to upload image")
                 
-            # Get the image URL
-            image_url = upload_result['secure_url']
+            # Prepare image data
+            image_data = {
+                'url': upload_result['secure_url'],
+                'public_id': upload_result['public_id']
+            }
 
             try:
                 # Get raw text from multiple iterations
-                extracted_text = self.ai_service.analyze_image(image_url)
+                extracted_text = self.ai_service.analyze_image(image_data['url'])
                 
                 if not extracted_text:
                     return None
 
-                # Extract structured data using regex and save to database
-                structured_data = self.extractor.analyze_text(extracted_text, self.db_service)
+                # Extract structured data using regex and save to database with image data
+                structured_data = self.extractor.analyze_text(
+                    extracted_text, 
+                    self.db_service,
+                    image_data=image_data
+                )
                 
                 if "error" in structured_data:
                     return {
@@ -45,10 +52,7 @@ class PrescriptionProcessor:
             # Return combined result
             return {
                 'success': True,
-                'image_data': {
-                    'url': image_url,
-                    'public_id': upload_result['public_id']
-                },
+                'image_data': image_data,
                 'prescription_data': structured_data
             }
             

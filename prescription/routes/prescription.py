@@ -1,15 +1,16 @@
 from flask import Blueprint, request, jsonify
-from services.prescription_processor import PrescriptionProcessor
+from services.prescription_processor import PrescriptionProcessor  # Fix import path
 import logging
 
-prescription_bp = Blueprint('prescription', __name__)
+prescription_bp = Blueprint('prescription', __name__)  # Remove url_prefix here
 processor = PrescriptionProcessor()
 
-
-@prescription_bp.route('/process-prescription', methods=['POST'])
+@prescription_bp.route('/prescription/process', methods=['POST', 'OPTIONS'])  # Add OPTIONS and update path
 def process_prescription():
     """Combined endpoint for upload and extraction"""
-    
+    if request.method == 'OPTIONS':
+        return _build_cors_preflight_response()
+        
     if not request.files or 'image' not in request.files:
         return jsonify({"error": "No image file provided"}), 400
 
