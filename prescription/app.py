@@ -1,5 +1,5 @@
 from flask import Flask
-from flask_cors import CORS
+# from flask_cors import CORS
 from dotenv import load_dotenv
 import os
 from routes import init_routes
@@ -13,13 +13,13 @@ def create_app():
     app = Flask(__name__)
     
     # Enable CORS
-    CORS(app, resources={
-        r"/*": {
-            "origins": "*",
-            "methods": ["GET", "POST", "OPTIONS"],
-            "allow_headers": ["Content-Type"]
-        }
-    })
+    # CORS(app, resources={
+    #     r"/*": {
+    #         "origins": "*",
+    #         "methods": ["GET", "POST", "OPTIONS"],
+    #         "allow_headers": ["Content-Type"]
+    #     }
+    # })
     
     # Initialize database
     app.db = DatabaseService()

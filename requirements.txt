@@ -5,3 +5,16 @@ numpy
 matplotlib
 ultralytics
 roboflow
+together
+python-dotenv
+requests
+Pillow
+cloudinary
+pymongo
+torch
+transformers
+torchvision
+pandas
+datasets 
+accelerate
+dnspython
