@@ -607,6 +607,7 @@ const PrescriptionReader = () => {
     setImage(e.target.files[0]);
   };
 
+  
   const handleUpload = async () => {
     if (!image) {
       alert('Please upload a prescription image.');
