@@ -7,6 +7,9 @@
     <title>Product Scanner by ayush1512</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <link href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -453,6 +456,88 @@
         body.light-mode .error {
             background-color: #ffe6e6;
         }
+
+        /* Add new styles for medicine form */
+        .medicine-form {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #666;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .form-group input:focus {
+            border-color: #0066cc;
+            outline: none;
+        }
+
+        .medicine-error {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        /* Dark mode support for new elements */
+        @media (prefers-color-scheme: dark) {
+            .medicine-form {
+                background: #363636;
+            }
+
+            .form-group input {
+                background: #2d2d2d;
+                border-color: #444;
+                color: #fff;
+            }
+
+            .form-group label {
+                color: #ccc;
+            }
+        }
+
+        .edit-field {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .edit-field:focus {
+            border-color: #0066cc;
+            outline: none;
+        }
+
+        .result-buttons {
+            margin-top: 1rem;
+        }
+
+        /* Dark mode support for edit fields */
+        @media (prefers-color-scheme: dark) {
+            .edit-field {
+                background: #2d2d2d;
+                border-color: #444;
+                color: #fff;
+            }
+        }
     </style>
 </head>
 
@@ -463,6 +548,31 @@
     </button>
     <div class="container">
         <h1 class="title">Product Scanner</h1>
+
+        <!-- Add medicine form section -->
+        <div class="medicine-form">
+            <h3>Medicine Details</h3>
+            <div class="form-group">
+                <label for="medicine-name">Medicine Name*</label>
+                <input type="text" id="medicine-name" required>
+            </div>
+            <div class="form-group">
+                <label for="manufacturer">Manufacturer*</label>
+                <input type="text" id="manufacturer" required>
+            </div>
+            <div class="form-group">
+                <label for="composition">Salt Composition*</label>
+                <input type="text" id="composition" required>
+            </div>
+            <div class="medicine-details" style="display: none;">
+                <h4>Additional Details</h4>
+                <p id="medicine-price"></p>
+                <p id="medicine-category"></p>
+                <p id="medicine-desc"></p>
+            </div>
+            <div class="medicine-error"></div>
+            <button class="btn btn-primary" id="medicine-submit">Submit Medicine</button>
+        </div>
 
         <div class="upload-container" id="upload-area">
             <div class="upload-icon">📁</div>
@@ -492,19 +602,28 @@
                 <div class="result-item">
                     <h4>Batch Number</h4>
                     <p id="batch-no"></p>
+                    <input type="text" id="edit-batch-no" class="edit-field" style="display: none;">
                 </div>
                 <div class="result-item">
                     <h4>Manufacturing Date</h4>
                     <p id="mfg-date"></p>
+                    <input type="text" id="edit-mfg-date" class="edit-field" style="display: none;" placeholder="MM/YYYY">
                 </div>
                 <div class="result-item">
                     <h4>Expiry Date</h4>
                     <p id="exp-date"></p>
+                    <input type="text" id="edit-exp-date" class="edit-field" style="display: none;" placeholder="MM/YYYY">
                 </div>
                 <div class="result-item">
                     <h4>MRP</h4>
                     <p id="mrp"></p>
+                    <input type="number" id="edit-mrp" class="edit-field" style="display: none;" step="0.01">
                 </div>
+            </div>
+            <div class="buttons result-buttons" style="display: none;">
+                <button class="btn btn-primary" id="edit-btn">Edit Information</button>
+                <button class="btn btn-primary" id="save-btn" style="display: none;">Save Changes</button>
+                <button class="btn btn-secondary" id="cancel-edit-btn" style="display: none;">Cancel</button>
             </div>
         </div>
     </div>
@@ -585,7 +704,10 @@
         }
 
         processBtn.addEventListener('click', async () => {
-            if (!cropper) return;
+            if (!cropper || !currentMedicineId) {
+                showError('Please submit medicine details first');
+                return;
+            }
 
             // Hide the upload area
             uploadArea.style.display = 'none';
@@ -604,6 +726,7 @@
                 const formData = new FormData();
                 formData.append('image', originalImageFile);
                 formData.append('cropped_image', croppedBlob, 'cropped-image.jpg');
+                formData.append('medicine_id', currentMedicineId);  // Add medicine ID
 
                 const response = await fetch('/process_image', {
                     method: 'POST',
@@ -642,6 +765,14 @@
             if (resultsDiv.style.display === 'block') {
                 location.reload();
             } 
+            // Reset medicine form
+            document.querySelectorAll('.medicine-form input').forEach(input => {
+                input.disabled = false;
+                input.value = '';
+            });
+            medicineSubmitBtn.disabled = false;
+            currentMedicineId = null;
+            medicineError.style.display = 'none';
         });
 
         function startTimer() {
@@ -662,7 +793,15 @@
             document.getElementById('mfg-date').textContent = data.MfgD ? data.MfgD.join(', ') : 'Not found';
             document.getElementById('exp-date').textContent = data.ExpD ? data.ExpD.join(', ') : 'Not found';
             document.getElementById('mrp').textContent = data.MRP ? data.MRP.join(', ') : 'Not found';
+            
+            // Set initial values for edit fields
+            document.getElementById('edit-batch-no').value = data.BNo ? data.BNo[0] : '';
+            document.getElementById('edit-mfg-date').value = data.MfgD ? data.MfgD[0] : '';
+            document.getElementById('edit-exp-date').value = data.ExpD ? data.ExpD[0] : '';
+            document.getElementById('edit-mrp').value = data.MRP ? data.MRP[0] : '';
+            
             resultsDiv.style.display = 'block';
+            document.querySelector('.result-buttons').style.display = 'flex';
         }
 
         function showError(message) {
@@ -686,6 +825,192 @@
 
             const newMode = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
             localStorage.setItem('mode', newMode);
+        });
+
+        // Add new JavaScript for medicine handling
+        const medicineSubmitBtn = document.getElementById('medicine-submit');
+        const medicineError = document.querySelector('.medicine-error');
+        let currentMedicineId = null;
+
+        $(document).ready(function() {
+            $("#medicine-name").autocomplete({
+                source: function(request, response) {
+                    $.get("/medicine/search", { term: request.term })
+                        .done(function(data) {
+                            response(data.map(medicine => ({
+                                label: `${medicine.product_name} - ${medicine.product_manufactured}`,
+                                value: medicine.product_name,
+                                medicine: medicine
+                            })));
+                        });
+                },
+                minLength: 2,
+                select: function(event, ui) {
+                    const medicine = ui.item.medicine;
+                    $("#manufacturer").val(medicine.product_manufactured);
+                    $("#composition").val(medicine.salt_composition);
+                    
+                    // Display additional details
+                    $("#medicine-price").text(`Price: ${medicine.product_price || 'N/A'}`);
+                    $("#medicine-category").text(`Category: ${medicine.sub_category || 'N/A'}`);
+                    $("#medicine-desc").text(medicine.medicine_desc || 'No description available');
+                    $(".medicine-details").show();
+                    
+                    currentMedicineId = medicine._id;
+                    medicineSubmitBtn.textContent = "Use This Medicine";
+                }
+            });
+        });
+
+        medicineSubmitBtn.addEventListener('click', async () => {
+            const product_name = document.getElementById('medicine-name').value.trim();
+            const manufacturer = document.getElementById('manufacturer').value.trim();
+            const composition = document.getElementById('composition').value.trim();
+
+            if (!product_name || !manufacturer || !composition) {
+                showMedicineError('All fields are required');
+                return;
+            }
+
+            try {
+                const response = await fetch('/medicine', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        product_name,
+                        manufacturer,
+                        composition
+                    })
+                });
+
+                if (!response.ok) throw new Error('Failed to process medicine');
+
+                const data = await response.json();
+                if (data.medicine) {
+                    // Existing medicine found
+                    currentMedicineId = data.medicine._id;
+                } else {
+                    // New medicine created
+                    currentMedicineId = data.medicine_id;
+                }
+                
+                // Enable image upload area
+                uploadArea.style.display = 'block';
+                medicineError.style.display = 'none';
+                showSuccess(`Medicine ${data.message}. You can now upload an image.`);
+                
+                // Disable medicine form
+                document.querySelectorAll('.medicine-form input').forEach(input => {
+                    input.disabled = true;
+                });
+                medicineSubmitBtn.disabled = true;
+
+            } catch (error) {
+                showMedicineError('Failed to process medicine: ' + error.message);
+            }
+        });
+
+        function showMedicineError(message) {
+            medicineError.textContent = message;
+            medicineError.style.display = 'block';
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.createElement('div');
+            successDiv.style.cssText = `
+                background-color: #d4edda;
+                color: #155724;
+                padding: 1rem;
+                margin: 1rem 0;
+                border-radius: 4px;
+                text-align: center;
+            `;
+            successDiv.textContent = message;
+            document.querySelector('.medicine-form').appendChild(successDiv);
+            setTimeout(() => successDiv.remove(), 5000);
+        }
+
+        // Add edit functionality
+        const editBtn = document.getElementById('edit-btn');
+        const saveBtn = document.getElementById('save-btn');
+        const cancelEditBtn = document.getElementById('cancel-edit-btn');
+        const editFields = document.querySelectorAll('.edit-field');
+        const displayFields = document.querySelectorAll('.result-item p');
+
+        editBtn.addEventListener('click', () => {
+            editFields.forEach(field => field.style.display = 'block');
+            displayFields.forEach(field => field.style.display = 'none');
+            editBtn.style.display = 'none';
+            saveBtn.style.display = 'inline-block';
+            cancelEditBtn.style.display = 'inline-block';
+        });
+
+        cancelEditBtn.addEventListener('click', () => {
+            editFields.forEach(field => field.style.display = 'none');
+            displayFields.forEach(field => field.style.display = 'block');
+            editBtn.style.display = 'inline-block';
+            saveBtn.style.display = 'none';
+            cancelEditBtn.style.display = 'none';
+        });
+
+        saveBtn.addEventListener('click', async () => {
+            // Validate the data
+            const mfgDate = document.getElementById('edit-mfg-date').value;
+            const expDate = document.getElementById('edit-exp-date').value;
+            const datePattern = /^(0[1-9]|1[0-2])\/\d{4}$/;
+
+            if (!datePattern.test(mfgDate) || !datePattern.test(expDate)) {
+                showError('Please enter dates in MM/YYYY format');
+                return;
+            }
+
+            const mrp = parseFloat(document.getElementById('edit-mrp').value);
+            if (isNaN(mrp) || mrp <= 0) {
+                showError('Please enter a valid MRP');
+                return;
+            }
+
+            try {
+                const updatedInfo = {
+                    batch_no: document.getElementById('edit-batch-no').value,
+                    mfg_date: mfgDate,
+                    exp_date: expDate,
+                    mrp: mrp,
+                    medicine_id: currentMedicineId,
+                    image_url: document.querySelector('.results').getAttribute('data-image-url')
+                };
+
+                const response = await fetch('/update_stock', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updatedInfo)
+                });
+
+                if (!response.ok) throw new Error('Failed to update information');
+
+                const data = await response.json();
+                
+                // Update display fields with new values
+                document.getElementById('batch-no').textContent = updatedInfo.batch_no;
+                document.getElementById('mfg-date').textContent = updatedInfo.mfg_date;
+                document.getElementById('exp-date').textContent = updatedInfo.exp_date;
+                document.getElementById('mrp').textContent = updatedInfo.mrp;
+
+                // Return to display mode
+                editFields.forEach(field => field.style.display = 'none');
+                displayFields.forEach(field => field.style.display = 'block');
+                editBtn.style.display = 'inline-block';
+                saveBtn.style.display = 'none';
+                cancelEditBtn.style.display = 'none';
+
+                showSuccess('Information updated successfully');
+            } catch (error) {
+                showError('Failed to update information: ' + error.message);
+            }
         });
     </script>
 </body>
