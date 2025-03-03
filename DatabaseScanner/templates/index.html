@@ -538,6 +538,43 @@
                 color: #fff;
             }
         }
+
+        /* Add styles for medicine details box */
+        .medicine-details {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .medicine-details {
+                background: #363636;
+            }
+            
+            .medicine-details h4,
+            .medicine-details p {
+                color: #fff;
+            }
+        }
+
+        body.dark-mode .medicine-details {
+            background: #363636;
+        }
+
+        body.dark-mode .medicine-details h4,
+        body.dark-mode .medicine-details p {
+            color: #fff;
+        }
+
+        body.light-mode .medicine-details {
+            background: #f8f9fa;
+        }
+
+        body.light-mode .medicine-details h4,
+        body.light-mode .medicine-details p {
+            color: #1a1a1a;
+        }
     </style>
 </head>
 
@@ -622,6 +659,7 @@
             </div>
             <div class="buttons result-buttons" style="display: none;">
                 <button class="btn btn-primary" id="edit-btn">Edit Information</button>
+                <button class="btn btn-primary" id="save-stock-btn">Save Stock</button>
                 <button class="btn btn-primary" id="save-btn" style="display: none;">Save Changes</button>
                 <button class="btn btn-secondary" id="cancel-edit-btn" style="display: none;">Cancel</button>
             </div>
@@ -802,6 +840,9 @@
             
             resultsDiv.style.display = 'block';
             document.querySelector('.result-buttons').style.display = 'flex';
+            
+            // Store the image URL as a data attribute
+            resultsDiv.setAttribute('data-image-url', data.image_url || '');
         }
 
         function showError(message) {
@@ -867,8 +908,8 @@
             const manufacturer = document.getElementById('manufacturer').value.trim();
             const composition = document.getElementById('composition').value.trim();
 
-            if (!product_name || !manufacturer || !composition) {
-                showMedicineError('All fields are required');
+            if (!product_name || !manufacturer) {
+                showMedicineError('Medicine name and manufacturer are required');
                 return;
             }
 
@@ -881,7 +922,7 @@
                     body: JSON.stringify({
                         product_name,
                         manufacturer,
-                        composition
+                        composition: composition || 'Not specified'
                     })
                 });
 
@@ -935,6 +976,7 @@
         // Add edit functionality
         const editBtn = document.getElementById('edit-btn');
         const saveBtn = document.getElementById('save-btn');
+        const saveStockBtn = document.getElementById('save-stock-btn');
         const cancelEditBtn = document.getElementById('cancel-edit-btn');
         const editFields = document.querySelectorAll('.edit-field');
         const displayFields = document.querySelectorAll('.result-item p');
@@ -943,8 +985,44 @@
             editFields.forEach(field => field.style.display = 'block');
             displayFields.forEach(field => field.style.display = 'none');
             editBtn.style.display = 'none';
+            saveStockBtn.style.display = 'none';
             saveBtn.style.display = 'inline-block';
             cancelEditBtn.style.display = 'inline-block';
+        });
+
+        function getStockData() {
+            return {
+                batch_no: document.getElementById('batch-no').textContent,
+                mfg_date: document.getElementById('mfg-date').textContent,
+                exp_date: document.getElementById('exp-date').textContent,
+                mrp: parseFloat(document.getElementById('mrp').textContent),
+                medicine_id: currentMedicineId,
+                image_url: resultsDiv.getAttribute('data-image-url')
+            };
+        }
+
+        saveStockBtn.addEventListener('click', async () => {
+            try {
+                const stockData = getStockData();
+                const response = await fetch('/update_stock', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(stockData)
+                });
+
+                if (!response.ok) throw new Error('Failed to save stock information');
+
+                const data = await response.json();
+                showSuccess(data.message);
+                
+                // Hide save stock button after successful save
+                saveStockBtn.style.display = 'none';
+
+            } catch (error) {
+                showError('Failed to save stock: ' + error.message);
+            }
         });
 
         cancelEditBtn.addEventListener('click', () => {
@@ -979,7 +1057,7 @@
                     exp_date: expDate,
                     mrp: mrp,
                     medicine_id: currentMedicineId,
-                    image_url: document.querySelector('.results').getAttribute('data-image-url')
+                    image_url: resultsDiv.getAttribute('data-image-url')
                 };
 
                 const response = await fetch('/update_stock', {

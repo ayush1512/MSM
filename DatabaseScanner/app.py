@@ -251,9 +251,9 @@ def medicine():
             manufacturer = data.get('manufacturer')
             salt_composition = data.get('composition')
 
-            if not all([product_name, manufacturer, salt_composition]):
+            if not all([product_name, manufacturer]):
                 return jsonify({
-                    'error': 'Product name, manufacturer and composition are required'
+                    'error': 'Product name and manufacturer are required'
                 }), 400
 
             # Check if medicine exists
@@ -273,7 +273,7 @@ def medicine():
             new_medicine = Medicine(
                 product_name=product_name,
                 product_manufactured=manufacturer,
-                salt_composition=salt_composition
+                salt_composition=salt_composition or 'Not specified'
             )
             result = medicine_collection.insert_one(new_medicine.to_dict())
             
@@ -379,21 +379,40 @@ def update_stock():
         if not all(field in data for field in required_fields):
             return jsonify({"error": "Missing required fields"}), 400
 
-        # Create new stock entry with updated information
-        stock = Stock(
-            medicine_id=ObjectId(data['medicine_id']),
-            batch_no=data['batch_no'],
-            mfg_date=data['mfg_date'],
-            exp_date=data['exp_date'],
-            mrp=float(data['mrp']),
-            image_url=data['image_url']
-        )
-        
-        result = stock_collection.insert_one(stock.to_dict())
+        # Check if stock with same batch number exists
+        existing_stock = stock_collection.find_one({
+            'medicine_id': ObjectId(data['medicine_id']),
+            'batch_no': data['batch_no']
+        })
+
+        if existing_stock:
+            # Update existing stock
+            result = stock_collection.update_one(
+                {'_id': existing_stock['_id']},
+                {'$set': {
+                    'mfg_date': data['mfg_date'],
+                    'exp_date': data['exp_date'],
+                    'mrp': float(data['mrp']),
+                    'image_url': data['image_url']
+                }}
+            )
+            message = 'Stock information updated successfully'
+        else:
+            # Create new stock entry
+            stock = Stock(
+                medicine_id=ObjectId(data['medicine_id']),
+                batch_no=data['batch_no'],
+                mfg_date=data['mfg_date'],
+                exp_date=data['exp_date'],
+                mrp=float(data['mrp']),
+                image_url=data['image_url']
+            )
+            result = stock_collection.insert_one(stock.to_dict())
+            message = 'New stock entry created successfully'
         
         return jsonify({
-            'stock_id': str(result.inserted_id),
-            'message': 'Stock information updated successfully'
+            'stock_id': str(result.inserted_id if hasattr(result, 'inserted_id') else existing_stock['_id']),
+            'message': message
         }), 201
 
     except Exception as e:
