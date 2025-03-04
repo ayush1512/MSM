@@ -338,59 +338,25 @@ def process_image():
                 "extracted_info": None
             }), 200
 
-        # Check if stock with same batch number already exists
-        if extracted_info['BNo'] and extracted_info['BNo'][0]:
-            existing_stock = stock_collection.find_one({
-                'medicine_id': ObjectId(medicine_id),
-                'batch_no': extracted_info['BNo'][0]
-            })
-            
-            if existing_stock:
-                # Get current quantity or default to 1
-                current_quantity = existing_stock.get('quantity', 1)
-                # Update existing stock with new information
-                stock_collection.update_one(
-                    {'_id': existing_stock['_id']},
-                    {'$set': {
-                        'mfg_date': extracted_info['MfgD'][0] if extracted_info['MfgD'] else None,
-                        'exp_date': extracted_info['ExpD'][0] if extracted_info['ExpD'] else None,
-                        'mrp': float(extracted_info['MRP'][0]) if extracted_info['MRP'] else None,
-                        'quantity': current_quantity,  # Preserve existing quantity
-                        'image_url': upload_result['secure_url'],
-                        'updated_at': datetime.utcnow()
-                    }}
-                )
-                stock_id = str(existing_stock['_id'])
-                status_message = "Updated existing stock entry"
-                # Add quantity to extracted info for display
-                extracted_info['quantity'] = [str(current_quantity)]
-            else:
-                # Create new stock entry
-                stock = Stock(
-                    medicine_id=ObjectId(medicine_id),
-                    batch_no=extracted_info['BNo'][0],
-                    mfg_date=extracted_info['MfgD'][0] if extracted_info['MfgD'] else None,
-                    exp_date=extracted_info['ExpD'][0] if extracted_info['ExpD'] else None,
-                    mrp=float(extracted_info['MRP'][0]) if extracted_info['MRP'] else None,
-                    quantity=1,  # Default quantity for new entries
-                    image_url=upload_result['secure_url']
-                )
-                result = stock_collection.insert_one(stock.to_dict())
-                stock_id = str(result.inserted_id)
-                status_message = "Created new stock entry"
-                # Add quantity to extracted info for display
-                extracted_info['quantity'] = ['1']
-        else:
-            return jsonify({"error": "No batch number found in the image"}), 400
+        # Create stock entry
+        stock = Stock(
+            medicine_id=ObjectId(medicine_id),
+            batch_no=extracted_info['BNo'][0] if extracted_info['BNo'] else None,
+            mfg_date=extracted_info['MfgD'][0] if extracted_info['MfgD'] else None,
+            exp_date=extracted_info['ExpD'][0] if extracted_info['ExpD'] else None,
+            mrp=float(extracted_info['MRP'][0]) if extracted_info['MRP'] else None,
+            image_url=upload_result['secure_url']
+        )
+        
+        stock_result = stock_collection.insert_one(stock.to_dict())
 
         # Return response with all information
         response = {
             'image_url': upload_result['secure_url'],
             'public_id': upload_result['public_id'],
             'extracted_info': extracted_info,
-            'stock_id': stock_id,
-            'medicine_id': medicine_id,
-            'message': status_message
+            'stock_id': str(stock_result.inserted_id),
+            'medicine_id': medicine_id
         }
         
         return jsonify(response), 201
@@ -413,14 +379,7 @@ def update_stock():
         if not all(field in data for field in required_fields):
             return jsonify({"error": "Missing required fields"}), 400
 
-        try:
-            quantity = int(data.get('quantity', 1))
-            if quantity < 0:
-                raise ValueError("Quantity cannot be negative")
-        except ValueError as e:
-            return jsonify({"error": f"Invalid quantity: {str(e)}"}), 400
-        
-        # Always check for existing stock with the same batch number
+        # Check if stock with same batch number exists
         existing_stock = stock_collection.find_one({
             'medicine_id': ObjectId(data['medicine_id']),
             'batch_no': data['batch_no']
@@ -434,13 +393,10 @@ def update_stock():
                     'mfg_date': data['mfg_date'],
                     'exp_date': data['exp_date'],
                     'mrp': float(data['mrp']),
-                    'quantity': quantity,
-                    'image_url': data['image_url'],
-                    'updated_at': datetime.utcnow()
+                    'image_url': data['image_url']
                 }}
             )
-            message = f'Stock information updated for batch {data["batch_no"]} (Quantity: {quantity})'
-            stock_id = str(existing_stock['_id'])
+            message = 'Stock information updated successfully'
         else:
             # Create new stock entry
             stock = Stock(
@@ -449,38 +405,13 @@ def update_stock():
                 mfg_date=data['mfg_date'],
                 exp_date=data['exp_date'],
                 mrp=float(data['mrp']),
-                quantity=quantity,
                 image_url=data['image_url']
             )
             result = stock_collection.insert_one(stock.to_dict())
-            message = f'New stock entry created for batch {data["batch_no"]} (Quantity: {quantity})'
-            stock_id = str(result.inserted_id)
-
-        # Get and serialize updated stock information
-        updated_stock = stock_collection.find_one({'_id': ObjectId(stock_id)})
-        if updated_stock:
-            # Convert MongoDB document to dictionary and handle ObjectId serialization
-            stock_dict = {
-                '_id': str(updated_stock['_id']),
-                'medicine_id': str(updated_stock['medicine_id']),
-                'batch_no': updated_stock['batch_no'],
-                'mfg_date': updated_stock['mfg_date'],
-                'exp_date': updated_stock['exp_date'],
-                'mrp': updated_stock['mrp'],
-                'quantity': updated_stock['quantity'],
-                'image_url': updated_stock['image_url'],
-                'created_at': updated_stock.get('created_at', datetime.utcnow()).isoformat(),
-                'updated_at': updated_stock.get('updated_at', datetime.utcnow()).isoformat()
-            }
-            
-            return jsonify({
-                'stock_id': stock_id,
-                'message': message,
-                'stock': stock_dict
-            }), 201
+            message = 'New stock entry created successfully'
         
         return jsonify({
-            'stock_id': stock_id,
+            'stock_id': str(result.inserted_id if hasattr(result, 'inserted_id') else existing_stock['_id']),
             'message': message
         }), 201
 
@@ -489,4 +420,4 @@ def update_stock():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000)
