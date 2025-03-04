@@ -656,11 +656,6 @@
                     <p id="mrp"></p>
                     <input type="number" id="edit-mrp" class="edit-field" style="display: none;" step="0.01">
                 </div>
-                <div class="result-item">
-                    <h4>Quantity</h4>
-                    <p id="quantity">0</p>
-                    <input type="number" id="edit-quantity" class="edit-field" style="display: none;" min="0" step="1">
-                </div>
             </div>
             <div class="buttons result-buttons" style="display: none;">
                 <button class="btn btn-primary" id="edit-btn">Edit Information</button>
@@ -1001,18 +996,12 @@
                 mfg_date: document.getElementById('mfg-date').textContent,
                 exp_date: document.getElementById('exp-date').textContent,
                 mrp: parseFloat(document.getElementById('mrp').textContent),
-                quantity: parseInt(document.getElementById('quantity').textContent) || 0,
                 medicine_id: currentMedicineId,
                 image_url: resultsDiv.getAttribute('data-image-url')
             };
         }
 
         saveStockBtn.addEventListener('click', async () => {
-            const quantity = parseInt(document.getElementById('quantity').textContent);
-            if (isNaN(quantity) || quantity < 0) {
-                showError('Please enter a valid quantity');
-                return;
-            }
             try {
                 const stockData = getStockData();
                 const response = await fetch('/update_stock', {
@@ -1061,19 +1050,12 @@
                 return;
             }
 
-            const quantity = parseInt(document.getElementById('edit-quantity').value);
-            if (isNaN(quantity) || quantity < 0) {
-                showError('Please enter a valid quantity');
-                return;
-            }
-
             try {
                 const updatedInfo = {
                     batch_no: document.getElementById('edit-batch-no').value,
                     mfg_date: mfgDate,
                     exp_date: expDate,
                     mrp: mrp,
-                    quantity: quantity,
                     medicine_id: currentMedicineId,
                     image_url: resultsDiv.getAttribute('data-image-url')
                 };
@@ -1095,7 +1077,6 @@
                 document.getElementById('mfg-date').textContent = updatedInfo.mfg_date;
                 document.getElementById('exp-date').textContent = updatedInfo.exp_date;
                 document.getElementById('mrp').textContent = updatedInfo.mrp;
-                document.getElementById('quantity').textContent = updatedInfo.quantity;
 
                 // Return to display mode
                 editFields.forEach(field => field.style.display = 'none');
