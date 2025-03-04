@@ -374,7 +374,7 @@ def process_image():
 def update_stock():
     try:
         data = request.json
-        required_fields = ['medicine_id', 'batch_no', 'mfg_date', 'exp_date', 'mrp', 'image_url', 'quantity']
+        required_fields = ['medicine_id', 'batch_no', 'mfg_date', 'exp_date', 'mrp', 'image_url']
         
         if not all(field in data for field in required_fields):
             return jsonify({"error": "Missing required fields"}), 400
@@ -393,7 +393,6 @@ def update_stock():
                     'mfg_date': data['mfg_date'],
                     'exp_date': data['exp_date'],
                     'mrp': float(data['mrp']),
-                    'quantity': int(data['quantity']),
                     'image_url': data['image_url']
                 }}
             )
@@ -406,8 +405,7 @@ def update_stock():
                 mfg_date=data['mfg_date'],
                 exp_date=data['exp_date'],
                 mrp=float(data['mrp']),
-                image_url=data['image_url'],
-                quantity=int(data['quantity'])
+                image_url=data['image_url']
             )
             result = stock_collection.insert_one(stock.to_dict())
             message = 'New stock entry created successfully'

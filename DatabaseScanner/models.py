@@ -29,14 +29,13 @@ class Medicine:
         }
 
 class Stock:
-    def __init__(self, medicine_id, batch_no, mfg_date, exp_date, mrp, image_url=None, quantity=0):
+    def __init__(self, medicine_id, batch_no, mfg_date, exp_date, mrp, image_url=None):
         self.medicine_id = medicine_id
         self.batch_no = batch_no
         self.mfg_date = mfg_date
         self.exp_date = exp_date
         self.mrp = mrp
         self.image_url = image_url
-        self.quantity = quantity
         self.created_at = datetime.utcnow()
 
     def to_dict(self):
@@ -47,6 +46,5 @@ class Stock:
             "exp_date": self.exp_date,
             "mrp": self.mrp,
             "image_url": self.image_url,
-            "quantity": self.quantity,
             "created_at": self.created_at
         }
