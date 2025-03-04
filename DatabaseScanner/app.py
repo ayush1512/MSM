@@ -374,7 +374,7 @@ def process_image():
 def update_stock():
     try:
         data = request.json
-        required_fields = ['medicine_id', 'batch_no', 'mfg_date', 'exp_date', 'mrp', 'image_url']
+        required_fields = ['medicine_id', 'batch_no', 'mfg_date', 'exp_date', 'mrp', 'quantity', 'image_url']
         
         if not all(field in data for field in required_fields):
             return jsonify({"error": "Missing required fields"}), 400
@@ -385,18 +385,23 @@ def update_stock():
             'batch_no': data['batch_no']
         })
 
+        update_data = {
+            'mfg_date': data['mfg_date'],
+            'exp_date': data['exp_date'],
+            'mrp': float(data['mrp']),
+            'quantity': int(data['quantity']),
+            'image_url': data['image_url'],
+            'updated_at': datetime.utcnow()
+        }
+
         if existing_stock:
             # Update existing stock
             result = stock_collection.update_one(
                 {'_id': existing_stock['_id']},
-                {'$set': {
-                    'mfg_date': data['mfg_date'],
-                    'exp_date': data['exp_date'],
-                    'mrp': float(data['mrp']),
-                    'image_url': data['image_url']
-                }}
+                {'$set': update_data}
             )
             message = 'Stock information updated successfully'
+            stock_id = str(existing_stock['_id'])
         else:
             # Create new stock entry
             stock = Stock(
@@ -405,13 +410,15 @@ def update_stock():
                 mfg_date=data['mfg_date'],
                 exp_date=data['exp_date'],
                 mrp=float(data['mrp']),
+                quantity=int(data['quantity']),
                 image_url=data['image_url']
             )
             result = stock_collection.insert_one(stock.to_dict())
             message = 'New stock entry created successfully'
+            stock_id = str(result.inserted_id)
         
         return jsonify({
-            'stock_id': str(result.inserted_id if hasattr(result, 'inserted_id') else existing_stock['_id']),
+            'stock_id': stock_id,
             'message': message
         }), 201
 
