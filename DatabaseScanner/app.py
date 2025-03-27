@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS  # Add this import
 from together import Together
 import cloudinary
 import cloudinary.uploader
@@ -18,6 +19,7 @@ from models import Medicine, Stock
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})  # Add CORS support
 
 # Cloudinary configuration
 cloudinary.config(
