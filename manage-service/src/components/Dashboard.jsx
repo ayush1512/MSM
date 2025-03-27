@@ -63,7 +63,8 @@ const Dashboard = () => {
             We provide robust, user-friendly, and cost-effective software
             solutions for the healthcare industry.
           </p>
-          <button className="px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-500">
+          <button className="px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-500"
+           onClick={() => navigate('/contact-us')}>
             Request a Quote
           </button>
         </div>

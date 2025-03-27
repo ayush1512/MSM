@@ -2,7 +2,7 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Dashboard from "./components/Dashboard";
-
+import ContactUs from './components/ContactUs';
 import PrescriptionReader from "./components/PrescriptionReader";
 import StockManagement from "./components/StockManagement";
 import PaymentRecords from "./components/PaymentRecords";
@@ -31,6 +31,7 @@ function App() {
         <Route path="/debit-credit" element={<DebitCredit/>}/>
         <Route path="/login-page" element={<LoginPage/>}/>
         <Route path="/dashboard" element={<AdminDashboard/>}/>
+        <Route path="/contact-us" element={<ContactUs/>}/>
       </Routes>
     </Router>
   );
