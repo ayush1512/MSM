@@ -10,7 +10,7 @@ import PaymentRecords from "./components/PaymentRecords";
 import ProductScanner from "./components/ProductScanner";
 import DebitCredit from "./components/DebitCredit";
 import Admin from '/src/components/Admin.jsx';
-import LoginPage from "./components/LoginPage";
+// import LoginPage from "./components/LoginPage";
 import AdminDashboard from "./components/AdminDashboard";
 
 
@@ -29,7 +29,7 @@ function App() {
         <Route path="/admin/*" element={<Admin />} />
         <Route path="/stock-management" element={<StockManagement/>}/>
         <Route path="/debit-credit" element={<DebitCredit/>}/>
-        <Route path="/login-page" element={<LoginPage/>}/>
+        {/* <Route path="/login-page" element={<LoginPage/>}/> */}
         <Route path="/dashboard" element={<AdminDashboard/>}/>
         <Route path="/contact-us" element={<ContactUs/>}/>
       </Routes>
