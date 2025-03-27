@@ -8,12 +8,16 @@ from dotenv import load_dotenv
 from together import Together
 import asyncio
 from models.prescription import Prescription
+from .medicine_service import MedicineService
+from .medicine_kb_service import MedicineKnowledgeBase
 
 load_dotenv()
 class TextProcess:
     def __init__(self):
         self.client = Together(api_key=os.getenv("TOGETHER_API_KEY"))
         self.model = "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free"
+        self.medicine_kb = MedicineKnowledgeBase()
+        self.medicine_service = None
         self.prompt =""" You are an expert in medical prescription analysis. Given the raw prescription text below, extract structured data in strict JSON format using the schema provided.
 
 ### JSON Output Schema:
@@ -140,9 +144,17 @@ class TextProcess:
             logging.error(f"JSON string cleaning error: {str(e)}")
             return json_string
 
+    def _initialize_services(self, db_service):
+        """Initialize medicine services if needed"""
+        if db_service and not self.medicine_service:
+            self.medicine_service = MedicineService(db_service)
+            
     def analyze_text(self, raw_text, db_service=None, image_data=None):
         """Analyze prescription text and optionally save to database"""
         try:
+            # Initialize services if needed
+            self._initialize_services(db_service)
+
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
@@ -160,6 +172,16 @@ class TextProcess:
                 try:
                     cleaned_json = self._clean_json_string(result)
                     parsed_json = json.loads(cleaned_json)
+                    
+                    # Suggest corrections for medicine names
+                    if 'medications' in parsed_json:
+                        parsed_json['medications'] = self.medicine_kb.suggest_medicines_for_prescription(
+                            parsed_json['medications']
+                        )
+                    
+                    # Update medicine database if new medicines are found
+                    if self.medicine_service and 'medications' in parsed_json:
+                        self.medicine_service.update_medicines(parsed_json['medications'])
                     
                     # Save to database if db_service is provided
                     if db_service:

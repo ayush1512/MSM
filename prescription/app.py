@@ -1,5 +1,5 @@
-from flask import Flask
-# from flask_cors import CORS
+from flask import Flask, jsonify
+from flask_cors import CORS
 from dotenv import load_dotenv
 import os
 from routes import init_routes
@@ -13,19 +13,25 @@ def create_app():
     app = Flask(__name__)
     
     # Enable CORS
-    # CORS(app, resources={
-    #     r"/*": {
-    #         "origins": "*",
-    #         "methods": ["GET", "POST", "OPTIONS"],
-    #         "allow_headers": ["Content-Type"]
-    #     }
-    # })
+    CORS(app, resources={
+        r"/*": {
+            "origins": "*",
+            "methods": ["GET", "POST", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Accept"]
+        }
+    })
     
     # Initialize database
     app.db = DatabaseService()
     
     # Initialize routes
     init_routes(app)
+    
+    # Add error handlers
+    @app.errorhandler(Exception)
+    def handle_error(error):
+        logging.error(f"Unhandled error: {str(error)}")
+        return jsonify({"success": False, "error": str(error)}), 500
     
     return app
 

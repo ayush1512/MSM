@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 from config import Config
 import logging
+from datetime import datetime
 
 class DatabaseService:
     def __init__(self):
@@ -27,4 +28,24 @@ class DatabaseService:
             return self.prescriptions.find_one({"_id": prescription_id})
         except Exception as e:
             logging.error(f"Database retrieval error: {str(e)}")
+            raise
+
+    def update_prescription(self, prescription_id, updated_data):
+        """Update prescription in database"""
+        try:
+            result = self.prescriptions.update_one(
+                {"_id": prescription_id},
+                {"$set": {
+                    "hospital_info": updated_data.get("hospital_info"),
+                    "doctor_info": updated_data.get("doctor_info"),
+                    "patient_info": updated_data.get("patient_info"),
+                    "prescription_details": updated_data.get("prescription_details"),
+                    "medications": updated_data.get("medications"),
+                    "additional_notes": updated_data.get("additional_notes"),
+                    "updated_at": datetime.utcnow()
+                }}
+            )
+            return result.modified_count > 0
+        except Exception as e:
+            logging.error(f"Database update error: {str(e)}")
             raise
