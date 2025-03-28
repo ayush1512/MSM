@@ -1,0 +1,15 @@
+Flask
+together
+python-dotenv
+requests
+Pillow
+cloudinary
+pymongo
+torch
+transformers
+torchvision
+pandas
+numpy
+datasets 
+accelerate
+dnspython

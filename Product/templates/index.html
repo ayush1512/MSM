@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Scanner by ayush1512</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <link href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            padding: 1rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: clamp(1rem, 4vw, 2rem);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+        }
+
+        .title {
+            text-align: center;
+            color: #1a1a1a;
+            margin-bottom: 2rem;
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            word-wrap: break-word;
+        }
+
+        .upload-container {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: clamp(1rem, 3vw, 2rem);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 2rem;
+        }
+
+        .upload-container:hover {
+            border-color: #666;
+            background-color: #f8f9fa;
+        }
+
+        .upload-icon {
+            font-size: clamp(2rem, 5vw, 3rem);
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        .upload-container p {
+            font-size: clamp(0.875rem, 2vw, 1rem);
+            color: #666;
+        }
+
+        .image-preview-container {
+            max-width: 100%;
+            margin: 2rem 0;
+            display: none;
+            overflow: hidden;
+        }
+
+        #image-preview {
+            max-width: 100%;
+            display: block;
+        }
+
+        /* Make cropper more mobile-friendly */
+        .cropper-container {
+            max-width: 100% !important;
+        }
+
+        .cropper-wrap-box {
+            background-color: #f8f9fa;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin: 1rem 0;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: clamp(0.5rem, 2vw, 0.75rem) clamp(1rem, 3vw, 1.5rem);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: clamp(0.875rem, 2vw, 1rem);
+            width: auto;
+            min-width: 120px;
+        }
+
+        @media (max-width: 480px) {
+            .btn {
+                width: 100%;
+            }
+        }
+
+        .btn-primary {
+            background-color: #0066cc;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #0052a3;
+        }
+
+        .btn-primary:disabled {
+            background-color: #99c2ff;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .processing {
+            display: none;
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .timer {
+            font-size: clamp(1rem, 2.5vw, 1.2rem);
+            color: #666;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: clamp(1.25rem, 3vw, 1.5rem);
+            height: clamp(1.25rem, 3vw, 1.5rem);
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #0066cc;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .results {
+            display: none;
+            margin-top: 2rem;
+            padding: clamp(1rem, 3vw, 1.5rem);
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .results h3 {
+            margin-bottom: 1rem;
+            color: #1a1a1a;
+            font-size: clamp(1.1rem, 2.5vw, 1.25rem);
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
+            gap: clamp(0.75rem, 2vw, 1rem);
+        }
+
+        .result-item {
+            padding: clamp(0.75rem, 2vw, 1rem);
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .result-item h4 {
+            color: #666;
+            margin-bottom: 0.5rem;
+            font-size: clamp(0.9rem, 2vw, 1rem);
+        }
+
+        .result-item p {
+            color: #1a1a1a;
+            word-break: break-word;
+            font-size: clamp(0.875rem, 2vw, 1rem);
+        }
+
+        .error {
+            color: #dc3545;
+            text-align: center;
+            margin: 1rem 0;
+            display: none;
+            font-size: clamp(0.875rem, 2vw, 1rem);
+            padding: 0.75rem;
+            background-color: #ffe6e6;
+            border-radius: 6px;
+        }
+
+        /* Touch device optimizations */
+        @media (hover: none) {
+            .cropper-point {
+                width: 20px;
+                height: 20px;
+                opacity: 0.9;
+            }
+
+            .cropper-line {
+                height: 2px;
+                width: 2px;
+            }
+        }
+
+        /* Small screen adjustments */
+        @media (max-width: 480px) {
+            body {
+                padding: 0.5rem;
+            }
+
+            .container {
+                padding: 1rem;
+                border-radius: 8px;
+            }
+
+            .buttons {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Medium screen adjustments */
+        @media (min-width: 481px) and (max-width: 768px) {
+            .results-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .container {
+                box-shadow: none;
+                padding: 0;
+            }
+
+            .upload-container,
+            .buttons,
+            .processing {
+                display: none;
+            }
+
+            .results {
+                break-inside: avoid;
+                background: none;
+                padding: 0;
+            }
+
+            .result-item {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #1a1a1a;
+                color: #fff;
+            }
+
+            .container {
+                background: #2d2d2d;
+            }
+
+            .title {
+                color: #fff;
+            }
+
+            .upload-container {
+                border-color: #444;
+            }
+
+            .upload-container:hover {
+                background-color: #363636;
+                border-color: #666;
+            }
+
+            .upload-icon,
+            .upload-container p {
+                color: #ccc;
+            }
+
+            .results {
+                background-color: #363636;
+            }
+
+            .result-item {
+                background: #2d2d2d;
+            }
+
+            .result-item h4 {
+                color: #ccc;
+            }
+
+            .result-item p {
+                color: #fff;
+            }
+
+            .timer {
+                color: #ccc;
+            }
+
+            .error {
+                background-color: #442326;
+            }
+        }
+
+        /* High contrast mode support */
+        @media (forced-colors: active) {
+            .btn {
+                border: 1px solid ButtonText;
+            }
+
+            .upload-container {
+                border: 2px dashed ButtonText;
+            }
+
+            .result-item {
+                border: 1px solid ButtonText;
+            }
+        }
+
+        .mode-toggle {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mode-toggle.dark {
+            background: #444;
+        }
+
+        .mode-toggle .icon {
+            font-size: 1.5rem;
+        }
+
+        .mode-toggle .icon.sun {
+            display: none;
+        }
+
+        .mode-toggle.dark .icon.sun {
+            display: inline;
+        }
+
+        .mode-toggle.dark .icon.moon {
+            display: none;
+        }
+
+        body.light-mode .mode-toggle .icon.sun {
+            display: none;
+        }
+
+        body.light-mode .mode-toggle .icon.moon {
+            display: inline;
+        }
+
+        body.light-mode {
+            background-color: #f0f2f5;
+            color: #1a1a1a;
+        }
+
+        body.light-mode .container {
+            background: white;
+        }
+
+        body.light-mode .title {
+            color: #1a1a1a;
+        }
+
+        body.light-mode .upload-container {
+            border-color: #ccc;
+        }
+
+        body.light-mode .upload-container:hover {
+            background-color: #f8f9fa;
+            border-color: #666;
+        }
+
+        body.light-mode .upload-icon,
+        body.light-mode .upload-container p {
+            color: #666;
+        }
+
+        body.light-mode .results {
+            background-color: #f8f9fa;
+        }
+
+        body.light-mode .result-item {
+            background: white;
+        }
+
+        body.light-mode .result-item h4 {
+            color: #666;
+        }
+
+        body.light-mode .result-item p {
+            color: #1a1a1a;
+        }
+
+        body.light-mode .timer {
+            color: #666;
+        }
+
+        body.light-mode .error {
+            background-color: #ffe6e6;
+        }
+
+        /* Add new styles for medicine form */
+        .medicine-form {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        /* Add dark mode class styles */
+        body.dark-mode .medicine-form {
+            background: #363636;
+        }
+
+        body.dark-mode .form-group input {
+            background: #2d2d2d;
+            border-color: #444;
+            color: #fff;
+        }
+
+        body.dark-mode .form-group label {
+            color: #ccc;
+        }
+
+        /* Add light mode class styles */
+        body.light-mode .medicine-form {
+            background: #f8f9fa;
+        }
+
+        body.light-mode .form-group input {
+            background: #fff;
+            border-color: #ccc;
+            color: #1a1a1a;
+        }
+
+        body.light-mode .form-group label {
+            color: #666;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #666;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .form-group input:focus {
+            border-color: #0066cc;
+            outline: none;
+        }
+
+        .medicine-error {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        /* Dark mode support for new elements */
+        @media (prefers-color-scheme: dark) {
+            .medicine-form {
+                background: #363636;
+            }
+
+            .form-group input {
+                background: #2d2d2d;
+                border-color: #444;
+                color: #fff;
+            }
+
+            .form-group label {
+                color: #ccc;
+            }
+        }
+
+        .edit-field {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .edit-field:focus {
+            border-color: #0066cc;
+            outline: none;
+        }
+
+        .result-buttons {
+            margin-top: 1rem;
+        }
+
+        /* Dark mode support for edit fields */
+        @media (prefers-color-scheme: dark) {
+            .edit-field {
+                background: #2d2d2d;
+                border-color: #444;
+                color: #fff;
+            }
+        }
+
+        /* Add styles for medicine details box */
+        .medicine-details {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .medicine-details {
+                background: #363636;
+            }
+            
+            .medicine-details h4,
+            .medicine-details p {
+                color: #fff;
+            }
+        }
+
+        body.dark-mode .medicine-details {
+            background: #363636;
+        }
+
+        body.dark-mode .medicine-details h4,
+        body.dark-mode .medicine-details p {
+            color: #fff;
+        }
+
+        body.light-mode .medicine-details {
+            background: #f8f9fa;
+        }
+
+        body.light-mode .medicine-details h4,
+        body.light-mode .medicine-details p {
+            color: #1a1a1a;
+        }
+    </style>
+</head>
+
+<body>
+    <button class="mode-toggle" id="mode-toggle">
+        <span class="icon sun">☀️</span>
+        <span class="icon moon">🌙</span>
+    </button>
+    <div class="container">
+        <h1 class="title">Product Scanner</h1>
+
+        <!-- Add medicine form section -->
+        <div class="medicine-form">
+            <h3>Medicine Details</h3>
+            <div class="form-group">
+                <label for="medicine-name">Medicine Name*</label>
+                <input type="text" id="medicine-name" required>
+            </div>
+            <div class="form-group">
+                <label for="manufacturer">Manufacturer*</label>
+                <input type="text" id="manufacturer" required>
+            </div>
+            <div class="form-group">
+                <label for="composition">Salt Composition*</label>
+                <input type="text" id="composition" required>
+            </div>
+            <div class="medicine-details" style="display: none;">
+                <h4>Additional Details</h4>
+                <p id="medicine-price"></p>
+                <p id="medicine-category"></p>
+                <p id="medicine-desc"></p>
+            </div>
+            <div class="medicine-error"></div>
+            <button class="btn btn-primary" id="medicine-submit">Submit Medicine</button>
+        </div>
+
+        <div class="upload-container" id="upload-area">
+            <div class="upload-icon">📁</div>
+            <p>Click or drag and drop an image here</p>
+            <input type="file" id="file-input" accept="image/*" style="display: none;">
+        </div>
+
+        <div class="image-preview-container">
+            <img id="image-preview">
+        </div>
+
+        <div class="buttons">
+            <button class="btn btn-primary" id="process-btn" style="display: none;">Process Image</button>
+            <button class="btn btn-secondary" id="reset-btn" style="display: none;">Reset</button>
+        </div>
+
+        <div class="processing">
+            <div class="spinner"></div>
+            <span class="timer">Processing: 0s</span>
+        </div>
+
+        <div class="error"></div>
+
+        <div class="results">
+            <h3>Extracted Information</h3>
+            <div class="results-grid">
+                <div class="result-item">
+                    <h4>Batch Number</h4>
+                    <p id="batch-no"></p>
+                    <input type="text" id="edit-batch-no" class="edit-field" style="display: none;">
+                </div>
+                <div class="result-item">
+                    <h4>Manufacturing Date</h4>
+                    <p id="mfg-date"></p>
+                    <input type="text" id="edit-mfg-date" class="edit-field" style="display: none;" placeholder="MM/YYYY">
+                </div>
+                <div class="result-item">
+                    <h4>Expiry Date</h4>
+                    <p id="exp-date"></p>
+                    <input type="text" id="edit-exp-date" class="edit-field" style="display: none;" placeholder="MM/YYYY">
+                </div>
+                <div class="result-item">
+                    <h4>MRP</h4>
+                    <p id="mrp"></p>
+                    <input type="number" id="edit-mrp" class="edit-field" style="display: none;" step="0.01">
+                </div>
+                <div class="result-item">
+                    <h4>Quantity</h4>
+                    <p id="quantity">0</p>
+                    <input type="number" id="edit-quantity" class="edit-field" style="display: none;" min="0" step="1" value="0">
+                </div>
+            </div>
+            <div class="buttons result-buttons" style="display: none;">
+                <button class="btn btn-primary" id="edit-btn">Edit Information</button>
+                <button class="btn btn-primary" id="save-stock-btn">Save Stock</button>
+                <button class="btn btn-primary" id="save-btn" style="display: none;">Save Changes</button>
+                <button class="btn btn-secondary" id="cancel-edit-btn" style="display: none;">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <footer style="text-align: center; margin-top: 2rem; font-size: 0.875rem; color: #666;">
+        We use your image to enhance our service quality.
+    </footer>
+    <script>
+        let cropper;
+        let timer;
+        let startTime;
+
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+        const imagePreview = document.getElementById('image-preview');
+        const previewContainer = document.querySelector('.image-preview-container');
+        const processBtn = document.getElementById('process-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const processingDiv = document.querySelector('.processing');
+        const timerSpan = document.querySelector('.timer');
+        const resultsDiv = document.querySelector('.results');
+        const errorDiv = document.querySelector('.error');
+
+        let originalImageFile;
+
+        // Upload handling
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#0066cc';
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.borderColor = '#ccc';
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#ccc';
+            if (e.dataTransfer.files.length) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showError('Please upload an image file.');
+                return;
+            }
+
+            originalImageFile = file;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imagePreview.src = e.target.result;
+                previewContainer.style.display = 'block';
+                processBtn.style.display = 'inline-block';
+                resetBtn.style.display = 'inline-block';
+                resultsDiv.style.display = 'none';
+                errorDiv.style.display = 'none';
+
+                if (cropper) {
+                    cropper.destroy();
+                }
+                cropper = new Cropper(imagePreview, {
+                    aspectRatio: NaN,
+                    viewMode: 2,
+                    background: false,
+                    responsive: true,
+                    ready() {
+                        this.cropper.crop();
+                    }
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        processBtn.addEventListener('click', async () => {
+            if (!cropper || !currentMedicineId) {
+                showError('Please submit medicine details first');
+                return;
+            }
+
+            // Hide the upload area
+            uploadArea.style.display = 'none';
+            previewContainer.style.display = 'none';
+            processBtn.style.display = 'none';
+
+            startTimer();
+            processBtn.disabled = true;
+            processingDiv.style.display = 'block';
+            resultsDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+
+            try {
+                const croppedCanvas = cropper.getCroppedCanvas();
+                const croppedBlob = await new Promise(resolve => croppedCanvas.toBlob(resolve, 'image/jpeg'));
+                const formData = new FormData();
+                formData.append('image', originalImageFile);
+                formData.append('cropped_image', croppedBlob, 'cropped-image.jpg');
+                formData.append('medicine_id', currentMedicineId);  // Add medicine ID
+
+                const response = await fetch('/process_image', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Processing failed');
+
+                const data = await response.json();
+                console.log('Received data:', data); // Add this line for logging
+                displayResults(data.extracted_info); // Ensure to pass the correct data
+            } catch (error) {
+                console.error('Error during processing:', error); // Add this line for logging
+                showError('An error occurred while processing the image.');
+            } finally {
+                stopTimer();
+                processBtn.disabled = false;
+                processingDiv.style.display = 'none';
+            }
+        });
+
+        resetBtn.addEventListener('click', () => {
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            } else {
+                fileInput.value = '';
+                imagePreview.src = '';
+                previewContainer.style.display = 'none';
+                processBtn.style.display = 'none';
+                resetBtn.style.display = 'none';
+                resultsDiv.style.display = 'none';
+                errorDiv.style.display = 'none';
+                stopTimer();
+            }
+            if (resultsDiv.style.display === 'block') {
+                location.reload();
+            } 
+            // Reset medicine form
+            document.querySelectorAll('.medicine-form input').forEach(input => {
+                input.disabled = false;
+                input.value = '';
+            });
+            medicineSubmitBtn.disabled = false;
+            currentMedicineId = null;
+            medicineError.style.display = 'none';
+        });
+
+        function startTimer() {
+            startTime = Date.now();
+            timer = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                timerSpan.textContent = `Processing: ${elapsed}s`;
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timer);
+        }
+
+        function displayResults(data) {
+            console.log('Displaying results:', data); // Add this line for logging
+            document.getElementById('batch-no').textContent = data.BNo ? data.BNo.join(', ') : 'Not found';
+            document.getElementById('mfg-date').textContent = data.MfgD ? data.MfgD.join(', ') : 'Not found';
+            document.getElementById('exp-date').textContent = data.ExpD ? data.ExpD.join(', ') : 'Not found';
+            document.getElementById('mrp').textContent = data.MRP ? data.MRP.join(', ') : 'Not found';
+            
+            // Set initial values for edit fields
+            document.getElementById('edit-batch-no').value = data.BNo ? data.BNo[0] : '';
+            document.getElementById('edit-mfg-date').value = data.MfgD ? data.MfgD[0] : '';
+            document.getElementById('edit-exp-date').value = data.ExpD ? data.ExpD[0] : '';
+            document.getElementById('edit-mrp').value = data.MRP ? data.MRP[0] : '';
+            
+            resultsDiv.style.display = 'block';
+            document.querySelector('.result-buttons').style.display = 'flex';
+            
+            // Store the image URL as a data attribute
+            resultsDiv.setAttribute('data-image-url', data.image_url || '');
+        }
+
+        function showError(message) {
+            console.error('Error message:', message); // Add this line for logging
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        const modeToggle = document.getElementById('mode-toggle');
+        const currentMode = localStorage.getItem('mode') || 'light';
+
+        document.body.classList.add(`${currentMode}-mode`);
+        if (currentMode === 'dark') {
+            modeToggle.classList.add('dark');
+        }
+
+        modeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            document.body.classList.toggle('light-mode');
+            modeToggle.classList.toggle('dark');
+
+            const newMode = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
+            localStorage.setItem('mode', newMode);
+        });
+
+        // Add new JavaScript for medicine handling
+        const medicineSubmitBtn = document.getElementById('medicine-submit');
+        const medicineError = document.querySelector('.medicine-error');
+        let currentMedicineId = null;
+
+        $(document).ready(function() {
+            $("#medicine-name").autocomplete({
+                source: function(request, response) {
+                    $.get("/medicine/search", { term: request.term })
+                        .done(function(data) {
+                            response(data.map(medicine => ({
+                                label: `${medicine.product_name} - ${medicine.product_manufactured}`,
+                                value: medicine.product_name,
+                                medicine: medicine
+                            })));
+                        });
+                },
+                minLength: 2,
+                select: function(event, ui) {
+                    const medicine = ui.item.medicine;
+                    $("#manufacturer").val(medicine.product_manufactured);
+                    $("#composition").val(medicine.salt_composition);
+                    
+                    // Display additional details
+                    $("#medicine-price").text(`Price: ${medicine.product_price || 'N/A'}`);
+                    $("#medicine-category").text(`Category: ${medicine.sub_category || 'N/A'}`);
+                    $("#medicine-desc").text(medicine.medicine_desc || 'No description available');
+                    $(".medicine-details").show();
+                    
+                    currentMedicineId = medicine._id;
+                    medicineSubmitBtn.textContent = "Use This Medicine";
+                }
+            });
+        });
+
+        medicineSubmitBtn.addEventListener('click', async () => {
+            const product_name = document.getElementById('medicine-name').value.trim();
+            const manufacturer = document.getElementById('manufacturer').value.trim();
+            const composition = document.getElementById('composition').value.trim();
+
+            if (!product_name || !manufacturer) {
+                showMedicineError('Medicine name and manufacturer are required');
+                return;
+            }
+
+            try {
+                const response = await fetch('/medicine', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        product_name,
+                        manufacturer,
+                        composition: composition || 'Not specified'
+                    })
+                });
+
+                if (!response.ok) throw new Error('Failed to process medicine');
+
+                const data = await response.json();
+                if (data.medicine) {
+                    // Existing medicine found
+                    currentMedicineId = data.medicine._id;
+                } else {
+                    // New medicine created
+                    currentMedicineId = data.medicine_id;
+                }
+                
+                // Enable image upload area
+                uploadArea.style.display = 'block';
+                medicineError.style.display = 'none';
+                showSuccess(`Medicine ${data.message}. You can now upload an image.`);
+                
+                // Disable medicine form
+                document.querySelectorAll('.medicine-form input').forEach(input => {
+                    input.disabled = true;
+                });
+                medicineSubmitBtn.disabled = true;
+
+            } catch (error) {
+                showMedicineError('Failed to process medicine: ' + error.message);
+            }
+        });
+
+        function showMedicineError(message) {
+            medicineError.textContent = message;
+            medicineError.style.display = 'block';
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.createElement('div');
+            successDiv.style.cssText = `
+                background-color: #d4edda;
+                color: #155724;
+                padding: 1rem;
+                margin: 1rem 0;
+                border-radius: 4px;
+                text-align: center;
+            `;
+            successDiv.textContent = message;
+            document.querySelector('.medicine-form').appendChild(successDiv);
+            setTimeout(() => successDiv.remove(), 5000);
+        }
+
+        // Add edit functionality
+        const editBtn = document.getElementById('edit-btn');
+        const saveBtn = document.getElementById('save-btn');
+        const saveStockBtn = document.getElementById('save-stock-btn');
+        const cancelEditBtn = document.getElementById('cancel-edit-btn');
+        const editFields = document.querySelectorAll('.edit-field');
+        const displayFields = document.querySelectorAll('.result-item p');
+
+        editBtn.addEventListener('click', () => {
+            editFields.forEach(field => field.style.display = 'block');
+            displayFields.forEach(field => field.style.display = 'none');
+            editBtn.style.display = 'none';
+            saveStockBtn.style.display = 'none';
+            saveBtn.style.display = 'inline-block';
+            cancelEditBtn.style.display = 'inline-block';
+        });
+
+        function getStockData() {
+            return {
+                batch_no: document.getElementById('batch-no').textContent,
+                mfg_date: document.getElementById('mfg-date').textContent,
+                exp_date: document.getElementById('exp-date').textContent,
+                mrp: parseFloat(document.getElementById('mrp').textContent),
+                quantity: parseInt(document.getElementById('quantity').textContent) || 0,
+                medicine_id: currentMedicineId,
+                image_url: resultsDiv.getAttribute('data-image-url')
+            };
+        }
+
+        saveStockBtn.addEventListener('click', async () => {
+            try {
+                const stockData = getStockData();
+                const response = await fetch('/update_stock', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(stockData)
+                });
+
+                if (!response.ok) throw new Error('Failed to save stock information');
+
+                const data = await response.json();
+                showSuccess(data.message);
+                
+                // Hide save stock button after successful save
+                saveStockBtn.style.display = 'none';
+
+            } catch (error) {
+                showError('Failed to save stock: ' + error.message);
+            }
+        });
+
+        cancelEditBtn.addEventListener('click', () => {
+            editFields.forEach(field => field.style.display = 'none');
+            displayFields.forEach(field => field.style.display = 'block');
+            editBtn.style.display = 'inline-block';
+            saveBtn.style.display = 'none';
+            cancelEditBtn.style.display = 'none';
+        });
+
+        saveBtn.addEventListener('click', async () => {
+            // Validate the data
+            const mfgDate = document.getElementById('edit-mfg-date').value;
+            const expDate = document.getElementById('edit-exp-date').value;
+            const datePattern = /^(0[1-9]|1[0-2])\/\d{4}$/;
+            const quantity = parseInt(document.getElementById('edit-quantity').value);
+
+            if (!datePattern.test(mfgDate) || !datePattern.test(expDate)) {
+                showError('Please enter dates in MM/YYYY format');
+                return;
+            }
+
+            const mrp = parseFloat(document.getElementById('edit-mrp').value);
+            if (isNaN(mrp) || mrp <= 0) {
+                showError('Please enter a valid MRP');
+                return;
+            }
+
+            if (isNaN(quantity) || quantity < 0) {
+                showError('Please enter a valid quantity');
+                return;
+            }
+
+            try {
+                const updatedInfo = {
+                    batch_no: document.getElementById('edit-batch-no').value,
+                    mfg_date: mfgDate,
+                    exp_date: expDate,
+                    mrp: mrp,
+                    quantity: quantity,
+                    medicine_id: currentMedicineId,
+                    image_url: resultsDiv.getAttribute('data-image-url')
+                };
+
+                const response = await fetch('/update_stock', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updatedInfo)
+                });
+
+                if (!response.ok) throw new Error('Failed to update information');
+
+                const data = await response.json();
+                
+                // Update display fields with new values
+                document.getElementById('batch-no').textContent = updatedInfo.batch_no;
+                document.getElementById('mfg-date').textContent = updatedInfo.mfg_date;
+                document.getElementById('exp-date').textContent = updatedInfo.exp_date;
+                document.getElementById('mrp').textContent = updatedInfo.mrp;
+                document.getElementById('quantity').textContent = updatedInfo.quantity;
+
+                // Return to display mode
+                editFields.forEach(field => field.style.display = 'none');
+                displayFields.forEach(field => field.style.display = 'block');
+                editBtn.style.display = 'inline-block';
+                saveBtn.style.display = 'none';
+                cancelEditBtn.style.display = 'none';
+
+                showSuccess('Information updated successfully');
+            } catch (error) {
+                showError('Failed to update information: ' + error.message);
+            }
+        });
+    </script>
+</body>
+
+</html>
