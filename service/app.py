@@ -1,7 +1,8 @@
 #Prescription Librarys
 from dotenv import load_dotenv
-from Prescription.routes import init_routes
+from routes import init_routes
 from Prescription.services.db_service import DatabaseService
+from flask_cors import CORS
 
 # Product Librarys
 from flask import Flask, request, jsonify, render_template
@@ -20,6 +21,7 @@ from bson import ObjectId
 from Product.models import Medicine, Stock
 from Product.image_processor import ImageProcessor
 
+
 # Load environment variables
 load_dotenv()
 
@@ -31,6 +33,17 @@ logging.getLogger("pymongo").setLevel(logging.WARNING)
 logging.getLogger("pymongo.topology").setLevel(logging.ERROR)
 
 app = Flask(__name__)
+
+CORS(app, resources={
+    r"/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "OPTIONS", "PUT"],
+        "allow_headers": ["Content-Type", "Accept"]
+    }
+})
+
+# Set a secret key for session management
+app.secret_key = os.getenv('SECRET_KEY', 'supersecretkey')
 
 # Cloudinary configuration
 cloudinary.config(

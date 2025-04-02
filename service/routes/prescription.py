@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from Prescription.services.prescription_processor import PrescriptionProcessor
+from bson import ObjectId
 import logging
 
 prescription_bp = Blueprint('prescription', __name__)
@@ -32,6 +33,42 @@ def process_prescription():
         logging.error(f"Process error: {str(e)}")
         return jsonify({
             "error": "Failed to process prescription",
+            "details": str(e)
+        }), 500
+
+@prescription_bp.route('/prescription/<prescription_id>', methods=['PUT'])
+def update_prescription(prescription_id):
+    """Update prescription data"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                "success": False,
+                "error": "No data provided"
+            }), 400
+
+        # Convert string ID to ObjectId
+        _id = ObjectId(prescription_id)
+        
+        # Update prescription in database
+        result = processor.db_service.update_prescription(_id, data)
+        
+        if result:
+            return jsonify({
+                "success": True,
+                "message": "Prescription updated successfully"
+            })
+        
+        return jsonify({
+            "success": False,
+            "error": "Failed to update prescription"
+        }), 404
+
+    except Exception as e:
+        logging.error(f"Update error: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": "Failed to update prescription",
             "details": str(e)
         }), 500
 

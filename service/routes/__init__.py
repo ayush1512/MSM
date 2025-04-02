@@ -1,9 +1,20 @@
 from flask import Blueprint, jsonify
+from authlib.integrations.flask_client import OAuth
 from .prescription import prescription_bp
+from .users import user_bp, init_user_bp
+
+# Create OAuth object to be used with the app
+oauth = OAuth()
 
 def init_routes(app):
     """Initialize routes"""
-    # Register the blueprint without additional prefix
+    # Initialize OAuth with the app
+    oauth.init_app(app)
+    
+    # Initialize user blueprint with app and OAuth
+    init_user_bp(app, oauth)
+    
+    # Register other blueprints
     app.register_blueprint(prescription_bp)
     
     @app.errorhandler(404)
