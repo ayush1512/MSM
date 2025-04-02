@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 const ProductScanner = () => {
-  const [serverUrl] = useState('http://localhost:5001');
+  const [serverUrl] = useState('http://localhost:5000');
 
   return (
     <div className="w-full h-[calc(100vh-4rem)]">  {/* Adjust height to account for navbar */}
