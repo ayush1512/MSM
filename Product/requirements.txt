@@ -1,5 +1,0 @@
-flask
-together
-gunicorn
-python-dotenv
-cloudinary

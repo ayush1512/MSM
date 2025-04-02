@@ -13,3 +13,4 @@ numpy
 datasets 
 accelerate
 dnspython
+gunicorn
