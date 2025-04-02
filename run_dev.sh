@@ -22,7 +22,7 @@ else
     start cmd /k "npm run dev"
 
     cd ../service
-    call venv\Scripts\activate
+    call ..\venv\Scripts\activate
     start cmd /k "flask run"
 
     cd ..
