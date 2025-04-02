@@ -1,166 +1,132 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import "./LoginPage.css";
 
-const LoginPage = () => {
-  // Toggle between login and registration forms
-  const [isLogin, setIsLogin] = useState(true);
-
-  // State for login form
-  const [loginData, setLoginData] = useState({
-    email: '',
-    password: ''
-  });
-
-  // State for registration form
-  const [registerData, setRegisterData] = useState({
-    username: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
-  });
-
-  // Handle form toggling
-  const handleToggle = () => {
-    setIsLogin(!isLogin);
-  };
-
-  // Handle changes for login form
-  const handleLoginChange = (e) => {
-    const { name, value } = e.target;
-    setLoginData({ ...loginData, [name]: value });
-  };
-
-  // Handle changes for registration form
-  const handleRegisterChange = (e) => {
-    const { name, value } = e.target;
-    setRegisterData({ ...registerData, [name]: value });
-  };
-
-  // Handle login form submission
-  const handleLoginSubmit = (e) => {
-    e.preventDefault();
-    // Add your login logic here
-    console.log("Login Data:", loginData);
-  };
-
-  // Handle registration form submission
-  const handleRegisterSubmit = (e) => {
-    e.preventDefault();
-    // Simple check for matching passwords
-    if (registerData.password !== registerData.confirmPassword) {
-      alert("Passwords do not match!");
-      return;
+export default function LoginPage() {
+  const containerRef = useRef(null);
+  
+  const toggle = () => {
+    const container = containerRef.current;
+    if (container) {
+      container.classList.toggle('sign-in');
+      container.classList.toggle('sign-up');
     }
-    // Add your registration logic here
-    console.log("Registration Data:", registerData);
   };
+
+  useEffect(() => {
+    // Use setTimeout to add sign-in class after component mounts
+    const timeoutId = setTimeout(() => {
+      if (containerRef.current) {
+        containerRef.current.classList.add('sign-in');
+      }
+    }, 200);
+    
+    // Clean up timeout on unmount
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      <div className="w-full max-w-md bg-white p-8 rounded shadow">
-        <h2 className="text-2xl font-bold mb-6 text-center">
-          {isLogin ? "Login" : "Register"}
-        </h2>
-
-        {isLogin ? (
-          <form onSubmit={handleLoginSubmit}>
-            <div className="mb-4">
-              <label htmlFor="email" className="block text-gray-700">Email</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={loginData.email}
-                onChange={handleLoginChange}
-                className="w-full border p-2 rounded"
-                required
-              />
+    <>
+      <div id="container" className="container loginPage" ref={containerRef}>
+        {/* -- FORM SECTION -- */}
+        <div className="row">
+          {/* -- SIGN UP -- */}
+          <div className="col align-items-center flex-col sign-up">
+            <div className="form-wrapper align-items-center">
+              <div className="form sign-up">
+                <div className="input-group">
+                  <i className='bx bxs-user'></i>
+                  <input type="text" placeholder="Username"/>
+                </div>
+                <div className="input-group">
+                  <i className='bx bx-mail-send'></i>
+                  <input type="email" placeholder="Email"/>
+                </div>
+                <div className="input-group">
+                  <i className='bx bxs-lock-alt'></i>
+                  <input type="password" placeholder="Password"/>
+                </div>
+                <div className="input-group">
+                  <i className='bx bxs-lock-alt'></i>
+                  <input type="password" placeholder="Confirm password"/>
+                </div>
+                <button>
+                  Sign up
+                </button>
+                <p>
+                  <span>
+                    Already have an account?
+                  </span>
+                  <b onClick={toggle} className="pointer">
+                    Sign in here
+                  </b>
+                </p>
+              </div>
             </div>
-            <div className="mb-4">
-              <label htmlFor="password" className="block text-gray-700">Password</label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={loginData.password}
-                onChange={handleLoginChange}
-                className="w-full border p-2 rounded"
-                required
-              />
+          </div>
+          {/* -- END SIGN UP -- */}
+          {/* -- SIGN IN -- */}
+          <div className="col align-items-center flex-col sign-in">
+            <div className="form-wrapper align-items-center">
+              <div className="form sign-in">
+                <div className="input-group">
+                  <i className='bx bxs-user'></i>
+                  <input type="text" placeholder="Username"/>
+                </div>
+                <div className="input-group">
+                  <i className='bx bxs-lock-alt'></i>
+                  <input type="password" placeholder="Password"/>
+                </div>
+                <button>
+                  Sign in
+                </button>
+                <p>
+                  <b>
+                    Forgot password?
+                  </b>
+                </p>
+                <p>
+                  <span>
+                    Don't have an account?
+                  </span>
+                  <b onClick={toggle} className="pointer">
+                    Sign up here
+                  </b>
+                </p>
+              </div>
             </div>
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
-            >
-              Login
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleRegisterSubmit}>
-            <div className="mb-4">
-              <label htmlFor="username" className="block text-gray-700">Username</label>
-              <input
-                type="text"
-                id="username"
-                name="username"
-                value={registerData.username}
-                onChange={handleRegisterChange}
-                className="w-full border p-2 rounded"
-                required
-              />
+            <div className="form-wrapper">
             </div>
-            <div className="mb-4">
-              <label htmlFor="email" className="block text-gray-700">Email</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={registerData.email}
-                onChange={handleRegisterChange}
-                className="w-full border p-2 rounded"
-                required
-              />
-            </div>
-            <div className="mb-4">
-              <label htmlFor="password" className="block text-gray-700">Password</label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={registerData.password}
-                onChange={handleRegisterChange}
-                className="w-full border p-2 rounded"
-                required
-              />
-            </div>
-            <div className="mb-4">
-              <label htmlFor="confirmPassword" className="block text-gray-700">Confirm Password</label>
-              <input
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-                value={registerData.confirmPassword}
-                onChange={handleRegisterChange}
-                className="w-full border p-2 rounded"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
-            >
-              Register
-            </button>
-          </form>
-        )}
-
-        <div className="mt-4 text-center">
-          <button onClick={handleToggle} className="text-blue-600 hover:underline">
-            {isLogin ? "Don't have an account? Register here." : "Already have an account? Login here."}
-          </button>
+          </div>
+          {/* -- END SIGN IN -- */}
         </div>
+        {/* <!-- END FORM SECTION --> */}
+        {/* <!-- CONTENT SECTION --> */}
+        <div className="row content-row">
+          {/* <!-- SIGN IN CONTENT --> */}
+          <div className="col align-items-center flex-col">
+            <div className="text sign-in">
+              <h2>
+                Welcome
+              </h2>
+            </div>
+            <div className="img sign-in">
+            </div>
+          </div>
+          {/* <!-- END SIGN IN CONTENT --> */}
+          {/* <!-- SIGN UP CONTENT --> */}
+          <div className="col align-items-center flex-col">
+            <div className="img sign-up">
+            </div>
+            <div className="text sign-up">
+              <h2>
+                Join with us
+              </h2>
+            </div>
+          </div>
+          {/* <!-- END SIGN UP CONTENT --> */}
+        </div>
+        {/* <!-- END CONTENT SECTION --> */}
       </div>
-    </div>
+    </>
   );
-};
-
-export default LoginPage;
+}
