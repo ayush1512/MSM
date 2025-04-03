@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./Navbar.css"; 
 
@@ -9,12 +9,17 @@ const Navbar = ({ user }) => {
   const toggleMenu = () => {
     setMenuActive(!menuActive);
   };
+  const navigate = useNavigate();
   const handleLogout = () => {
     axios.get("http://localhost:5000/logout", { withCredentials: true })
       .then(() => {
         alert("Logout successful");
+        navigate("/");
         window.location.reload();
-      });
+      })
+      .catch((error)=> {
+        console.error("Logout failed:", error);
+      })
   };
 
   return (
