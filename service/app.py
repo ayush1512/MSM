@@ -34,13 +34,17 @@ logging.getLogger("pymongo.topology").setLevel(logging.ERROR)
 
 app = Flask(__name__)
 
-CORS(app, resources={
-    r"/*": {
-        "origins": "*",
-        "methods": ["GET", "POST", "OPTIONS", "PUT"],
-        "allow_headers": ["Content-Type", "Accept"]
-    }
-})
+# Fix CORS configuration - ensure credentials are allowed
+CORS(app, 
+     resources={
+        r"/*": {
+            "origins": "http://localhost:5173",  # Vite dev server default port
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"],
+            "supports_credentials": True,
+        }
+     }
+)
 
 # Set a secret key for session management
 app.secret_key = os.getenv('SECRET_KEY', 'supersecretkey')

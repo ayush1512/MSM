@@ -41,7 +41,7 @@ def init_user_bp(app, oauth):
 # -----------------------------------
 # Normal Signup
 # -----------------------------------
-@user_bp.route("/signup", methods=["POST"])
+@user_bp.route("/user/signup", methods=["POST"])
 def user_signup():
     """Sign up a user"""
     data = request.json
@@ -49,23 +49,37 @@ def user_signup():
     email = data.get("email")
     password = data.get("password")
 
+    # Debug the session to see what's happening
+    print("Current session:", session)
+    print("User in session:", "user" in session)
+    
+    # Fix session check and improve error message
+    if "user" in session:
+        current_user = session.get("user")
+        return jsonify({
+            "error": f"Already logged in as {current_user}. Please logout first.",
+            "logged_in": True
+        }), 400
+
     if not username or not email or not password:
         return jsonify({"error": "Username, Email, and Password are required"}), 400
 
     if user_collection.find_one({"email": email}):
         return jsonify({"error": "User already exists"}), 400
 
-    hashed_password = generate_password_hash(password)
+    password = generate_password_hash(password)
 
     new_user = {
         "username": username,
         "email": email,
-        "password": hashed_password,
+        "password": password,
+        "registration_mode": "Normal"
     }
     new_user = User(new_user)
     try:
         user_collection.insert_one(new_user.to_dict())
-        return jsonify({"message": "User registered successfully"}), 201
+        session["user"] = email
+        return jsonify({"message": "User registered successfully", "email": email}), 201
     except Exception as e:
         logging.error(f"Database save error: {str(e)}")
         raise
@@ -79,6 +93,9 @@ def user_login():
     data = request.json
     email = data.get("email")
     password = data.get("password")
+
+    if "user" in session:
+        return jsonify({"error": "User already Logged In"}), 400
 
     if not email or not password:
         return jsonify({"error": "Email and Password are required"}), 400
@@ -116,14 +133,24 @@ def google_callback():
         user_data = {
             "username": username,
             "email": email,
-            "password": None,  # OAuth users do not have a password
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow(),
+            "password": None,
+            "registration_mode":"Google"
         }
-        user_collection.insert_one(user_data)
+        user_data=User(user_data)
+        user_collection.insert_one(user_data.to_dict())
 
     session["user"] = email
     return jsonify({"message": "Google login successful", "email": email})
+
+# -----------------------------------
+# Checking login
+# -----------------------------------
+
+@user_bp.route("/check-login")
+def check_login():
+    if "user" in session:
+        return jsonify({"email": session["user"]})
+    return jsonify({"error": "Not logged in"}), 401
 
 # -----------------------------------
 # Logout Route

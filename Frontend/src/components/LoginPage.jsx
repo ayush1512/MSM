@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import axios from "axios";
 import "./LoginPage.css";
 
 export default function LoginPage() {
@@ -24,6 +25,26 @@ export default function LoginPage() {
     return () => clearTimeout(timeoutId);
   }, []);
 
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    password: "",
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post("http://localhost:5000/signup", formData);
+      alert(response.data.message);
+    } catch (error) {
+      alert(error.response?.data?.error || "Signup failed");
+    }
+  };
+
   return (
     <>
       <div id="container" className="container loginPage" ref={containerRef}>
@@ -33,25 +54,27 @@ export default function LoginPage() {
           <div className="col align-items-center flex-col sign-up">
             <div className="form-wrapper align-items-center">
               <div className="form sign-up">
-                <div className="input-group">
-                  <i className='bx bxs-user'></i>
-                  <input type="text" placeholder="Username"/>
-                </div>
-                <div className="input-group">
-                  <i className='bx bx-mail-send'></i>
-                  <input type="email" placeholder="Email"/>
-                </div>
-                <div className="input-group">
-                  <i className='bx bxs-lock-alt'></i>
-                  <input type="password" placeholder="Password"/>
-                </div>
-                <div className="input-group">
-                  <i className='bx bxs-lock-alt'></i>
-                  <input type="password" placeholder="Confirm password"/>
-                </div>
-                <button>
-                  Sign up
-                </button>
+                <form onSubmit={handleSubmit}>
+                  <div className="input-group">
+                    <i className='bx bxs-user'></i>
+                    <input name="username" type="text" placeholder="Username"/>
+                  </div>
+                  <div className="input-group">
+                    <i className='bx bx-mail-send'></i>
+                    <input name="email" type="email" placeholder="Email"/>
+                  </div>
+                  <div className="input-group">
+                    <i className='bx bxs-lock-alt'></i>
+                    <input type="password" name="password" placeholder="Password"/>
+                  </div>
+                  <div className="input-group">
+                    <i className='bx bxs-lock-alt'></i>
+                    <input type="password" placeholder="Confirm password"/>
+                  </div>
+                  <button type="submit">
+                    Sign up
+                  </button>
+                </form>
                 <p>
                   <span>
                     Already have an account?

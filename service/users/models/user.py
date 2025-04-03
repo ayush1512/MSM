@@ -10,6 +10,7 @@ class User:
         self.manager_id = data.get('manager_id')
         self.medicines = data.get('medicines', [])
         self.prescriptions = data.get('prescriptions', [])
+        self.registration_mode= data.get('registration_mode')
         self.created_at = datetime.utcnow()
         self.updated_at = datetime.utcnow()
 
@@ -20,11 +21,13 @@ class User:
         return {
             'username': self.username,
             'email': self.email,
+            'password': self.password,
             'shop_name': self.shop_name,
             'employees': self.employees,
             'manager_id': self.manager_id,
             'medicines': self.medicines,
             'prescriptions': self.prescriptions,
+            'registration_mode': self.registration_mode,
             'created_at': self.created_at,
             'updated_at': self.updated_at
         }
