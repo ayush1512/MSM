@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Dashboard from "./components/Dashboard";
 import ContactUs from './components/ContactUs';
@@ -14,11 +14,31 @@ import Admin from './components/Admin.jsx';
 import LoginPage from "./components/Login/LoginPage";
 import AdminDashboard from "./components/AdminDashboard";
 
-function App() {
+function AppContent() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Check URL parameters for auth success
+    const params = new URLSearchParams(location.search);
+    const authSuccess = params.get('auth_success');
+    const authAction = params.get('auth_action');
+    const email = params.get('email');
+    
+    // Clear URL parameters and show welcome message if needed
+    if (authSuccess === 'true' && email) {
+      // Remove query parameters
+      navigate('/', { replace: true });
+      
+      // Show welcome message
+      const message = authAction === 'signup' 
+        ? `Welcome! Your account has been created with ${email}`
+        : `Welcome back, ${email}`;
+      setTimeout(() => alert(message), 500);
+    }
+    
     // Use environment variable for API URL
     const apiUrl = import.meta.env.VITE_API_URL;
     
@@ -35,13 +55,12 @@ function App() {
         setUser(null);
       })
       .finally(() => {
-        clearTimeout(checkLoginTimeout);
         setLoading(false);
       });
-  }, []);
+  }, [location.search, navigate]);
 
   // Simple loading indicator
-  if (!loading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-screen w-full">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-800">
@@ -52,7 +71,7 @@ function App() {
   }
 
   return (
-    <Router>
+    <>
       <Navbar user={user} />
       <Routes>
         <Route path="/" element={<Dashboard />} />
@@ -67,6 +86,14 @@ function App() {
         <Route path="/dashboard" element={<AdminDashboard/>}/>
         <Route path="/contact-us" element={<ContactUs/>}/>
       </Routes>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <AppContent />
     </Router>
   );
 }

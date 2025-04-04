@@ -1,7 +1,9 @@
 from flask import Blueprint, jsonify
 from authlib.integrations.flask_client import OAuth
+from dotenv import load_dotenv
 from .prescription import prescription_bp
 from .users import user_bp, init_user_bp
+load_dotenv()
 
 # Create OAuth object to be used with the app
 oauth = OAuth()
@@ -10,6 +12,9 @@ def init_routes(app):
     """Initialize routes"""
     # Initialize OAuth with the app
     oauth.init_app(app)
+    
+    # Attach the OAuth instance to the app itself
+    app.oauth = oauth
     
     # Initialize user blueprint with app and OAuth
     init_user_bp(app, oauth)

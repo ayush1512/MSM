@@ -1,4 +1,5 @@
 import os
+import secrets
 from flask import Blueprint, request, jsonify, session, redirect, url_for, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
@@ -31,8 +32,10 @@ def init_user_bp(app, oauth):
         client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
         authorize_url="https://accounts.google.com/o/oauth2/auth",
         access_token_url="https://oauth2.googleapis.com/token",
+        userinfo_endpoint= "https://openidconnect.googleapis.com/v1/userinfo",
         redirect_uri="http://localhost:5000/google/callback",
         client_kwargs={"scope": "openid email profile"},
+        server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
     )
     
     # Register the blueprint with the app
@@ -113,34 +116,42 @@ def user_login():
 @user_bp.route("/login/google")
 def login_google():
     """Redirects to Google login"""
-    return current_app.oauth.google.authorize_redirect(url_for("google_callback", _external=True))
+    nonce = secrets.token_urlsafe(16)
+    session['nonce'] = nonce
+    return current_app.oauth.google.authorize_redirect(redirect_uri=url_for("user.google_callback", _external=True), scope=["openid", "email", "profile"], nonce=nonce)
 
 @user_bp.route("/google/callback")
 def google_callback():
     """Handles Google OAuth callback"""
     token = current_app.oauth.google.authorize_access_token()
-    user_info = current_app.oauth.google.parse_id_token(token)
+    if token:
+        nonce = session.pop('nonce', None)
+        if nonce:
+            user_info = current_app.oauth.google.parse_id_token(token, nonce=nonce)
 
-    if not user_info:
-        return jsonify({"error": "Google authentication failed"}), 400
+            if not user_info:
+                return jsonify({"error": "Google authentication failed"}), 400
 
-    email = user_info["email"]
-    username = user_info.get("name", email.split("@")[0])
+            email = user_info["email"]
+            username = user_info.get("name", email.split("@")[0])
 
-    # Check if user exists
-    user = user_collection.find_one({"email": email})
-    if not user:
-        user_data = {
-            "username": username,
-            "email": email,
-            "password": None,
-            "registration_mode":"Google"
-        }
-        user_data=User(user_data)
-        user_collection.insert_one(user_data.to_dict())
+            # Check if user exists
+            user = user_collection.find_one({"email": email})
+            if not user:
+                user_data = {
+                    "username": username,
+                    "email": email,
+                    "password": None,
+                    "registration_mode":"Google"
+                }
+                user_data=User(user_data)
+                user_collection.insert_one(user_data.to_dict())
 
-    session["user"] = email
-    return jsonify({"message": "Google login successful", "email": email})
+            session["user"] = email
+            return redirect(os.getenv('FRONTEND_URL'))
+        else:
+            return jsonify({"error": "Nonce not found in session."}), 400
+    return jsonify({"error": "Google authentication failed."}), 400
 
 # -----------------------------------
 # Checking login

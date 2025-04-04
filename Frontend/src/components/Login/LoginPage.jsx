@@ -3,10 +3,13 @@ import axios from "axios";
 import SignUp from "./SignUp";
 import LogIn from "./LogIn";
 import "./LoginPage.css";
+import googleLogo from '../../assets/google-logo.png';
 
 export default function LoginPage() {
   const containerRef = useRef(null);
-  
+  const [queryParams] = useState(new URLSearchParams(window.location.search));
+  const [authError] = useState(queryParams.get('error'));
+
   const toggle = () => {
     const container = containerRef.current;
     if (container) {
@@ -26,7 +29,15 @@ export default function LoginPage() {
     // Clean up timeout on unmount
     return () => clearTimeout(timeoutId);
   }, []);
-  const handleGoogleLogin = () => {
+
+  useEffect(() => {
+    // Show error message if authentication failed
+    if (authError === 'auth_failed') {
+      alert('Google authentication failed. Please try again or use email/password.');
+    }
+  }, [authError]);
+
+  const handleGoogleAuth = () => {
     window.location.href = "http://localhost:5000/login/google";
   };
 
@@ -40,7 +51,16 @@ export default function LoginPage() {
             <div className="form-wrapper align-items-center">
               <div className="form sign-up">
                 <SignUp />
-                <button id='googleLogin' onClick={handleGoogleLogin}>G</button>
+                <div className="social-divider">
+                  <span>OR</span>
+                </div>
+                <button className="google-btn" onClick={handleGoogleAuth} type="button">
+                  <img src={googleLogo} alt="Google" />
+                  Continue with Google
+                </button>
+                <p className="auth-help-text">
+                  By continuing with Google, a new account will be created if you don't have one already.
+                </p>
                 <p>
                   <span>
                     Already have an account?
@@ -58,7 +78,16 @@ export default function LoginPage() {
             <div className="form-wrapper align-items-center">
               <div className="form sign-in">
                 <LogIn />
-                <button id="googleLogin" onClick={handleGoogleLogin}>G</button>
+                <div className="social-divider">
+                  <span>OR</span>
+                </div>
+                <button className="google-btn" onClick={handleGoogleAuth} type="button">
+                  <img src={googleLogo} alt="Google" />
+                  Continue with Google
+                </button>
+                <p className="auth-help-text">
+                  You can sign in with your Google account
+                </p>
                 <p>
                   <b>
                     Forgot password?

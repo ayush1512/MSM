@@ -365,3 +365,60 @@
     font-size: 0.9rem;
     text-align: left;
 }
+
+/* Google button styling */
+.google-btn {
+  width: 100%;
+  background-color: white;
+  border: 1px solid #dadce0;
+  color: #3c4043;
+  font-weight: 500;
+  font-size: 14px;
+  height: 40px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 10px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: background-color 0.3s;
+}
+
+.google-btn:hover {
+  background-color: #f6f9fe;
+  border-color: #d2e3fc;
+}
+
+.google-btn img {
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+}
+
+.social-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 15px 0;
+}
+
+.social-divider::before,
+.social-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #dadce0;
+}
+
+.social-divider span {
+  padding: 0 10px;
+  color: #666;
+  font-size: 12px;
+}
+
+.auth-help-text {
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 0.5rem;
+  text-align: center;
+}
