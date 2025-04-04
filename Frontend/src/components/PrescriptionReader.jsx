@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-const PrescriptionReader = () => {
+const PrescriptionReader = ({ user }) => {
   const [image, setImage] = useState(null);
   const [formData, setFormData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -26,13 +26,14 @@ const PrescriptionReader = () => {
       setError(null);
 
       const response = await axios.post(
-        'http://127.0.0.1:5000/prescription/process',
+        'http://localhost:5000/prescription/process',
         formData,
         {
           headers: {
             'Content-Type': 'multipart/form-data',
             'Accept': 'application/json',
           },
+          withCredentials: true,
           validateStatus: (status) => status < 500
         }
       );
@@ -53,14 +54,15 @@ const PrescriptionReader = () => {
 
   const handleSave = async () => {
     try {
-      const response = await axios.put(
-        `http://127.0.0.1:5000/prescription/${formData.data._id}`,
+            const response = await axios.put(
+        `http://localhost:5000/prescription/${formData.data._id}`,
         formData.data,
         {
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-          }
+          },
+          withCredentials: true
         }
       );
 
@@ -71,7 +73,13 @@ const PrescriptionReader = () => {
       }
     } catch (error) {
       console.error('Save error:', error.response || error);
-      setError(error.response?.data?.error || 'Failed to save changes.');
+      
+      // Special handling for authentication errors
+      if (error.response?.status === 401) {
+        setError('Authentication error: You must be logged in to save changes');
+      } else {
+        setError(error.response?.data?.error || 'Failed to save changes.');
+      }
     }
   };
 

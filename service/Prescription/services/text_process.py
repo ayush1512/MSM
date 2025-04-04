@@ -140,7 +140,7 @@ class TextProcess:
             logging.error(f"JSON string cleaning error: {str(e)}")
             return json_string
 
-    def analyze_text(self, raw_text, db_service=None, image_data=None):
+    def analyze_text(self, raw_text, db_service=None, image_data=None, session=None):
         """Analyze prescription text and optionally save to database"""
         try:
             response = self.client.chat.completions.create(
@@ -164,7 +164,7 @@ class TextProcess:
                     # Save to database if db_service is provided
                     if db_service:
                         try:
-                            prescription = Prescription(parsed_json, image_data)
+                            prescription = Prescription(parsed_json, image_data, session['user'])
                             prescription_id = db_service.save_prescription(prescription.to_dict())
                             parsed_json['_id'] = prescription_id
                             parsed_json['image_data'] = image_data

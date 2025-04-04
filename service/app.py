@@ -34,16 +34,26 @@ logging.getLogger("pymongo.topology").setLevel(logging.ERROR)
 
 app = Flask(__name__)
 
+# Set SameSite=None, Secure=False for local development
+app.config.update(
+    SESSION_COOKIE_SAMESITE='Lax',  # Use 'Lax' for local development
+    SESSION_COOKIE_SECURE=False,     # False for HTTP (development)
+    SESSION_COOKIE_HTTPONLY=True,    # Prevents JavaScript access
+    PERMANENT_SESSION_LIFETIME=86400  # Session lasts for 1 day (in seconds)
+)
+
 # Fix CORS configuration - ensure credentials are allowed
 CORS(app, 
      resources={
         r"/*": {
-            "origins": "http://localhost:5173",  # Vite dev server default port
+            "origins": ["http://localhost:5173", "http://127.0.0.1:5173"],  # Allow both localhost and 127.0.0.1
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization"],
+            "allow_headers": ["Content-Type", "Authorization", "Accept"],
             "supports_credentials": True,
+            "expose_headers": ["Content-Type", "X-CSRFToken"]
         }
-     }
+     },
+     supports_credentials=True  # Add this at top level too
 )
 
 # Set a secret key for session management

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from "axios";
-import "./LoginPage.css";
+import styles from "./LoginPage.module.css";
 
 export default function SignUp() {
     const [formData, setFormData] = useState({
@@ -71,10 +71,10 @@ export default function SignUp() {
 
     return (
         <form onSubmit={handleSubmit}>
-            {error && <div className="error-message">{error}</div>}
-            {success && <div className="success-message">{success}</div>}
+            {error && <div className={styles['error-message']}>{error}</div>}
+            {success && <div className={styles['success-message']}>{success}</div>}
             
-            <div className="input-group">
+            <div className={styles['input-group']}>
                 <i className='bx bxs-user'></i>
                 <input 
                     name="username" 
@@ -84,7 +84,7 @@ export default function SignUp() {
                     onChange={handleChange}
                 />
             </div>
-            <div className="input-group">
+            <div className={styles['input-group']}>
                 <i className='bx bx-mail-send'></i>
                 <input 
                     name="email" 
@@ -94,7 +94,7 @@ export default function SignUp() {
                     onChange={handleChange}
                 />
             </div>
-            <div className="input-group">
+            <div className={styles['input-group']}>
                 <i className='bx bxs-lock-alt'></i>
                 <input 
                     type="password" 
@@ -104,7 +104,7 @@ export default function SignUp() {
                     onChange={handleChange}
                 />
             </div>
-            <div className="input-group">
+            <div className={styles['input-group']}>
                 <i className='bx bxs-lock-alt'></i>
                 <input 
                     type="password" 

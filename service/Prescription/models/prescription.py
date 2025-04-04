@@ -1,7 +1,7 @@
 from datetime import datetime
 
 class Prescription:
-    def __init__(self, data, image_data=None):
+    def __init__(self, data, image_data=None, shop_owner=None):
         self.hospital_info = data.get('hospital_info')
         self.doctor_info = data.get('doctor_info')
         self.patient_info = data.get('patient_info')

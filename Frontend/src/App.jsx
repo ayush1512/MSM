@@ -75,7 +75,7 @@ function AppContent() {
       <Navbar user={user} />
       <Routes>
         <Route path="/" element={<Dashboard />} />
-        <Route path="/prescription-reader" element={<PrescriptionReader />} />
+        <Route path="/prescription-reader" element={<PrescriptionReader user={user} />} />
         <Route path="/payment-records" element={<PaymentRecords />} />
         <Route path="/billing" element={<Billing />} />
         <Route path="/product-scanner" element={<ProductScanner />} />

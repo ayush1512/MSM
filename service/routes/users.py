@@ -103,10 +103,22 @@ def user_login():
     if not email or not password:
         return jsonify({"error": "Email and Password are required"}), 400
 
+    # Find user by email
     user = user_collection.find_one({"email": email})
-    if not user or not check_password_hash(user["password"], password):
-        return jsonify({"error": "Invalid email or password"}), 401
+    
+    # Check if user exists
+    if not user:
+        return jsonify({"error": "User not found. Please sign up first!"}), 404
+    
+    # Check if user has a password (OAuth users don't have passwords)
+    if user.get("password") is None:
+        return jsonify({"error": "This account uses Google Sign-In. Please log in with Google."}), 400
+        
+    # Verify password
+    if not check_password_hash(user["password"], password):
+        return jsonify({"error": "Invalid password or email"}), 401
 
+    # Login successful
     session["user"] = email
     return jsonify({"message": "Login successful", "email": email}), 200
 

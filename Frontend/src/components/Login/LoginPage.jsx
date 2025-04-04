@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from "axios";
 import SignUp from "./SignUp";
 import LogIn from "./LogIn";
-import "./LoginPage.css";
+import styles from "./LoginPage.module.css";
 import googleLogo from '../../assets/google-logo.png';
 
 export default function LoginPage() {
@@ -13,8 +13,8 @@ export default function LoginPage() {
   const toggle = () => {
     const container = containerRef.current;
     if (container) {
-      container.classList.toggle('sign-in');
-      container.classList.toggle('sign-up');
+      container.classList.toggle(styles['sign-in']);
+      container.classList.toggle(styles['sign-up']);
     }
   };
 
@@ -22,7 +22,7 @@ export default function LoginPage() {
     // Use setTimeout to add sign-in class after component mounts
     const timeoutId = setTimeout(() => {
       if (containerRef.current) {
-        containerRef.current.classList.add('sign-in');
+        containerRef.current.classList.add(styles['sign-in']);
       }
     }, 200);
     
@@ -43,29 +43,29 @@ export default function LoginPage() {
 
   return (
     <>
-      <div id="container" className="container loginPage" ref={containerRef}>
+      <div id="container" className={`${styles.container} ${styles.loginPage}`} ref={containerRef}>
         {/* -- FORM SECTION -- */}
-        <div className="row">
+        <div className={styles.row}>
           {/* -- SIGN UP -- */}
-          <div className="col align-items-center flex-col sign-up">
-            <div className="form-wrapper align-items-center">
-              <div className="form sign-up">
+          <div className={`${styles.col} ${styles['align-items-center']} ${styles['flex-col']} ${styles['sign-up']}`}>
+            <div className={`${styles['form-wrapper']} ${styles['align-items-center']}`}>
+              <div className={`${styles.form} ${styles['sign-up']}`}>
                 <SignUp />
-                <div className="social-divider">
+                <div className={styles['social-divider']}>
                   <span>OR</span>
                 </div>
-                <button className="google-btn" onClick={handleGoogleAuth} type="button">
+                <button className={styles['google-btn']} onClick={handleGoogleAuth} type="button">
                   <img src={googleLogo} alt="Google" />
                   Continue with Google
                 </button>
-                <p className="auth-help-text">
+                <p className={styles['auth-help-text']}>
                   By continuing with Google, a new account will be created if you don't have one already.
                 </p>
                 <p>
                   <span>
                     Already have an account?
                   </span>
-                  <b onClick={toggle} className="pointer">
+                  <b onClick={toggle} className={styles.pointer}>
                     Sign in here
                   </b>
                 </p>
@@ -74,18 +74,18 @@ export default function LoginPage() {
           </div>
           {/* -- END SIGN UP -- */}
           {/* -- SIGN IN -- */}
-          <div className="col align-items-center flex-col sign-in">
-            <div className="form-wrapper align-items-center">
-              <div className="form sign-in">
+          <div className={`${styles.col} ${styles['align-items-center']} ${styles['flex-col']} ${styles['sign-in']}`}>
+            <div className={`${styles['form-wrapper']} ${styles['align-items-center']}`}>
+              <div className={`${styles.form} ${styles['sign-in']}`}>
                 <LogIn />
-                <div className="social-divider">
+                <div className={styles['social-divider']}>
                   <span>OR</span>
                 </div>
-                <button className="google-btn" onClick={handleGoogleAuth} type="button">
+                <button className={styles['google-btn']} onClick={handleGoogleAuth} type="button">
                   <img src={googleLogo} alt="Google" />
                   Continue with Google
                 </button>
-                <p className="auth-help-text">
+                <p className={styles['auth-help-text']}>
                   You can sign in with your Google account
                 </p>
                 <p>
@@ -97,36 +97,36 @@ export default function LoginPage() {
                   <span>
                     Don't have an account?
                   </span>
-                  <b onClick={toggle} className="pointer">
+                  <b onClick={toggle} className={styles.pointer}>
                     Sign up here
                   </b>
                 </p>
               </div>
             </div>
-            <div className="form-wrapper">
+            <div className={styles['form-wrapper']}>
             </div>
           </div>
           {/* -- END SIGN IN -- */}
         </div>
         {/* <!-- END FORM SECTION --> */}
         {/* <!-- CONTENT SECTION --> */}
-        <div className="row content-row">
+        <div className={`${styles.row} ${styles['content-row']}`}>
           {/* <!-- SIGN IN CONTENT --> */}
-          <div className="col align-items-center flex-col">
-            <div className="text sign-in">
+          <div className={`${styles.col} ${styles['align-items-center']} ${styles['flex-col']}`}>
+            <div className={`${styles.text} ${styles['sign-in']}`}>
               <h2>
                 Welcome
               </h2>
             </div>
-            <div className="img sign-in">
+            <div className={`${styles.img} ${styles['sign-in']}`}>
             </div>
           </div>
           {/* <!-- END SIGN IN CONTENT --> */}
           {/* <!-- SIGN UP CONTENT --> */}
-          <div className="col align-items-center flex-col">
-            <div className="img sign-up">
+          <div className={`${styles.col} ${styles['align-items-center']} ${styles['flex-col']}`}>
+            <div className={`${styles.img} ${styles['sign-up']}`}>
             </div>
-            <div className="text sign-up">
+            <div className={`${styles.text} ${styles['sign-up']}`}>
               <h2>
                 Join with us
               </h2>

@@ -11,7 +11,7 @@ class PrescriptionProcessor:
         self.extractor = TextProcess()  # Fixed class instantiation
         self.db_service = DatabaseService()
     
-    def process_prescription_image(self, image_file):
+    def process_prescription_image(self, image_file, session=None):
         """Upload image and process prescription in one go"""
         try:
             # First upload to Cloudinary
@@ -36,7 +36,8 @@ class PrescriptionProcessor:
                 structured_data = self.extractor.analyze_text(
                     extracted_text, 
                     self.db_service,
-                    image_data=image_data
+                    image_data=image_data,
+                    session=session
                 )
                 
                 if "error" in structured_data:

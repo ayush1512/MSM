@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from "axios";
-import "./LoginPage.css";
+import styles from "./LoginPage.module.css";
 
 export default function LogIn(){
     const [formData, setFormData] = useState({
@@ -25,13 +25,14 @@ export default function LogIn(){
             alert(error.response?.data?.error || "Login failed");
         }
     };
+
     return(
         <form onSubmit={handleSubmit}>
-            <div className="input-group">
+            <div className={styles['input-group']}>
                 <i className='bx bxs-user'></i>
                 <input name="email" type="email" placeholder="Email" value={formData.email} onChange={handleChange} required />
             </div>
-            <div className="input-group">
+            <div className={styles['input-group']}>
                 <i className='bx bxs-lock-alt'></i>
                 <input type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} required />
             </div>

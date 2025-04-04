@@ -29,7 +29,7 @@ class Medicine:
         }
 
 class Stock:
-    def __init__(self, medicine_id, batch_no, mfg_date, exp_date, mrp, quantity=0, image_url=None):
+    def __init__(self, medicine_id, batch_no, mfg_date, exp_date, mrp, quantity=0, image_url=None, shop_owner=None):
         self.medicine_id = medicine_id
         self.batch_no = batch_no
         self.mfg_date = mfg_date
@@ -37,6 +37,7 @@ class Stock:
         self.mrp = mrp
         self.quantity = quantity
         self.image_url = image_url
+        self.shop_owner = shop_owner
         self.created_at = datetime.utcnow()
         self.updated_at = datetime.utcnow()
 
@@ -49,6 +50,7 @@ class Stock:
             "mrp": self.mrp,
             "quantity": self.quantity,
             "image_url": self.image_url,
+            "shop_owner": self.shop_owner,
             "created_at": self.created_at,
             "updated_at": self.updated_at
         }

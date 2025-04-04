@@ -9,8 +9,12 @@ processor = PrescriptionProcessor()
 @prescription_bp.route('/prescription/process', methods=['POST', 'OPTIONS'])
 def process_prescription():
     """Combined endpoint for upload and extraction"""
+    # Debug session information
+    print(f"Session data: {session}")
+    print(f"User in session: {session.get('user')}")
+    
     if "user" not in session:
-        return jsonify({"error": "Not logged in"}), 401
+        return jsonify({"error": "Not logged in", "session_data": "Missing user key"}), 401
 
     if request.method == 'OPTIONS':
         return _build_cors_preflight_response()
@@ -24,7 +28,7 @@ def process_prescription():
             return jsonify({"error": "Invalid file"}), 400
             
         # Process everything
-        result = processor.process_prescription_image(image_file)
+        result = processor.process_prescription_image(image_file,session)
         
         if not result:
             return jsonify({"error": "Failed to process prescription"}), 500
@@ -42,9 +46,12 @@ def process_prescription():
 @prescription_bp.route('/prescription/<prescription_id>', methods=['PUT'])
 def update_prescription(prescription_id):
     """Update prescription data"""
+# Debug session information
+    print(f"Session data: {session}")
+    print(f"User in session: {session.get('user')}")
 
     if "user" not in session:
-        return jsonify({"error": "Not logged in"}), 401
+        return jsonify({"error": "Not logged in", "session_data": "Missing user key"}), 401
 
     try:
         data = request.get_json()
@@ -82,12 +89,14 @@ def update_prescription(prescription_id):
 def _build_cors_preflight_response():
     """Handle CORS preflight requests"""
     response = jsonify({})
-    response.headers.add("Access-Control-Allow-Origin", "*")
-    response.headers.add("Access-Control-Allow-Headers", "*")
-    response.headers.add("Access-Control-Allow-Methods", "*")
+    response.headers.add("Access-Control-Allow-Origin", "http://localhost:5173")  # Update with specific origin
+    response.headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization")
+    response.headers.add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+    response.headers.add("Access-Control-Allow-Credentials", "true")  # Allow credentials
     return response
 
 def _corsify_actual_response(response):
     """Add CORS headers to the actual response"""
-    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add("Access-Control-Allow-Origin", "http://localhost:5173")  # Update with specific origin
+    response.headers.add("Access-Control-Allow-Credentials", "true")  # Allow credentials
     return response
