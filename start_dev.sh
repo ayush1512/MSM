@@ -18,7 +18,7 @@ fi
 echo "Starting Flask backend..."
 cd service
 source ../venv/Scripts/activate
-python app.py &
+flask run --host='0.0.0.0' --port=5000 &
 cd ..
 
 # Wait for backend to start

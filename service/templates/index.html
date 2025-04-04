@@ -1041,7 +1041,7 @@
             try {
                 const stockData = getStockData();
                 const response = await fetch('/update_stock', {
-                    method: 'POST',
+                    method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
                     },
@@ -1104,7 +1104,7 @@
                 };
 
                 const response = await fetch('/update_stock', {
-                    method: 'POST',
+                    method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
                     },

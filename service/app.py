@@ -251,7 +251,7 @@ def process_image():
             "details": str(e)
         }), 500
 
-@app.route('/update_stock', methods=['POST'])
+@app.route('/update_stock', methods=['PUT'])
 def update_stock():
     try:
         data = request.json
@@ -271,7 +271,6 @@ def update_stock():
             'exp_date': data['exp_date'],
             'mrp': float(data['mrp']),
             'quantity': int(data['quantity']),
-            'image_url': data['image_url'],
             'updated_at': datetime.utcnow()
         }
 

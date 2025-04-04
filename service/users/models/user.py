@@ -14,8 +14,9 @@ class User:
         self.created_at = datetime.utcnow()
         self.updated_at = datetime.utcnow()
 
-        if not self.username or not self.email or not self.password:
-            raise ValueError("Username, email, and password are required.")
+        if not self.username or not self.email:
+            if self.registration_mode == "Normal" and not self.password:
+                raise ValueError("Username, email, and password are required.")
     
     def to_dict(self):
         return {

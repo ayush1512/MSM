@@ -9,8 +9,12 @@ class Prescription:
         self.medications = data.get('medications', [])
         self.additional_notes = data.get('additional_notes')
         self.image_data = image_data or {}
+        self.shop_owner = shop_owner
         self.created_at = datetime.utcnow()
         self.updated_at = datetime.utcnow()
+
+        if not self.shop_owner:
+            raise ValueError("Please login or SginUp first.")
 
     def to_dict(self):
         return {
@@ -21,6 +25,7 @@ class Prescription:
             'medications': self.medications,
             'additional_notes': self.additional_notes,
             'image_data': self.image_data,
+            'shop_owner': self.shop_owner,
             'created_at': self.created_at,
             'updated_at': self.updated_at
         }

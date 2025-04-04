@@ -24,10 +24,10 @@ def init_routes(app):
     
     @app.errorhandler(404)
     def not_found(e):
-        return jsonify({"error": "Not Found"}), 404
+        return jsonify({"error": f"Not Found:\n{e}"}), 404
 
     @app.errorhandler(500)
     def server_error(e):
-        return jsonify({"error": "Internal Server Error"}), 500
+        return jsonify({"error": f"Internal Server Error \n {e}"}), 500
 
 __all__ = ['init_routes']
