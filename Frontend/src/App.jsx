@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from "react-router-dom";
-import Navbar from "./components/Navbar";
-import Dashboard from "./components/Dashboard";
-import ContactUs from './components/ContactUs';
-import PrescriptionReader from "./components/PrescriptionReader";
-import StockManagement from "./components/StockManagement";
-import PaymentRecords from "./components/PaymentRecords";
-import Billing from "./components/Billing";
-import ProductScanner from "./components/ProductScanner";
-import DebitCredit from "./components/DebitCredit";
-import Admin from './components/Admin.jsx';
-import LoginPage from "./components/Login/LoginPage";
-import AdminDashboard from "./components/AdminDashboard";
+import Navbar from "./pages/Navbar";
+import Dashboard from "./pages/Dashboard";
+import ContactUs from './pages/ContactUs';
+import PrescriptionReader from "./pages/PrescriptionReader";
+import StockManagement from "./pages/StockManagement";
+import PaymentRecords from "./pages/PaymentRecords";
+import Billing from "./pages/Billing";
+import ProductScanner from "./pages/ProductScanner";
+import DebitCredit from "./pages/DebitCredit";
+import Admin from './pages/Admin.jsx';
+import LoginPage from "./pages/Login/LoginPage";
+import AdminDashboard from "./pages/AdminDashboard";
 
 function AppContent() {
   const location = useLocation();
