@@ -7,7 +7,7 @@
   z-index: 1000; 
   justify-content: space-between;
   align-items: center;
-  background-color: #2C3E50; /* Rich navy blue */
+  background-color: #134e4a; /* Rich navy blue */
   padding: 15px 30px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -84,7 +84,7 @@
   .nav-links {
     position: absolute;
     flex-direction: column;
-    background-color: #2C3E50;
+    background-color: #134e4a;
     width: 100%;
     top: 60px;
     left: 0;

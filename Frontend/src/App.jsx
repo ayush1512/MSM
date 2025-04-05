@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from "react-router-dom";
-import Navbar from "./pages/Navbar";
 import Dashboard from "./pages/Dashboard";
 import ContactUs from './pages/ContactUs';
 import PrescriptionReader from "./pages/PrescriptionReader";
@@ -10,16 +9,61 @@ import PaymentRecords from "./pages/PaymentRecords";
 import Billing from "./pages/Billing";
 import ProductScanner from "./pages/ProductScanner";
 import DebitCredit from "./pages/DebitCredit";
-import Admin from './pages/Admin.jsx';
 import LoginPage from "./pages/Login/LoginPage";
-import AdminDashboard from "./pages/AdminDashboard";
 
-function AppContent() {
+// Admin Page Imports
+import AdminLayout from "./pages/AdminPage/layouts/admin";
+import routes from "routes.js";
+import Navbar from "components/navbar";
+import { SidebarProvider } from './context/SidebarContext';
+
+function AppContent(props) {
+  const { ...rest } = props;
   const location = useLocation();
+  const [currentRoute, setCurrentRoute] = React.useState("Home Page");
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [open, setOpen] = React.useState(true);
 
+  // Advance
+
+  React.useEffect(() => {
+    window.addEventListener("resize", () =>
+      window.innerWidth < 1200 ? setOpen(false) : setOpen(true)
+    );
+  }, []);
+  React.useEffect(() => {
+    getActiveRoute(routes);
+  }, [location.pathname]);
+
+  const getActiveRoute = (routes) => {
+    let activeRoute = "Main Dashboard";
+    for (let i = 0; i < routes.length; i++) {
+      if (
+        window.location.href.indexOf(
+          routes[i].layout + "/" + routes[i].path
+        ) !== -1
+      ) {
+        setCurrentRoute(routes[i].name);
+      }
+    }
+    return activeRoute;
+  };
+  const getActiveNavbar = (routes) => {
+    let activeNavbar = false;
+    for (let i = 0; i < routes.length; i++) {
+      if (
+        window.location.href.indexOf(routes[i].layout + routes[i].path) !== -1
+      ) {
+        return routes[i].secondary;
+      }
+    }
+    return activeNavbar;
+  };
+
+
+  // Normal
   useEffect(() => {
     // Check URL parameters for auth success
     const params = new URLSearchParams(location.search);
@@ -63,8 +107,11 @@ function AppContent() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen w-full">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-800">
-          <img src="./shop_logo-removebg-preview.png" alt="logo" />
+        <div className="relative h-32 w-32">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-4 border-blue-800 absolute inset-0"></div>
+          <div className="absolute inset-0 h-30 w-30 flex items-center justify-center">
+            <img src="../shop_logo-removebg-preview.png" alt="logo" style={{maxWidth: "53%"}} />
+          </div>
         </div>
       </div>
     );
@@ -72,20 +119,30 @@ function AppContent() {
 
   return (
     <>
-      <Navbar user={user} />
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/prescription-reader" element={<PrescriptionReader user={user} />} />
-        <Route path="/payment-records" element={<PaymentRecords />} />
-        <Route path="/billing" element={<Billing />} />
-        <Route path="/product-scanner" element={<ProductScanner />} />
-        {user? <Route path="/admin/*" element={<Admin user={user} />} /> : null}
-        <Route path="/stock-management" element={<StockManagement/>}/>
-        <Route path="/debit-credit" element={<DebitCredit/>}/>
-        {user? null :  <Route path="/login-page" element={<LoginPage/>}/>}
-        <Route path="/dashboard" element={<AdminDashboard/>}/>
-        <Route path="/contact-us" element={<ContactUs/>}/>
-      </Routes>
+      <SidebarProvider>
+        {/* <Navbar user={user} /> */}
+        <Navbar
+          onOpenSidenav={() => setOpen(true)}
+          logoText={"Horizon UI Tailwind React"}
+          brandText={currentRoute}
+          secondary={getActiveNavbar(routes)}
+          {...rest}
+        />
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/prescription-reader" element={<PrescriptionReader user={user} />} />
+          <Route path="/payment-records" element={<PaymentRecords />} />
+          <Route path="/billing" element={<Billing />} />
+          <Route path="/product-scanner" element={<ProductScanner />} />
+          <Route path="/stock-management" element={<StockManagement/>}/>
+          <Route path="/debit-credit" element={<DebitCredit/>}/>
+          {user? null :  <Route path="/login-page" element={<LoginPage/>}/>}
+          <Route path="/contact-us" element={<ContactUs/>}/>
+
+          {/* Admin Page Routes */}
+          <Route path="/admin/*" element={<AdminLayout open={open} />} />
+        </Routes>
+      </SidebarProvider>
     </>
   );
 }
