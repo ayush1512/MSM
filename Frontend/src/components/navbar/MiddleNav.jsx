@@ -10,13 +10,23 @@ const MiddleNav = () => {
     { icon: <Home size={20} />, name: 'Home', link: "/" },
     { icon: <ScrollText size={20} />, name: 'Prescription', link: "/prescription-reader" },
     { icon: <Barcode size={20} />, name: 'Product', link: "/product-scanner" },
-    { icon: <LayoutDashboard size={20} />, name: 'Dashboard', link: "/admin/default" },
+    { icon: <LayoutDashboard size={20} />, name: 'Dashboard', link: "/admin/" },
   ];
 
-  // Update active tab based on current path whenever location changes
-  useEffect(() => {
+   // Update active tab based on current path whenever location changes
+   useEffect(() => {
     const currentPath = location.pathname;
-    const activeIndex = navItems.findIndex(item => currentPath === item.link);
+    
+    // Special handling for nested routes
+    const activeIndex = navItems.findIndex(item => {
+      // Home route should only match exactly
+      if (item.link === "/" && currentPath !== "/") {
+        return false;
+      }
+      // For other routes, check if current path starts with the link
+      return currentPath.startsWith(item.link);
+    });
+    
     if (activeIndex !== -1) {
       setActiveTab(activeIndex);
     }
@@ -32,8 +42,8 @@ const MiddleNav = () => {
               to={item.link}
               className={`flex items-center justify-center rounded-full px-3 py-2 transition-colors ${
                 activeTab === index 
-                  ? 'bg-gray-800 text-white' 
-                  : 'text-gray-600 hover:text-gray-800'
+                  ? 'bg-gray-800 text-white dark:bg-white dark:text-gray-800' 
+                  : 'text-gray-600 hover:text-gray-800 dark:hover:text-white '
               }`}
               onClick={() => setActiveTab(index)}
             >
