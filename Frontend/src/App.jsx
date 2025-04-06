@@ -3,7 +3,7 @@ import axios from "axios";
 import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import ContactUs from './pages/ContactUs';
-import PrescriptionReader from "./pages/PrescriptionReader";
+import PrescriptionReader from "./pages/Prescription";
 import StockManagement from "./pages/StockManagement";
 import PaymentRecords from "./pages/PaymentRecords";
 import Billing from "./pages/Billing";
@@ -16,6 +16,7 @@ import AdminLayout from "./pages/AdminPage/layouts/admin";
 import routes from "routes.js";
 import Navbar from "components/navbar";
 import { SidebarProvider } from './context/SidebarContext';
+import UpwardDropdown from 'components/dropup'
 
 function AppContent(props) {
   const { ...rest } = props;
@@ -24,15 +25,8 @@ function AppContent(props) {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [open, setOpen] = React.useState(true);
 
   // Advance
-
-  React.useEffect(() => {
-    window.addEventListener("resize", () =>
-      window.innerWidth < 1200 ? setOpen(false) : setOpen(true)
-    );
-  }, []);
   React.useEffect(() => {
     getActiveRoute(routes);
   }, [location.pathname]);
@@ -119,38 +113,37 @@ function AppContent(props) {
 
   return (
     <>
-      <SidebarProvider>
-        {/* <Navbar user={user} /> */}
-        <Navbar
-          onOpenSidenav={() => setOpen(true)}
-          logoText={"Horizon UI Tailwind React"}
-          brandText={currentRoute}
-          secondary={getActiveNavbar(routes)}
-          {...rest}
-        />
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/prescription-reader" element={<PrescriptionReader user={user} />} />
-          <Route path="/payment-records" element={<PaymentRecords />} />
-          <Route path="/billing" element={<Billing />} />
-          <Route path="/product-scanner" element={<ProductScanner />} />
-          <Route path="/stock-management" element={<StockManagement/>}/>
-          <Route path="/debit-credit" element={<DebitCredit/>}/>
-          {user? null :  <Route path="/login-page" element={<LoginPage/>}/>}
-          <Route path="/contact-us" element={<ContactUs/>}/>
+      {/* <Navbar user={user} /> */}
+      <Navbar
+        brandText={currentRoute}
+        secondary={getActiveNavbar(routes)}
+        {...rest}
+      />
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/prescription-reader" element={<PrescriptionReader user={user} />} />
+        <Route path="/payment-records" element={<PaymentRecords />} />
+        <Route path="/billing" element={<Billing />} />
+        <Route path="/product-scanner" element={<ProductScanner />} />
+        <Route path="/stock-management" element={<StockManagement/>}/>
+        <Route path="/debit-credit" element={<DebitCredit/>}/>
+        {user? null :  <Route path="/login-page" element={<LoginPage/>}/>}
+        <Route path="/contact-us" element={<ContactUs/>}/>
 
-          {/* Admin Page Routes */}
-          <Route path="/admin/*" element={<AdminLayout open={open} />} />
-        </Routes>
-      </SidebarProvider>
+        {/* Admin Page Routes */}
+        <Route path="/admin/*" element={<AdminLayout open={open} />} />
+      </Routes>
+      <UpwardDropdown />
     </>
   );
 }
 
-function App() {
+function App(props) {
   return (
     <Router>
-      <AppContent />
+      <SidebarProvider>
+        <AppContent props={props} />
+      </SidebarProvider>
     </Router>
   );
 }

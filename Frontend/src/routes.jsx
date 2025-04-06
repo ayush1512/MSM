@@ -17,6 +17,21 @@ import {
 
 const routes = [
   {
+    name:"Home",
+    layout:"",
+    path:""
+  },
+  {
+    name:"Prescription reader",
+    layout:"",
+    path:"prescription-reader"
+  },
+  {
+    name:"Product scanner",
+    layout:"",
+    path:"product-scanner"
+  },
+  {
     name: "Main Dashboard",
     layout: "/admin",
     path: "default",

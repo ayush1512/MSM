@@ -11,7 +11,7 @@ import { useSidebar } from 'context/SidebarContext';
 import MiddleNav from "./MiddleNav";
 
 const Navbar = (props) => {
-  const { onOpenSidenav, brandText } = props;
+  const { brandText } = props;
   const { toggleSidebar } = useSidebar();
   const [darkmode, setDarkmode] = React.useState(false);
 
@@ -46,7 +46,7 @@ const Navbar = (props) => {
         </p>
       </div>
 
-      {/* Home Page */}
+      {/* Pages Link */}
 
       <MiddleNav />      
 

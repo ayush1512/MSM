@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import Upload from "views/admin/profile/components/Upload";
 
 const PrescriptionReader = ({ user }) => {
   const [image, setImage] = useState(null);
@@ -215,7 +216,9 @@ const PrescriptionReader = ({ user }) => {
   return (
     <div className="container mx-auto p-4 max-w-4xl">
       <h1 className="text-2xl font-bold mb-6">Prescription Upload</h1>
-
+      <div className="flex">
+        <Upload/>
+      </div>
       <div className="mb-6">
         <input
           type="file"

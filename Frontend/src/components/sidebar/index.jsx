@@ -34,11 +34,6 @@ const Sidebar = (props) => {
         <Links routes={routes} />
       </ul>
 
-      {/* Free Horizon Card */}
-      <div className="flex justify-center">
-        <SidebarCard />
-      </div>
-
       {/* Nav item end */}
     </div>
   );

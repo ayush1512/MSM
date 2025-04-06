@@ -7,25 +7,6 @@ import routes from "routes.js";
 export default function Admin(props) {
   const { ...rest } = props;
   const location = useLocation();
-  const [currentRoute, setCurrentRoute] = React.useState("Main Dashboard");
-
-  React.useEffect(() => {
-    getActiveRoute(routes);
-  }, [location.pathname]);
-
-  const getActiveRoute = (routes) => {
-    let activeRoute = "Main Dashboard";
-    for (let i = 0; i < routes.length; i++) {
-      if (
-        window.location.href.indexOf(
-          routes[i].layout + "/" + routes[i].path
-        ) !== -1
-      ) {
-        setCurrentRoute(routes[i].name);
-      }
-    }
-    return activeRoute;
-  };
   const getRoutes = (routes) => {
     return routes.map((prop, key) => {
       if (prop.layout === "/admin") {
