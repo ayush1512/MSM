@@ -10,7 +10,7 @@ const MiddleNav = () => {
     { icon: <Home size={20} />, name: 'Home', link: "/" },
     { icon: <ScrollText size={20} />, name: 'Prescription', link: "/prescription-reader" },
     { icon: <Barcode size={20} />, name: 'Product', link: "/product-scanner" },
-    { icon: <LayoutDashboard size={20} />, name: 'Dashboard', link: "/admin/" },
+    { icon: <LayoutDashboard size={20} />, name: 'Dashboard', link: "/admin" },
   ];
 
    // Update active tab based on current path whenever location changes
@@ -35,7 +35,7 @@ const MiddleNav = () => {
   return (
     <div className="flex justify-center">
       {/* Added bg-white and shadow styling to match search box */}
-      <nav className="relative flex h-[61px] w-screen xl:w-[465px] items-center justify-between rounded-full bg-white px-4 py-2 shadow-xl shadow-shadow-500 dark:!bg-navy-800 dark:shadow-none">
+      <nav className="relative flex h-[61px] w-[395px] xl:w-[465px] items-center justify-between rounded-full bg-white px-2 py-2 shadow-xl shadow-shadow-500 dark:!bg-navy-800 dark:shadow-none">
         {navItems.map((item, index) => (
           <div key={index} className="relative">
             <Link
