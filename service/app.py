@@ -100,6 +100,13 @@ def search_medicine():
                 {'product_manufactured': {'$regex': search_term, '$options': 'i'}}
             ]
         }))
+        medicines = list(stock_collection.find({
+            '$or': [
+                {'product_name': {'$regex': search_term, '$options': 'i'}},
+                {'product_manufactured': {'$regex': search_term, '$options': 'i'}}
+            ]
+        }))
+
 
         # Convert ObjectId to string for JSON serialization
         for med in medicines:
