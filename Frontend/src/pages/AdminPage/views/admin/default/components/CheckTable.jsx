@@ -25,7 +25,7 @@ function CheckTable(props) {
         <div className="flex items-center">
           <Checkbox
             defaultChecked={info.getValue()[1]}
-            colorScheme="brandScheme"
+            color="brandScheme"
             me="10px"
           />
           <p className="ml-3 text-sm font-bold text-navy-700 dark:text-white">

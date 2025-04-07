@@ -43,21 +43,21 @@ const UpwardDropdown = () => {
 
   return (
     <>
-      {/* Prescription popup */}
-      <Prescription 
-        externalOpen={isPrescriptionOpen} 
-        onClose={() => setIsPrescriptionOpen(false)}
-        hideButton={true}
-      />
-      
-      {/* Product Upload popup */}
-      <ProductUpload
-        externalOpen={isProductUploadOpen}
-        onClose={() => setIsProductUploadOpen(false)}
-        hideButton={true}
-      />
-      
       <div className="fixed bottom-6 right-6 z-50" ref={dropdownRef}>
+        {/* Prescription popup */}
+        <Prescription
+          externalOpen={isPrescriptionOpen} 
+          onClose={() => setIsPrescriptionOpen(false)}
+          hideButton={true}
+        />
+        
+        {/* Product Upload popup */}
+        <ProductUpload
+          externalOpen={isProductUploadOpen}
+          onClose={() => setIsProductUploadOpen(false)}
+          hideButton={true}
+        />
+      
         {/* Main dropdown button */}
         <button
           onClick={toggleDropdown}
