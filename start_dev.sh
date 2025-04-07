@@ -30,4 +30,4 @@ echo "Starting React frontend..."
 cd Frontend
 npm run dev
 
-echo "Development environment started!"
+echo "Development environment stopped!"
