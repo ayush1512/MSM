@@ -31,11 +31,9 @@ const MiddleNav = () => {
       setActiveTab(activeIndex);
     }
   }, [location.pathname]);
-
+    // {/* Added bg-white and shadow styling to match search box */}
   return (
-    <div className="flex justify-center">
-      {/* Added bg-white and shadow styling to match search box */}
-      <nav className="relative flex h-[61px] w-[395px] xl:w-[465px] items-center justify-between rounded-full bg-white px-2 py-2 shadow-xl shadow-shadow-500 dark:!bg-navy-800 dark:shadow-none">
+      <nav className="relative mt-[3px] flex h-[61px] sm-max:w-full  xl:w-[465px] items-center justify-between rounded-full bg-white px-2 py-2 shadow-xl shadow-shadow-500 dark:!bg-navy-800 dark:shadow-none">
         {navItems.map((item, index) => (
           <div key={index} className="relative">
             <Link
@@ -50,7 +48,7 @@ const MiddleNav = () => {
               <span className="flex items-center">
                 {item.icon}
                 <span className={`ml-2 text-sm font-medium ${
-                  activeTab === index ? 'block' : 'hidden sm:block'
+                  activeTab === index ? 'block' : 'hidden xl:block'
                 }`}>
                   {item.name}
                 </span>
@@ -59,7 +57,6 @@ const MiddleNav = () => {
           </div>
         ))}
       </nav>
-    </div>
   );
 };
 

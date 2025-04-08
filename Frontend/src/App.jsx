@@ -12,7 +12,7 @@ import AdminLayout from "./pages/AdminPage/layouts/admin";
 import routes from "routes.js";
 import Navbar from "components/navbar";
 import { SidebarProvider } from './context/SidebarContext';
-import UpwardDropdown from 'components/dropup'
+import UpwardDropdown from 'components/dropup';
 
 function AppContent(props) {
   const { ...rest } = props;
@@ -120,7 +120,6 @@ function AppContent(props) {
         <Route path="/" element={<Dashboard />} />
         <Route path="/prescription-reader" element={<PrescriptionReader user={user} />} />
         <Route path="/product-scanner" element={<ProductScanner />} />
-        {user? null :  <Route path="/login-page" element={<LoginPage/>}/>}
         <Route path="/contact-us" element={<ContactUs/>}/>
 
         {/* Admin Page Routes */}
