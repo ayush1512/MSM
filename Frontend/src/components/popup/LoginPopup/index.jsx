@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import LogIn from '../../../pages/Login/LogIn';
-import SignUp from '../../../pages/Login/SignUp';
-import googleLogo from '../../../assets/google-logo.png';
-import styles from '../../../pages/Login/LoginPage.module.css';
+import LogIn from 'pages/Login/LogIn';
+import SignUp from 'pages/Login/SignUp';
+import googleLogo from 'assets/google-logo.png';
+import styles from 'pages/Login/LoginPage.module.css';
 
 export default function LoginPopup({ isOpen, onClose }) {
   const containerRef = useRef(null);
@@ -78,13 +78,10 @@ export default function LoginPopup({ isOpen, onClose }) {
                       <div className={styles['social-divider']}>
                         <span>OR</span>
                       </div>
-                      <button className={styles['google-btn']} onClick={handleGoogleAuth} type="button">
+                      <button className={`${styles['google-btn']} hover:bg-gray-100`} onClick={handleGoogleAuth} type="button">
                         <img src={googleLogo} alt="Google" />
                         Continue with Google
                       </button>
-                      <p className={styles['auth-help-text']}>
-                        By continuing with Google, a new account will be created if you don't have one already.
-                      </p>
                       <p>
                         <span>
                           Already have an account?
@@ -106,13 +103,10 @@ export default function LoginPopup({ isOpen, onClose }) {
                       <div className={styles['social-divider']}>
                         <span>OR</span>
                       </div>
-                      <button className={styles['google-btn']} onClick={handleGoogleAuth} type="button">
+                      <button className={`${styles['google-btn']} hover:bg-gray-100`} onClick={handleGoogleAuth} type="button">
                         <img src={googleLogo} alt="Google" />
                         Continue with Google
                       </button>
-                      <p className={styles['auth-help-text']}>
-                        You can sign in with your Google account
-                      </p>
                       <p>
                         <b>
                           Forgot password?

@@ -27,16 +27,13 @@ export default function LogIn(){
     };
 
     return(
-        <form onSubmit={handleSubmit}>
-            <div className={styles['input-group']}>
-                <i className='bx bxs-user'></i>
-                <input name="email" type="email" placeholder="Email" value={formData.email} onChange={handleChange} required />
-            </div>
-            <div className={styles['input-group']}>
-                <i className='bx bxs-lock-alt'></i>
-                <input type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} required />
-            </div>
-            <button>
+        <form className="flex flex-col" onSubmit={handleSubmit}>
+            <input className='h-12 border rounded-xl bg-white border-gray-300 p-3 mb-3 flex items-center justify-center text-sm outline-none dark:!border-white/10 dark:text-white' name="email" type="email" placeholder="Email" value={formData.email} onChange={handleChange} required />
+            <input className='h-12 border rounded-xl bg-white border-gray-300 p-3 mb-3 flex items-center justify-center text-sm outline-none dark:!border-white/10 dark:text-white' type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} required />
+            <button 
+                className="w-full py-2.5 px-4 bg-gray-800 text-white font-medium rounded-lg transition duration-200 ease-in-out"
+                type="submit"
+            >
                 Sign in
             </button>
         </form>

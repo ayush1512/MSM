@@ -6,10 +6,6 @@ import NFTMarketplace from "./pages/AdminPage/views/admin/marketplace";
 import Profile from "./pages/AdminPage/views/admin/profile";
 import DataTables from "./pages/AdminPage/views/admin/tables";
 
-// Auth Imports
-import SignIn from "views/auth/SignIn";
-
-
 // Icon Imports
 import {
   MdHome,
@@ -63,13 +59,6 @@ const routes = [
     path: "profile",
     icon: <MdPerson className="h-6 w-6" />,
     component: <Profile />,
-  },
-  {
-    name: "Sign In",
-    layout: "/auth",
-    path: "sign-in",
-    icon: <MdLock className="h-6 w-6" />,
-    component: <SignIn />,
-  },
+  }
 ];
 export default routes;

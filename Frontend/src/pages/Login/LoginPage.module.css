@@ -1,8 +1,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600&display=swap');
 
 .loginPage{
-    --primary-color: #4EA685;
-    --secondary-color: #57B894;
+    --primary-color: #0f766e;    /* teal-700 - works in both modes */
+    --secondary-color: #0d9488;  /* teal-600 - good for both modes */
+    --tertiary-color: #2dd4bf;   /* teal-400 - visible in dark mode */
+    --accent-color: #5eead4;     /* teal-300/brandLinear - matches site theme */
+    --deep-blue: #3b82f6;        /* blue-500 - good visibility in both modes */
+    --navy-color: #1B254B;       /* navy-700 - from theme */
+    --cyan-color: #21d4fd;       /* cyan-400 - from theme */
+    --royal-purple: #7e22ce;     /* purple */
+    --amber: #f59e0b;            /* amber/gold */
     --black: #000000;
     --white: #ffffff;
     --gray: #efefef;
@@ -94,14 +101,8 @@
     border: 0.125rem solid var(--primary-color);
 }
 
+/* Remove the button styling since we'll use Tailwind */
 .form button {
-    cursor: pointer;
-    width: 100%;
-    padding: .6rem 0;
-    border-radius: .5rem;
-    border: none;
-    background-color: var(--primary-color);
-    color: var(--white);
     font-size: 1.2rem;
     outline: none;
 }
@@ -255,7 +256,15 @@
     height: 100vh;
     width: 300vw;
     transform: translate(35%, 0);
-    background-image: linear-gradient(-45deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    background-image: linear-gradient(-45deg, 
+        var(--primary-color) 0%, 
+        var(--navy-color) 15%,
+        var(--secondary-color) 30%, 
+        var(--cyan-color) 42%,
+        var(--tertiary-color) 56%, 
+        var(--accent-color) 70%,
+        var(--deep-blue) 85%, 
+        var(--primary-color) 100%);
     transition: 1s ease-in-out;
     z-index: 6;
     box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
