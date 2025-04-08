@@ -4,11 +4,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from
 import Dashboard from "./pages/Dashboard";
 import ContactUs from './pages/ContactUs';
 import PrescriptionReader from "./pages/Prescription";
-import StockManagement from "./pages/StockManagement";
-import PaymentRecords from "./pages/PaymentRecords";
-import Billing from "./pages/Billing";
 import ProductScanner from "./pages/ProductScanner";
-import DebitCredit from "./pages/DebitCredit";
 import LoginPage from "./pages/Login/LoginPage";
 
 // Admin Page Imports
@@ -117,21 +113,18 @@ function AppContent(props) {
       <Navbar
         brandText={currentRoute}
         secondary={getActiveNavbar(routes)}
+        user={user}
         {...rest}
       />
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/prescription-reader" element={<PrescriptionReader user={user} />} />
-        <Route path="/payment-records" element={<PaymentRecords />} />
-        <Route path="/billing" element={<Billing />} />
         <Route path="/product-scanner" element={<ProductScanner />} />
-        <Route path="/stock-management" element={<StockManagement/>}/>
-        <Route path="/debit-credit" element={<DebitCredit/>}/>
         {user? null :  <Route path="/login-page" element={<LoginPage/>}/>}
         <Route path="/contact-us" element={<ContactUs/>}/>
 
         {/* Admin Page Routes */}
-        <Route path="/admin/*" element={<AdminLayout open={open} />} />
+        <Route path="/admin/*" element={<AdminLayout />} />
       </Routes>
       <UpwardDropdown />
     </>
