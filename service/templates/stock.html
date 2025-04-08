@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Inventory - Product Scanner by ayush1512</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" rel="stylesheet">
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            padding: 1rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: clamp(1rem, 4vw, 2rem);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+        }
+
+        .title {
+            text-align: center;
+            color: #1a1a1a;
+            margin-bottom: 2rem;
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            word-wrap: break-word;
+        }
+
+        .btn-primary {
+            background-color: #0066cc;
+            border-color: #0066cc;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #0052a3;
+            border-color: #0052a3;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background-color: #bb2d3b;
+            border-color: #bb2d3b;
+        }
+
+        .top-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 576px) {
+            .top-actions {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .top-actions .btn {
+                width: 100%;
+            }
+        }
+
+        .stock-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .stock-table th,
+        .stock-table td {
+            padding: 0.75rem;
+            vertical-align: middle;
+        }
+
+        .stock-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .stock-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        .stock-table tr:hover {
+            background-color: #e9ecef;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .action-buttons button {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .medicine-name {
+            font-weight: bold;
+            color: #0066cc;
+        }
+
+        .batch-details {
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+
+        .low-stock {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .expired {
+            background-color: #fff3cd;
+        }
+
+        .near-expiry {
+            background-color: #ffe6e6;
+        }
+
+        .no-stock {
+            text-align: center;
+            padding: 3rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            color: #6c757d;
+            margin: 2rem 0;
+            font-size: 1.2rem;
+        }
+
+        /* DataTables adjustments */
+        .dataTables_filter input {
+            padding: 0.375rem 0.75rem;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            margin-left: 0.5rem;
+        }
+
+        .dataTables_length select {
+            padding: 0.375rem 0.75rem;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+        }
+
+        .dataTables_info,
+        .dataTables_paginate {
+            margin-top: 1rem;
+        }
+
+        .paginate_button {
+            padding: 0.375rem 0.75rem;
+            margin: 0 0.25rem;
+            cursor: pointer;
+        }
+
+        .paginate_button.current {
+            background-color: #0066cc;
+            color: white;
+            border-radius: 0.25rem;
+        }
+
+        /* Dark mode styles */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #1a1a1a;
+                color: #fff;
+            }
+
+            .container {
+                background: #2d2d2d;
+            }
+
+            .title {
+                color: #fff;
+            }
+
+            .stock-table th {
+                background-color: #363636;
+                color: #fff;
+            }
+
+            .stock-table tr:nth-child(even) {
+                background-color: #363636;
+            }
+
+            .stock-table tr:hover {
+                background-color: #444;
+            }
+
+            .medicine-name {
+                color: #66b0ff;
+            }
+
+            .batch-details {
+                color: #ccc;
+            }
+
+            .expired {
+                background-color: rgba(255, 243, 205, 0.2);
+            }
+
+            .near-expiry {
+                background-color: rgba(255, 230, 230, 0.2);
+            }
+
+            .no-stock {
+                background-color: #363636;
+                color: #ccc;
+            }
+
+            .modal-content {
+                background-color: #2d2d2d;
+                color: #fff;
+            }
+
+            .modal-header {
+                border-bottom-color: #444;
+            }
+
+            .modal-footer {
+                border-top-color: #444;
+            }
+
+            .dataTables_filter input,
+            .dataTables_length select {
+                background-color: #363636;
+                color: #fff;
+                border-color: #444;
+            }
+
+            .dataTables_info {
+                color: #ccc;
+            }
+        }
+
+        /* Light/Dark mode toggle */
+        body.light-mode {
+            background-color: #f0f2f5;
+            color: #1a1a1a;
+        }
+
+        body.light-mode .container {
+            background: white;
+        }
+
+        body.light-mode .title {
+            color: #1a1a1a;
+        }
+
+        body.light-mode .stock-table th {
+            background-color: #f8f9fa;
+            color: #1a1a1a;
+        }
+
+        body.light-mode .stock-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        body.light-mode .stock-table tr:hover {
+            background-color: #e9ecef;
+        }
+
+        body.light-mode .medicine-name {
+            color: #0066cc;
+        }
+
+        body.light-mode .batch-details {
+            color: #6c757d;
+        }
+
+        body.light-mode .expired {
+            background-color: #fff3cd;
+        }
+
+        body.light-mode .near-expiry {
+            background-color: #ffe6e6;
+        }
+
+        body.light-mode .no-stock {
+            background-color: #f8f9fa;
+            color: #6c757d;
+        }
+
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #fff;
+        }
+
+        body.dark-mode .container {
+            background: #2d2d2d;
+        }
+
+        body.dark-mode .title {
+            color: #fff;
+        }
+
+        body.dark-mode .stock-table th {
+            background-color: #363636;
+            color: #fff;
+        }
+
+        body.dark-mode .stock-table tr:nth-child(even) {
+            background-color: #363636;
+        }
+
+        body.dark-mode .stock-table tr:hover {
+            background-color: #444;
+        }
+
+        body.dark-mode .medicine-name {
+            color: #66b0ff;
+        }
+
+        body.dark-mode .batch-details {
+            color: #ccc;
+        }
+
+        body.dark-mode .expired {
+            background-color: rgba(255, 243, 205, 0.2);
+        }
+
+        body.dark-mode .near-expiry {
+            background-color: rgba(255, 230, 230, 0.2);
+        }
+
+        body.dark-mode .no-stock {
+            background-color: #363636;
+            color: #ccc;
+        }
+
+        body.dark-mode .modal-content {
+            background-color: #2d2d2d;
+            color: #fff;
+        }
+
+        body.dark-mode .modal-header {
+            border-bottom-color: #444;
+        }
+
+        body.dark-mode .modal-footer {
+            border-top-color: #444;
+        }
+
+        body.dark-mode .dataTables_filter input,
+        body.dark-mode .dataTables_length select {
+            background-color: #363636;
+            color: #fff;
+            border-color: #444;
+        }
+
+        body.dark-mode .dataTables_info {
+            color: #ccc;
+        }
+
+        .mode-toggle {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mode-toggle.dark {
+            background: #444;
+        }
+
+        .mode-toggle .icon {
+            font-size: 1.5rem;
+        }
+
+        .mode-toggle .icon.sun {
+            display: none;
+        }
+
+        .mode-toggle.dark .icon.sun {
+            display: inline;
+        }
+
+        .mode-toggle.dark .icon.moon {
+            display: none;
+        }
+
+        body.light-mode .mode-toggle .icon.sun {
+            display: none;
+        }
+
+        body.light-mode .mode-toggle .icon.moon {
+            display: inline;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 1rem;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 0.5rem;
+        }
+
+        .nav-item {
+            list-style: none;
+        }
+
+        .nav-link {
+            color: #6c757d;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem 0.25rem 0 0;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover {
+            color: #0066cc;
+            background-color: #f8f9fa;
+        }
+
+        .nav-link.active {
+            color: #0066cc;
+            border-bottom: 2px solid #0066cc;
+        }
+
+        body.dark-mode .nav-link {
+            color: #ccc;
+        }
+
+        body.dark-mode .nav-link:hover {
+            color: #66b0ff;
+            background-color: #363636;
+        }
+
+        body.dark-mode .nav-link.active {
+            color: #66b0ff;
+            border-bottom: 2px solid #66b0ff;
+        }
+
+        .filter-options {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-select {
+            padding: 0.375rem 0.75rem;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            min-width: 200px;
+        }
+
+        @media (max-width: 768px) {
+            .top-actions {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+
+            .filter-options {
+                width: 100%;
+            }
+
+            .form-select {
+                width: 100%;
+            }
+        }
+
+        body.dark-mode .form-select {
+            background-color: #363636;
+            color: #fff;
+            border-color: #444;
+        }
+    </style>
+</head>
+
+<body>
+    <button class="mode-toggle" id="mode-toggle">
+        <span class="icon sun">☀️</span>
+        <span class="icon moon">🌙</span>
+    </button>
+
+    <div class="container">
+        <h1 class="title">Stock Inventory</h1>
+
+        <div class="nav-container">
+            <ul class="nav-tabs">
+                <li class="nav-item">
+                    <a href="/" class="nav-link">Product Scanner</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/stock" class="nav-link active">Stock Inventory</a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="top-actions">
+            <a href="/" class="btn btn-primary">Add New Stock</a>
+            <div class="filter-options">
+                <select id="expiry-filter" class="form-select">
+                    <option value="all">All Stock</option>
+                    <option value="expired">Expired Items</option>
+                    <option value="expiring-soon">Expiring Soon (3 Months)</option>
+                    <option value="valid">Valid Items</option>
+                </select>
+            </div>
+            <button id="refresh-btn" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+        </div>
+
+        <div id="stock-table-container">
+            <table id="stock-table" class="stock-table display" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>Medicine</th>
+                        <th>Batch Info</th>
+                        <th>MRP (₹)</th>
+                        <th>Quantity</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="stock-table-body">
+                    <!-- Table will be populated with JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- No stock message (initially hidden) -->
+        <div id="no-stock" class="no-stock" style="display:none;">
+            <p>No stock items found. Please add stock using the Product Scanner.</p>
+            <a href="/" class="btn btn-primary mt-3">Go to Product Scanner</a>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Stock</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-form">
+                        <input type="hidden" id="edit-stock-id">
+                        <input type="hidden" id="edit-medicine-id">
+                        <input type="hidden" id="edit-image-url">
+
+                        <div class="mb-3">
+                            <label for="edit-medicine-name" class="form-label">Medicine Name</label>
+                            <input type="text" class="form-control" id="edit-medicine-name" disabled>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit-batch-no" class="form-label">Batch Number</label>
+                            <input type="text" class="form-control" id="edit-batch-no" required>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col">
+                                <label for="edit-mfg-date" class="form-label">Mfg Date (MM/YYYY)</label>
+                                <input type="text" class="form-control" id="edit-mfg-date" required
+                                    placeholder="MM/YYYY" pattern="(0[1-9]|1[0-2])\/\d{4}">
+                            </div>
+                            <div class="col">
+                                <label for="edit-exp-date" class="form-label">Exp Date (MM/YYYY)</label>
+                                <input type="text" class="form-control" id="edit-exp-date" required
+                                    placeholder="MM/YYYY" pattern="(0[1-9]|1[0-2])\/\d{4}">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col">
+                                <label for="edit-mrp" class="form-label">MRP (₹)</label>
+                                <input type="number" class="form-control" id="edit-mrp" required step="0.01" min="0">
+                            </div>
+                            <div class="col">
+                                <label for="edit-quantity" class="form-label">Quantity</label>
+                                <input type="number" class="form-control" id="edit-quantity" required min="0">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="save-changes-btn">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete this stock item?</p>
+                    <p id="delete-medicine-name" class="fw-bold"></p>
+                    <p id="delete-batch-no" class="fw-bold"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirm-delete-btn">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer style="text-align: center; margin-top: 2rem; font-size: 0.875rem; color: #666;">
+        &copy; 2024 Product Scanner by ayush1512
+    </footer>
+
+    <script>
+        let stockTable;
+        let stockData = [];
+
+        $(document).ready(function () {
+            // Initialize mode from localStorage
+            const currentMode = localStorage.getItem('mode') || 'light';
+            document.body.classList.add(`${currentMode}-mode`);
+            if (currentMode === 'dark') {
+                document.getElementById('mode-toggle').classList.add('dark');
+            }
+
+            // Initialize DataTable
+            stockTable = $('#stock-table').DataTable({
+                responsive: true,
+                columns: [
+                    { data: 'medicine_info' },
+                    { data: 'batch_info' },
+                    { data: 'mrp' },
+                    { data: 'quantity' },
+                    { data: 'actions', orderable: false }
+                ],
+                language: {
+                    emptyTable: "No stock items found"
+                }
+            });
+
+            // Load stock data
+            fetchStockData();
+
+            // Refresh button
+            $('#refresh-btn').on('click', fetchStockData);
+
+            // Mode toggle
+            $('#mode-toggle').on('click', function() {
+                document.body.classList.toggle('dark-mode');
+                document.body.classList.toggle('light-mode');
+                this.classList.toggle('dark');
+
+                const newMode = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
+                localStorage.setItem('mode', newMode);
+            });
+
+            // Add expiry filter change event
+            $('#expiry-filter').on('change', function() {
+                const filterValue = $(this).val();
+                filterByExpiry(filterValue);
+            });
+
+            // Edit modal
+            $('#editModal').on('show.bs.modal', function (event) {
+                const button = $(event.relatedTarget);
+                const stockId = button.data('stock-id');
+                const stock = stockData.find(s => s._id === stockId);
+                
+                if (stock) {
+                    $('#edit-stock-id').val(stock._id);
+                    $('#edit-medicine-id').val(stock.medicine_id);
+                    $('#edit-medicine-name').val(stock.medicine?.product_name || 'Unknown');
+                    $('#edit-batch-no').val(stock.batch_no);
+                    $('#edit-mfg-date').val(stock.mfg_date);
+                    $('#edit-exp-date').val(stock.exp_date);
+                    $('#edit-mrp').val(stock.mrp);
+                    $('#edit-quantity').val(stock.quantity);
+                    $('#edit-image-url').val(stock.image_url);
+                }
+            });
+
+            // Delete modal
+            $('#deleteModal').on('show.bs.modal', function (event) {
+                const button = $(event.relatedTarget);
+                const stockId = button.data('stock-id');
+                const stock = stockData.find(s => s._id === stockId);
+                
+                if (stock) {
+                    $('#delete-medicine-name').text(stock.medicine?.product_name || 'Unknown');
+                    $('#delete-batch-no').text(`Batch: ${stock.batch_no}`);
+                    $('#confirm-delete-btn').data('stock-id', stockId);
+                }
+            });
+
+            // Save changes button
+            $('#save-changes-btn').on('click', function() {
+                if (!validateForm()) return;
+                
+                const stockId = $('#edit-stock-id').val();
+                const stockData = {
+                    medicine_id: $('#edit-medicine-id').val(),
+                    batch_no: $('#edit-batch-no').val(),
+                    mfg_date: $('#edit-mfg-date').val(),
+                    exp_date: $('#edit-exp-date').val(),
+                    mrp: parseFloat($('#edit-mrp').val()),
+                    quantity: parseInt($('#edit-quantity').val()),
+                    image_url: $('#edit-image-url').val()
+                };
+
+                updateStock(stockId, stockData);
+                $('#editModal').modal('hide');
+            });
+
+            // Confirm delete button
+            $('#confirm-delete-btn').on('click', function() {
+                const stockId = $(this).data('stock-id');
+                deleteStock(stockId);
+                $('#deleteModal').modal('hide');
+            });
+        });
+
+        function validateForm() {
+            const form = document.getElementById('edit-form');
+            if (!form.checkValidity()) {
+                // Create and dispatch an event to show validation errors
+                form.reportValidity();
+                return false;
+            }
+            
+            // Additional validation for date formats
+            const mfgDate = $('#edit-mfg-date').val();
+            const expDate = $('#edit-exp-date').val();
+            const datePattern = /^(0[1-9]|1[0-2])\/\d{4}$/;
+            
+            if (!datePattern.test(mfgDate)) {
+                alert('Manufacturing date should be in MM/YYYY format');
+                return false;
+            }
+            
+            if (!datePattern.test(expDate)) {
+                alert('Expiry date should be in MM/YYYY format');
+                return false;
+            }
+            
+            return true;
+        }
+
+        function fetchStockData() {
+            $.ajax({
+                url: '/stock',
+                type: 'GET',
+                success: function(data) {
+                    stockData = data;
+                    updateStockTable(data);
+                },
+                error: function(error) {
+                    console.error('Error fetching stock data:', error);
+                    showError('Failed to fetch stock data. Please try again.');
+                }
+            });
+        }
+
+        function updateStockTable(data) {
+            stockTable.clear();
+            
+            if (data.length === 0) {
+                $('#stock-table-container').hide();
+                $('#no-stock').show();
+                return;
+            }
+            
+            $('#stock-table-container').show();
+            $('#no-stock').hide();
+            
+            data.forEach(function(stock) {
+                const medicineName = stock.medicine ? stock.medicine.product_name : 'Unknown';
+                const manufacturer = stock.medicine ? stock.medicine.product_manufactured : 'Unknown';
+                
+                // Check if the product is expired or near expiry
+                let rowClass = '';
+                if (isExpired(stock.exp_date)) {
+                    rowClass = 'expired';
+                } else if (isNearExpiry(stock.exp_date)) {
+                    rowClass = 'near-expiry';
+                }
+                
+                stockTable.row.add({
+                    DT_RowClass: rowClass,
+                    medicine_info: `<div class="medicine-name">${medicineName}</div><div>${manufacturer}</div>`,
+                    batch_info: `<div>Batch: ${stock.batch_no}</div><div class="batch-details">Mfg: ${stock.mfg_date}</div><div class="batch-details">Exp: ${stock.exp_date}</div>`,
+                    mrp: `₹${stock.mrp.toFixed(2)}`,
+                    quantity: `<span class="${stock.quantity <= 5 ? 'low-stock' : ''}">${stock.quantity}</span>`,
+                    actions: `
+                        <div class="action-buttons">
+                            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editModal" data-stock-id="${stock._id}">Edit</button>
+                            <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal" data-stock-id="${stock._id}">Delete</button>
+                        </div>
+                    `
+                }).draw(false);
+            });
+        }
+
+        function isExpired(expDate) {
+            if (!expDate) return false;
+            
+            const parts = expDate.split('/');
+            if (parts.length !== 2) return false;
+            
+            const expMonth = parseInt(parts[0]) - 1; // JavaScript months are 0-based
+            const expYear = parseInt(parts[1]);
+            const expiry = new Date(expYear, expMonth + 1, 0); // Last day of expiry month
+            
+            return expiry < new Date();
+        }
+
+        function isNearExpiry(expDate) {
+            if (!expDate) return false;
+            if (isExpired(expDate)) return false;
+            
+            const parts = expDate.split('/');
+            if (parts.length !== 2) return false;
+            
+            const expMonth = parseInt(parts[0]) - 1; // JavaScript months are 0-based
+            const expYear = parseInt(parts[1]);
+            const expiry = new Date(expYear, expMonth + 1, 0); // Last day of expiry month
+            
+            const now = new Date();
+            const threeMonthsFromNow = new Date();
+            threeMonthsFromNow.setMonth(now.getMonth() + 3);
+            
+            return expiry <= threeMonthsFromNow;
+        }
+
+        function filterByExpiry(filter) {
+            if (filter === 'all') {
+                updateStockTable(stockData);
+                return;
+            }
+            
+            const filteredData = stockData.filter(stock => {
+                switch(filter) {
+                    case 'expired':
+                        return isExpired(stock.exp_date);
+                    case 'expiring-soon':
+                        return !isExpired(stock.exp_date) && isNearExpiry(stock.exp_date);
+                    case 'valid':
+                        return !isExpired(stock.exp_date) && !isNearExpiry(stock.exp_date);
+                    default:
+                        return true;
+                }
+            });
+            
+            updateStockTable(filteredData);
+        }
+
+        function updateStock(stockId, stockData) {
+            $.ajax({
+                url: '/update_stock',
+                type: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(stockData),
+                success: function(data) {
+                    showSuccess('Stock updated successfully');
+                    fetchStockData(); // Refresh data
+                },
+                error: function(error) {
+                    console.error('Error updating stock:', error);
+                    showError('Failed to update stock. Please try again.');
+                }
+            });
+        }
+
+        function deleteStock(stockId) {
+            $.ajax({
+                url: '/stock/' + stockId,
+                type: 'DELETE',
+                success: function() {
+                    showSuccess('Stock deleted successfully');
+                    fetchStockData(); // Refresh data
+                },
+                error: function(error) {
+                    console.error('Error deleting stock:', error);
+                    showError('Failed to delete stock. Please try again.');
+                }
+            });
+        }
+
+        function showSuccess(message) {
+            alert(message); // Replace with a more stylish notification system
+        }
+
+        function showError(message) {
+            alert('Error: ' + message); // Replace with a more stylish notification system
+        }
+    </script>
+</body>
+
+</html>

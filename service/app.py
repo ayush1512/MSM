@@ -100,6 +100,13 @@ def search_medicine():
                 {'product_manufactured': {'$regex': search_term, '$options': 'i'}}
             ]
         }))
+        # medicines = list(stock_collection.find({
+        #     '$or': [
+        #         {'product_name': {'$regex': search_term, '$options': 'i'}},
+        #         {'product_manufactured': {'$regex': search_term, '$options': 'i'}}
+        #     ]
+        # }))
+
 
         # Convert ObjectId to string for JSON serialization
         for med in medicines:
@@ -315,6 +322,56 @@ def update_stock():
     except Exception as e:
         logging.error(f"Error updating stock: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+@app.route('/stock', methods=['GET'])
+def get_stock():
+    try:
+        # Get all stock entries with medicine details
+        stocks = list(stock_collection.find())
+        
+        # Process the results for JSON serialization
+        for stock in stocks:
+            stock['_id'] = str(stock['_id'])
+            
+            # Check if medicine_id exists and convert it to string if it does
+            if 'medicine_id' in stock and stock['medicine_id']:
+                stock['medicine_id'] = str(stock['medicine_id'])
+                
+                # Try to fetch the associated medicine
+                try:
+                    medicine = medicine_collection.find_one({'_id': ObjectId(stock['medicine_id'])})
+                    if medicine:
+                        medicine['_id'] = str(medicine['_id'])
+                        stock['medicine'] = medicine
+                except Exception as e:
+                    logging.warning(f"Error fetching medicine for stock: {str(e)}")
+                    stock['medicine'] = None
+            else:
+                stock['medicine'] = None
+                
+        return jsonify(stocks), 200
+
+    except Exception as e:
+        logging.error(f"Error fetching stock data: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/stock/<stock_id>', methods=['DELETE'])
+def delete_stock(stock_id):
+    try:
+        result = stock_collection.delete_one({'_id': ObjectId(stock_id)})
+        
+        if result.deleted_count == 0:
+            return jsonify({'error': 'Stock not found'}), 404
+            
+        return jsonify({'message': 'Stock deleted successfully'}), 200
+
+    except Exception as e:
+        logging.error(f"Error deleting stock: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/stock_page')
+def stock_page():
+    return render_template('stock.html')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
