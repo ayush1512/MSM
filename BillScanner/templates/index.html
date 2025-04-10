@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bill Scanner</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .result-card {
+            margin-bottom: 20px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .result-image {
+            max-width: 100%;
+            height: auto;
+        }
+        .loader {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        #uploadForm {
+            margin-bottom: 30px;
+        }
+        .tab-content {
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+        }
+        .past-bills {
+            margin-top: 40px;
+        }
+        .bill-card {
+            margin-bottom: 30px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .bill-header {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .editable-table td input {
+            width: 100%;
+            border: none;
+            background-color: transparent;
+        }
+        .editable-table td input:focus {
+            outline: 1px solid #80bdff;
+            background-color: #f8f9fa;
+        }
+        .products-container {
+            margin-top: 20px;
+        }
+        .action-buttons {
+            margin-top: 15px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">Bill Scanner</h1>
+        
+        <form id="uploadForm">
+            <div class="mb-3">
+                <label for="billFile" class="form-label">Upload Bill (PDF or Image)</label>
+                <input type="file" class="form-control" id="billFile" name="bill" accept=".pdf,.jpg,.jpeg,.png">
+                <div class="form-text">Supported formats: PDF, JPG, PNG</div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Upload and Process</button>
+        </form>
+        
+        <div class="loader" id="processingLoader">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Processing your bill. This may take a moment...</p>
+        </div>
+        
+        <div id="resultsContainer"></div>
+        
+        <div class="past-bills">
+            <h3 class="mb-3">Past Bills</h3>
+            <div class="mb-4">
+                <div class="row g-3 align-items-center">
+                    <div class="col-auto">
+                        <label for="dateFilter" class="col-form-label">Filter by date:</label>
+                    </div>
+                    <div class="col-auto">
+                        <input type="date" class="form-control" id="dateFilter">
+                    </div>
+                    <div class="col-auto">
+                        <button type="button" class="btn btn-outline-primary" id="applyFilter">Apply</button>
+                        <button type="button" class="btn btn-outline-secondary" id="resetFilter">Reset</button>
+                    </div>
+                </div>
+            </div>
+            <div id="pastBillsList" class="list-group"></div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadForm = document.getElementById('uploadForm');
+            const processingLoader = document.getElementById('processingLoader');
+            const resultsContainer = document.getElementById('resultsContainer');
+            const pastBillsList = document.getElementById('pastBillsList');
+            const dateFilter = document.getElementById('dateFilter');
+            const applyFilter = document.getElementById('applyFilter');
+            const resetFilter = document.getElementById('resetFilter');
+            
+            // Load past bills
+            fetchPastBills();
+            
+            uploadForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const fileInput = document.getElementById('billFile');
+                
+                if (fileInput.files.length === 0) {
+                    alert('Please select a file to upload');
+                    return;
+                }
+                
+                const formData = new FormData();
+                formData.append('bill', fileInput.files[0]);
+                
+                // Show loader
+                processingLoader.style.display = 'block';
+                resultsContainer.innerHTML = '';
+                
+                try {
+                    const response = await fetch('/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        alert('Error: ' + data.error);
+                        return;
+                    }
+                    
+                    displayResults(data);
+                    // Refresh past bills list
+                    fetchPastBills();
+                    
+                } catch (error) {
+                    alert('Error: ' + error.message);
+                    console.error('Error:', error);
+                } finally {
+                    // Hide loader
+                    processingLoader.style.display = 'none';
+                }
+            });
+            
+            function displayResults(data) {
+                resultsContainer.innerHTML = '<h3 class="mb-3">Processing Results</h3>';
+                
+                if (data.results && Array.isArray(data.results)) {
+                    // Multiple bills from PDF
+                    data.results.forEach((result, index) => {
+                        createBillCard(result, index);
+                    });
+                } else {
+                    // Single bill (image upload)
+                    createBillCard(data);
+                }
+            }
+            
+            function createBillCard(bill, index = null) {
+                const billCard = document.createElement('div');
+                billCard.className = 'bill-card';
+                
+                const billId = bill.bill_id;
+                const billIndex = index !== null ? index + 1 : '';
+                
+                // Bill header
+                const billHeader = document.createElement('div');
+                billHeader.className = 'bill-header';
+                billHeader.innerHTML = `<h4>Bill ${billIndex} ${bill.bill_details.bill_number ? `#${bill.bill_details.bill_number}` : ''}</h4>`;
+                
+                // Bill body
+                const billBody = document.createElement('div');
+                billBody.className = 'card-body p-3';
+                
+                // Bill image
+                const img = document.createElement('img');
+                img.className = 'result-image mb-3';
+                img.src = bill.image_url;
+                img.alt = 'Bill Image';
+                
+                // Bill details section
+                const detailsCard = document.createElement('div');
+                detailsCard.className = 'card mb-3';
+                
+                const detailsHeader = document.createElement('div');
+                detailsHeader.className = 'card-header';
+                detailsHeader.innerHTML = '<h5>Bill Details</h5>';
+                
+                const detailsBody = document.createElement('div');
+                detailsBody.className = 'card-body';
+                
+                let detailsContent = '';
+                if (bill.bill_details && Object.keys(bill.bill_details).length > 0) {
+                    const details = bill.bill_details;
+                    detailsContent += `
+                        <dl class="row">
+                            ${Object.entries(details).map(([key, value]) => `
+                                <dt class="col-sm-4">${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</dt>
+                                <dd class="col-sm-8">${value}</dd>
+                            `).join('')}
+                        </dl>
+                    `;
+                } else {
+                    detailsContent = '<p>No bill details extracted</p>';
+                }
+                
+                detailsBody.innerHTML = detailsContent;
+                detailsCard.appendChild(detailsHeader);
+                detailsCard.appendChild(detailsBody);
+                
+                // Products section with editable table
+                const productsSection = document.createElement('div');
+                productsSection.className = 'products-container';
+                productsSection.innerHTML = '<h5>Products</h5>';
+                
+                // Create editable products table
+                const productsTable = createProductsTable(bill.products, billId);
+                productsSection.appendChild(productsTable);
+                
+                // Add action buttons
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'action-buttons';
+                
+                // Add new product row button
+                const addRowBtn = document.createElement('button');
+                addRowBtn.className = 'btn btn-outline-primary btn-sm';
+                addRowBtn.innerHTML = '<i class="bi bi-plus"></i> Add Product';
+                addRowBtn.addEventListener('click', () => addProductRow(billId));
+                
+                // Save to stock button
+                const saveBtn = document.createElement('button');
+                saveBtn.className = 'btn btn-success';
+                saveBtn.textContent = 'Save Products to Stock';
+                saveBtn.addEventListener('click', () => saveProductsToStock(billId));
+                
+                actionsDiv.appendChild(addRowBtn);
+                actionsDiv.appendChild(saveBtn);
+                productsSection.appendChild(actionsDiv);
+                
+                // Extracted text (for reference)
+                const extractedTextCard = document.createElement('div');
+                extractedTextCard.className = 'card mt-3';
+                
+                const extractedHeader = document.createElement('div');
+                extractedHeader.className = 'card-header';
+                extractedHeader.innerHTML = '<h5>Extracted Text</h5>';
+                
+                const extractedCollapse = document.createElement('div');
+                extractedCollapse.className = 'collapse';
+                extractedCollapse.id = `extractedText-${billId}`;
+                
+                const extractedBody = document.createElement('div');
+                extractedBody.className = 'card-body';
+                
+                const extractedPre = document.createElement('pre');
+                extractedPre.className = 'p-3 bg-light';
+                extractedPre.textContent = bill.extracted_text || 'No text extracted';
+                
+                extractedBody.appendChild(extractedPre);
+                extractedCollapse.appendChild(extractedBody);
+                
+                const toggleTextBtn = document.createElement('button');
+                toggleTextBtn.className = 'btn btn-link w-100 text-start';
+                toggleTextBtn.setAttribute('data-bs-toggle', 'collapse');
+                toggleTextBtn.setAttribute('data-bs-target', `#extractedText-${billId}`);
+                toggleTextBtn.textContent = 'Show/Hide Extracted Text';
+                
+                extractedTextCard.appendChild(extractedHeader);
+                extractedTextCard.appendChild(toggleTextBtn);
+                extractedTextCard.appendChild(extractedCollapse);
+                
+                // Append all sections to the bill body
+                billBody.appendChild(img);
+                billBody.appendChild(detailsCard);
+                billBody.appendChild(productsSection);
+                billBody.appendChild(extractedTextCard);
+                
+                // Assemble the complete bill card
+                billCard.appendChild(billHeader);
+                billCard.appendChild(billBody);
+                
+                // Add the card to results container
+                resultsContainer.appendChild(billCard);
+            }
+            
+            function createProductsTable(products, billId) {
+                const tableContainer = document.createElement('div');
+                tableContainer.className = 'table-responsive';
+                
+                const table = document.createElement('table');
+                table.className = 'table table-bordered editable-table';
+                table.id = `products-table-${billId}`;
+                
+                // Create table header
+                const thead = document.createElement('thead');
+                thead.className = 'table-light';
+                thead.innerHTML = `
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Quantity</th>
+                        <th>Batch Number</th>
+                        <th>Expiry Date</th>
+                        <th>Price</th>
+                        <th>Total Price</th>
+                        <th>Actions</th>
+                    </tr>
+                `;
+                
+                // Create table body
+                const tbody = document.createElement('tbody');
+                
+                // Add product rows
+                if (products && products.length > 0) {
+                    products.forEach((product, idx) => {
+                        tbody.appendChild(createProductRowElement(product, idx));
+                    });
+                } else {
+                    // Empty row if no products
+                    const emptyRow = document.createElement('tr');
+                    emptyRow.innerHTML = '<td colspan="6" class="text-center">No products detected</td>';
+                    tbody.appendChild(emptyRow);
+                }
+                
+                table.appendChild(thead);
+                table.appendChild(tbody);
+                tableContainer.appendChild(table);
+                
+                return tableContainer;
+            }
+            
+            function createProductRowElement(product, index) {
+                const row = document.createElement('tr');
+                row.dataset.index = index;
+                
+                // Product name cell
+                const nameCell = document.createElement('td');
+                const nameInput = document.createElement('input');
+                nameInput.type = 'text';
+                nameInput.value = product.product_name || '';
+                nameInput.dataset.field = 'product_name';
+                nameCell.appendChild(nameInput);
+                
+                // Quantity cell
+                const qtyCell = document.createElement('td');
+                const qtyInput = document.createElement('input');
+                qtyInput.type = 'number';
+                qtyInput.value = product.quantity || '';
+                qtyInput.dataset.field = 'quantity';
+                qtyCell.appendChild(qtyInput);
+                
+                // Batch number cell
+                const batchCell = document.createElement('td');
+                const batchInput = document.createElement('input');
+                batchInput.type = 'text';
+                batchInput.value = product.batch_number || '';
+                batchInput.dataset.field = 'batch_number';
+                batchCell.appendChild(batchInput);
+                
+                // Expiration date cell
+                const expDateCell = document.createElement('td');
+                const expDateInput = document.createElement('input');
+                expDateInput.type = 'text';
+                expDateInput.value = product.exp_date || '';
+                expDateInput.dataset.field = 'exp_date';
+                expDateCell.appendChild(expDateInput);
+                
+                // Price cell
+                const priceCell = document.createElement('td');
+                const priceInput = document.createElement('input');
+                priceInput.type = 'number';
+                priceInput.step = '0.01';
+                priceInput.value = product.price || '';
+                priceInput.dataset.field = 'price';
+                priceInput.addEventListener('change', function() {
+                    updateTotalPrice(row);
+                });
+                priceCell.appendChild(priceInput);
+                
+                // Total price cell
+                const totalCell = document.createElement('td');
+                const totalInput = document.createElement('input');
+                totalInput.type = 'number';
+                totalInput.step = '0.01';
+                totalInput.value = product.total_price || '';
+                totalInput.dataset.field = 'total_price';
+                totalCell.appendChild(totalInput);
+                
+                // Actions cell
+                const actionsCell = document.createElement('td');
+                actionsCell.style.width = '80px';
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn btn-sm btn-outline-danger';
+                deleteBtn.innerHTML = '&times;';
+                deleteBtn.title = 'Delete this product';
+                deleteBtn.addEventListener('click', function() {
+                    row.remove();
+                });
+                
+                actionsCell.appendChild(deleteBtn);
+                
+                // Add all cells to the row
+                row.appendChild(nameCell);
+                row.appendChild(qtyCell);
+                row.appendChild(batchCell);
+                row.appendChild(priceCell);
+                row.appendChild(totalCell);
+                row.appendChild(actionsCell);
+                
+                return row;
+            }
+            
+            function updateTotalPrice(row) {
+                const qtyInput = row.querySelector('input[data-field="quantity"]');
+                const priceInput = row.querySelector('input[data-field="price"]');
+                const totalInput = row.querySelector('input[data-field="total_price"]');
+                
+                const qty = parseFloat(qtyInput.value) || 0;
+                const price = parseFloat(priceInput.value) || 0;
+                
+                totalInput.value = (qty * price).toFixed(2);
+            }
+            
+            function addProductRow(billId) {
+                const table = document.getElementById(`products-table-${billId}`);
+                const tbody = table.querySelector('tbody');
+                
+                // If the table has an "empty" message row, remove it
+                if (tbody.children.length === 1 && tbody.children[0].cells.length === 1) {
+                    tbody.innerHTML = '';
+                }
+                
+                // Create a new empty product row
+                const emptyProduct = {
+                    product_name: '',
+                    quantity: '',
+                    batch_number: '',
+                    exp_date: '',
+                    price: '',
+                    total_price: ''
+                };
+                
+                const newRow = createProductRowElement(emptyProduct, tbody.children.length);
+                tbody.appendChild(newRow);
+            }
+            
+            function saveProductsToStock(billId) {
+                // Collect all product data from the table
+                const table = document.getElementById(`products-table-${billId}`);
+                const tbody = table.querySelector('tbody');
+                
+                // Check if there are products to save
+                if (tbody.children.length === 0 || (tbody.children.length === 1 && tbody.children[0].cells.length === 1)) {
+                    alert('No products to save');
+                    return;
+                }
+                
+                const products = [];
+                
+                // Iterate through rows
+                for (let i = 0; i < tbody.children.length; i++) {
+                    const row = tbody.children[i];
+                    
+                    // Skip rows that are message rows
+                    if (row.cells.length === 1) continue;
+                    
+                    const product = {
+                        bill_id: billId,
+                        product_name: row.querySelector('input[data-field="product_name"]').value,
+                        quantity: parseFloat(row.querySelector('input[data-field="quantity"]').value) || 0,
+                        batch_number: row.querySelector('input[data-field="batch_number"]').value,
+                        price: parseFloat(row.querySelector('input[data-field="price"]').value) || 0,
+                        total_price: parseFloat(row.querySelector('input[data-field="total_price"]').value) || 0,
+                        exp_date: row.querySelector('input[data-field="exp_date"]').value,  // Added expiration date
+                        date_added: new Date().toISOString()
+                    };
+                    
+                    // Validate product data
+                    if (!product.product_name) {
+                        alert(`Row ${i+1}: Product name is required`);
+                        return;
+                    }
+                    
+                    products.push(product);
+                }
+                
+                // Send data to server
+                saveProductsToAPI(products);
+            }
+            
+            async function saveProductsToAPI(products) {
+                try {
+                    const response = await fetch('/save-products', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            products: products
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.error) {
+                        alert('Error: ' + result.error);
+                        return;
+                    }
+                    
+                    alert(`Success! ${result.message}`);
+                    
+                } catch (error) {
+                    alert('Error: ' + error.message);
+                    console.error('Error saving products:', error);
+                }
+            }
+            
+            async function fetchPastBills() {
+                try {
+                    const response = await fetch('/bills');
+                    const bills = await response.json();
+                    
+                    pastBillsList.innerHTML = '';
+                    
+                    if (bills.length === 0) {
+                        pastBillsList.innerHTML = '<p>No past bills found</p>';
+                        return;
+                    }
+                    
+                    bills.forEach(bill => {
+                        const item = document.createElement('a');
+                        item.className = 'list-group-item list-group-item-action';
+                        item.href = `#${bill._id}`;
+                        item.dataset.id = bill._id;
+                        
+                        const date = new Date(bill.upload_date);
+                        const fileName = bill.original_filename;
+                        
+                        // Get bill number if available
+                        const billNumber = bill.bill_details && bill.bill_details.bill_number ? 
+                            `#${bill.bill_details.bill_number}` : '';
+                        
+                        const billDate = bill.bill_details && bill.bill_details.bill_date ?
+                            ` - ${bill.bill_details.bill_date}` : '';
+                        
+                        item.innerHTML = `
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">${billNumber} ${billDate}</h5>
+                                <small>${date.toLocaleString()}</small>
+                            </div>
+                            <p class="mb-1">${fileName}</p>
+                        `;
+                        
+                        item.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            fetchBillDetails(bill._id);
+                        });
+                        
+                        pastBillsList.appendChild(item);
+                    });
+                    
+                } catch (error) {
+                    console.error('Error fetching past bills:', error);
+                    pastBillsList.innerHTML = '<p class="text-danger">Failed to load past bills</p>';
+                }
+            }
+            
+            async function fetchBillDetails(billId) {
+                try {
+                    const response = await fetch(`/bills/${billId}`);
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        alert('Error: ' + data.error);
+                        return;
+                    }
+                    
+                    // Display the single bill
+                    resultsContainer.innerHTML = '<h3 class="mb-3">Bill Details</h3>';
+                    createBillCard(data);
+                    
+                    // Scroll to results
+                    resultsContainer.scrollIntoView({ behavior: 'smooth' });
+                    
+                } catch (error) {
+                    alert('Error: ' + error.message);
+                    console.error('Error:', error);
+                }
+            }
+            
+            applyFilter.addEventListener('click', function() {
+                const filterDate = dateFilter.value;
+                if (!filterDate) {
+                    alert('Please select a date to filter');
+                    return;
+                }
+                
+                // Use server-side filtering
+                fetchPastBillsByDate(filterDate);
+            });
+            
+            resetFilter.addEventListener('click', function() {
+                dateFilter.value = '';
+                fetchPastBills();
+            });
+            
+            async function fetchPastBillsByDate(date) {
+                try {
+                    const response = await fetch(`/bills?date=${date}`);
+                    const bills = await response.json();
+                    
+                    pastBillsList.innerHTML = '';
+                    
+                    if (bills.length === 0) {
+                        pastBillsList.innerHTML = '<p>No bills found for the selected date</p>';
+                        return;
+                    }
+                    
+                    bills.forEach(bill => {
+                        const item = document.createElement('a');
+                        item.className = 'list-group-item list-group-item-action';
+                        item.href = `#${bill._id}`;
+                        item.dataset.id = bill._id;
+                        
+                        const date = new Date(bill.upload_date);
+                        const fileName = bill.original_filename;
+                        
+                        // Get bill number if available
+                        const billNumber = bill.bill_details && bill.bill_details.bill_number ? 
+                            `#${bill.bill_details.bill_number}` : '';
+                        
+                        const billDate = bill.bill_details && bill.bill_details.bill_date ?
+                            ` - ${bill.bill_details.bill_date}` : '';
+                        
+                        item.innerHTML = `
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">${billNumber} ${billDate}</h5>
+                                <small>${date.toLocaleString()}</small>
+                            </div>
+                            <p class="mb-1">${fileName}</p>
+                        `;
+                        
+                        item.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            fetchBillDetails(bill._id);
+                        });
+                        
+                        pastBillsList.appendChild(item);
+                    });
+                    
+                } catch (error) {
+                    console.error('Error fetching filtered bills:', error);
+                    pastBillsList.innerHTML = '<p class="text-danger">Failed to load filtered bills</p>';
+                }
+            }
+        });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+</body>
+</html>
