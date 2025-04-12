@@ -1,34 +1,33 @@
 import React, { useState } from "react";
 import Dropdown from "components/dropdown";
 import { FiAlignJustify } from "react-icons/fi";
-import { Link, Routes, Route, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { BsArrowBarUp } from "react-icons/bs";
 import { FiSearch } from "react-icons/fi";
 import { RiMoonFill, RiSunFill } from "react-icons/ri";
 import { IoMdNotificationsOutline } from "react-icons/io";
 import avatar from "assets/img/avatars/avatar4.png";
 import { useSidebar } from 'context/SidebarContext';
+import { useUser } from 'context/UserContext';
 import MiddleNav from "./middleNav";
-import axios from "axios";
 import LoginPopup from "../popup/LoginPopup";
 
 const Navbar = (props) => {
-  const { brandText, user } = props;
+  const { brandText } = props;
   const { toggleSidebar } = useSidebar();
   const [darkmode, setDarkmode] = React.useState(false);
   const [loginPopupOpen, setLoginPopupOpen] = useState(false);
-
+  const { user, userInfo, logout } = useUser();
+  
   const navigate = useNavigate();
-  const handleLogout = () => {
-    axios.get("http://localhost:5000/logout", { withCredentials: true })
-      .then(() => {
-        alert("Logout successful");
-        navigate("/");
-        window.location.reload();
-      })
-      .catch((error)=> {
-        console.error("Logout failed:", error);
-      })
+  
+  const handleLogout = async () => {
+    const result = await logout();
+    if (result.success) {
+      navigate("/");
+    } else {
+      console.error("Logout failed:", result.error);
+    }
   };
 
   return (
@@ -124,7 +123,7 @@ const Navbar = (props) => {
             
             ):(
 
-            <>  
+            <>
               {/* start Notification */}
               <Dropdown
                 button={
@@ -181,8 +180,8 @@ const Navbar = (props) => {
                 button={
                   <img
                     className="h-10 w-10 rounded-full"
-                    src={avatar}
-                    alt="Elon Musk"
+                    src={userInfo?.image_data || avatar}
+                    alt="User Avatar"
                   />
                 }
                 children={
@@ -190,7 +189,7 @@ const Navbar = (props) => {
                     <div className="p-4">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-bold text-navy-700 dark:text-white">
-                          👋 Hey, Adela
+                          👋 Hey, {userInfo?.username || user}
                         </p>{" "}
                       </div>
                     </div>
@@ -198,7 +197,7 @@ const Navbar = (props) => {
 
                     <div className="flex flex-col p-4">
                       <a
-                        href=" "
+                        href="/admin/profile"
                         className="text-sm text-gray-800 dark:text-white hover:dark:text-white"
                       >
                         Profile Settings

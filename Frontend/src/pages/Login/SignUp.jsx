@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import axios from "axios";
 import styles from "./LoginPage.module.css";
+import { UserContext } from "context/UserContext";
 
 export default function SignUp() {
+    const { setUser } = useContext(UserContext);
     const [formData, setFormData] = useState({
         username: "",
         email: "",
@@ -49,8 +51,9 @@ export default function SignUp() {
             );
             
             setSuccess(response.data.message || "Signup successful!");
+            setUser(response.data.user); // Update user context
             
-            // Reload page or redirect after successful signup
+            // Reload page after successful signup
             setTimeout(() => {
                 window.location.reload();
             }, 1500);

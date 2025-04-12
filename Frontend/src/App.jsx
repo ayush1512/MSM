@@ -1,11 +1,9 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import ContactUs from './pages/ContactUs';
 import PrescriptionReader from "./pages/Prescription";
 import ProductScanner from "./pages/ProductScanner";
-import LoginPage from "./pages/Login/LoginPage";
 
 // Admin Page Imports
 import AdminLayout from "./pages/AdminPage/layouts/admin";
@@ -13,14 +11,14 @@ import routes from "routes.js";
 import Navbar from "components/navbar";
 import { SidebarProvider } from './context/SidebarContext';
 import UpwardDropdown from 'components/dropup';
+import { UserProvider, useUser } from './context/UserContext';
 
 function AppContent(props) {
   const { ...rest } = props;
   const location = useLocation();
   const [currentRoute, setCurrentRoute] = React.useState("Home Page");
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading } = useUser();
 
   // Advance
   React.useEffect(() => {
@@ -40,6 +38,7 @@ function AppContent(props) {
     }
     return activeRoute;
   };
+  
   const getActiveNavbar = (routes) => {
     let activeNavbar = false;
     for (let i = 0; i < routes.length; i++) {
@@ -52,10 +51,8 @@ function AppContent(props) {
     return activeNavbar;
   };
 
-
-  // Normal
+  // Check URL parameters for auth success
   useEffect(() => {
-    // Check URL parameters for auth success
     const params = new URLSearchParams(location.search);
     const authSuccess = params.get('auth_success');
     const authAction = params.get('auth_action');
@@ -72,25 +69,6 @@ function AppContent(props) {
         : `Welcome back, ${email}`;
       setTimeout(() => alert(message), 500);
     }
-    
-    // Use environment variable for API URL
-    const apiUrl = import.meta.env.VITE_API_URL;
-    
-    axios.get(`${apiUrl}/check-login`, { 
-      withCredentials: true,
-      timeout: 4000
-    })
-      .then(response => {
-        console.log("Login response:", response.data);
-        setUser(response.data.email);
-      })
-      .catch(error => {
-        console.log("Login check failed:", error.message);
-        setUser(null);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
   }, [location.search, navigate]);
 
   // Simple loading indicator
@@ -109,16 +87,14 @@ function AppContent(props) {
 
   return (
     <>
-      {/* <Navbar user={user} /> */}
       <Navbar
         brandText={currentRoute}
         secondary={getActiveNavbar(routes)}
-        user={user}
         {...rest}
       />
       <Routes>
         <Route path="/" element={<Dashboard />} />
-        <Route path="/prescription-reader" element={<PrescriptionReader user={user} />} />
+        <Route path="/prescription-reader" element={<PrescriptionReader />} />
         <Route path="/product-scanner" element={<ProductScanner />} />
         <Route path="/contact-us" element={<ContactUs/>}/>
 
@@ -133,9 +109,11 @@ function AppContent(props) {
 function App(props) {
   return (
     <Router>
-      <SidebarProvider>
-        <AppContent props={props} />
-      </SidebarProvider>
+      <UserProvider>
+        <SidebarProvider>
+          <AppContent {...props} />
+        </SidebarProvider>
+      </UserProvider>
     </Router>
   );
 }

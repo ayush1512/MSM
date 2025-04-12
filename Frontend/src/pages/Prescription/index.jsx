@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import Upload from "views/admin/profile/components/Upload";
+import { useUser } from 'context/UserContext';
 
-const PrescriptionReader = ({ user }) => {
+const PrescriptionReader = () => {
   const [image, setImage] = useState(null);
   const [formData, setFormData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { user } = useUser();
 
   const handleFileChange = (e) => {
     setImage(e.target.files[0]);
@@ -216,6 +218,13 @@ const PrescriptionReader = ({ user }) => {
   return (
     <div className="container mx-auto p-4 max-w-4xl">
       <h1 className="text-2xl font-bold mb-6">Prescription Upload</h1>
+      
+      {!user && (
+        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6">
+          <p>You need to be logged in to save prescriptions. You can still upload and view prescriptions.</p>
+        </div>
+      )}
+      
       <div className="flex">
         <Upload/>
       </div>

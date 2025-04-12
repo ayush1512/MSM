@@ -184,3 +184,93 @@ def logout():
     session.pop("user", None)
     return jsonify({"message": "Logout successful"})
 
+
+# -----------------------------------
+# User Information
+# -----------------------------------
+
+@user_bp.route("/<email>/user_info")
+def user_info(email):
+    if "user" not in session:
+        return jsonify({"error": "Not logged in"}), 401
+
+    if session["user"] != email:
+        return jsonify({"error": "Not authorized"}), 403
+
+    try:
+        result = user_collection.find_one({"email": email})
+        
+        if result:
+            result['_id'] = str(result['_id'])
+            result.pop('password')
+            result.pop('registration_mode')
+            return jsonify(result)
+        
+        return jsonify({
+            "success": False,
+            "error": "User does not exist"
+        }), 404
+
+    except Exception as e:
+        logging.error(f"User info error: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": "Failed to get user information",
+            "details": str(e)
+        }), 500
+
+
+# -----------------------------------
+# User Information Update
+# -----------------------------------
+
+@user_bp.route("/<email>/user_update", methods=["PUT"])
+def update_user_info(email):
+    """Update user information"""
+    if "user" not in session:
+        return jsonify({"error": "Not logged in"}), 401
+
+    if session["user"] != email:
+        return jsonify({"error": "Unauthorized access"}), 403
+
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                "success": False,
+                "error": "No data provided"
+            }), 400
+
+        # Fields that are allowed to be updated
+        allowed_updates = {
+            key: value for key, value in data.items() 
+            if key in ["username", "shop_name", "phone_no"]
+        }
+        
+        # Add updated timestamp
+        allowed_updates["updated_at"] = datetime.utcnow()
+        
+        # Update user in database
+        result = user_collection.update_one(
+            {"email": email},
+            {"$set": allowed_updates}
+        )
+        
+        if result.modified_count > 0:
+            return jsonify({
+                "success": True,
+                "message": "User information updated successfully"
+            })
+        
+        return jsonify({
+            "success": False,
+            "error": "No changes made to user information"
+        }), 404
+
+    except Exception as e:
+        logging.error(f"User update error: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": "Failed to update user information",
+            "details": str(e)
+        }), 500

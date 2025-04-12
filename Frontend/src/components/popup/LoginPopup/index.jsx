@@ -5,10 +5,19 @@ import LogIn from 'pages/Login/LogIn';
 import SignUp from 'pages/Login/SignUp';
 import googleLogo from 'assets/google-logo.png';
 import styles from 'pages/Login/LoginPage.module.css';
+import { useUser } from 'context/UserContext';
 
 export default function LoginPopup({ isOpen, onClose }) {
   const containerRef = useRef(null);
   const [isSignUp, setIsSignUp] = useState(false);
+  const { user } = useUser();
+
+  // Close popup when user logs in
+  useEffect(() => {
+    if (user && isOpen) {
+      onClose();
+    }
+  }, [user, isOpen, onClose]);
 
   // Set initial form state after component mounts
   useEffect(() => {

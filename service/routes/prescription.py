@@ -9,9 +9,6 @@ processor = PrescriptionProcessor()
 @prescription_bp.route('/prescription/process', methods=['POST', 'OPTIONS'])
 def process_prescription():
     """Combined endpoint for upload and extraction"""
-    # Debug session information
-    print(f"Session data: {session}")
-    print(f"User in session: {session.get('user')}")
     
     if "user" not in session:
         return jsonify({"error": "Not logged in", "session_data": "Missing user key"}), 401
@@ -46,10 +43,6 @@ def process_prescription():
 @prescription_bp.route('/prescription/<prescription_id>', methods=['PUT'])
 def update_prescription(prescription_id):
     """Update prescription data"""
-# Debug session information
-    print(f"Session data: {session}")
-    print(f"User in session: {session.get('user')}")
-
     if "user" not in session:
         return jsonify({"error": "Not logged in", "session_data": "Missing user key"}), 401
 

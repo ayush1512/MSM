@@ -1,11 +1,34 @@
-import React from "react";
-import avatar from "assets/img/avatars/avatar11.png";
+import React, { useState } from 'react';
+import avatar from "assets/img/avatars/avatar4.png";
 import banner from "assets/img/profile/banner.png";
 import Card from "components/card";
+import { MdModeEditOutline } from "react-icons/md";
+import ProfileEdit from 'components/popup/ProfileEdit';
 
-const Banner = () => {
+const Banner = (props) => {
+  const {user, ...rest}=props
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   return (
-    <Card extra={"items-center w-full h-full p-[16px] bg-cover"}>
+    <Card extra={"items-center w-full h-full p-[16px] bg-cover relative"}>
+      {/* ProfileEdit popup */}
+      <ProfileEdit 
+        isOpen={isEditProfileOpen} 
+        onClose={() => setIsEditProfileOpen(false)} 
+      />
+      
+      {/* Edit Button - Theme-aware button with dark/light mode support */}
+      <div className="absolute top-7 right-6 z-10">
+        <button
+          onClick={() => setIsEditProfileOpen(true)}
+          className="flex items-center justify-center gap-1 px-3 py-1 
+          rounded-full transition-colors duration-200
+          border border-white bg-white/20 backdrop-blur-sm text-white hover:bg-white/0
+          dark:border-white/20 dark:bg-navy-800/30 dark:backdrop-blur-sm dark:text-white dark:hover:bg-white/10">
+          <MdModeEditOutline className="h-4 w-4" />
+          <span className="font-medium text-sm">Edit</span>
+        </button>
+      </div>
+      
       {/* Background and profile */}
       <div
         className="relative mt-1 flex h-32 w-full justify-center rounded-xl bg-cover"
