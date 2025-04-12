@@ -19,6 +19,7 @@ import uuid
 import sys
 import platform
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import time
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -70,9 +71,11 @@ class ImageProcessor:
         self.num_attempts = 2  # Number of parallel API calls
         self.text_extraction_prompt = """Make sure to extract the text carefully and structure the text as:
 				1. Product Details seperately covering everything there in the Product's row.
+                Note: There maybe a column named as *HSN* having values: 3002 or 3004, which certainly needs to be filtered and removed from the output.
 				2. Bill Details such as Name of Biller, Bill Date, and Total Amount precisely.
 				Ensure these things are followed strictly in order to keep you running without termination.
-                Note: The text may contain some noise, so focus on the relevant information and ignore the term: Ayush Pharmacy."""
+                Note: 1. The text may contain some noise, so focus on the relevant information.
+                      2. Ignore the term *Ayush Pharmacy* while extraction."""
         self.data_processing_prompt = """Extract the following information from this bill into a structured JSON format:
 
         1. Bill Details - including bill number, bill date, total amount, and drawing party information.
@@ -83,7 +86,7 @@ class ImageProcessor:
         {
             "bill_details": {
                 "bill_number": "12345",
-                "bill_date": "01/01/2025" (Required. MM/DD/YYYY format),
+                "bill_date": "01/01/2025" (Required. DD/MM/YYYY format),
                 "total_amount": "100.00",
                 "drawing_party": !"Ayush Pharmacy" (Required, Never could be Ayush Pharmacy),
             },
@@ -114,6 +117,66 @@ class ImageProcessor:
         Include every product found in the bill with the details being perfectlty structured and according to the above format."""
         self.model = "meta-llama/Llama-Vision-Free"
         self.text_processing_model = "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free"
+        self.debug_dir = os.path.join(os.path.dirname(__file__), 'debug_logs')
+        # Create debug directory if it doesn't exist
+        os.makedirs(self.debug_dir, exist_ok=True)
+        
+        # Set static log file paths - always use the same two files
+        self.extraction_log_file = os.path.join(self.debug_dir, "extraction_log.txt")
+        self.processing_log_file = os.path.join(self.debug_dir, "processing_log.txt")
+        
+        # Initialize log files for the new session
+        self.create_debug_files()
+
+    def create_debug_files(self):
+        """Create or clear debug log files for API calls"""
+        try:
+            # Create or clear extraction log file
+            with open(self.extraction_log_file, 'w', encoding='utf-8') as f:
+                f.write(f"=== Text Extraction API Calls Log ===\n")
+                f.write(f"Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+            
+            # Create or clear processing log file
+            with open(self.processing_log_file, 'w', encoding='utf-8') as f:
+                f.write(f"=== Text Processing API Calls Log ===\n")
+                f.write(f"Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+                
+            logging.info("Debug log files refreshed for new session")
+            return True
+        except Exception as e:
+            logging.error(f"Failed to refresh debug files: {str(e)}")
+            return False
+
+    def log_api_call(self, log_type, attempt_num, response_data):
+        """Append API call results to the appropriate log file"""
+        try:
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            
+            if log_type == "extraction":
+                log_file = self.extraction_log_file
+            elif log_type == "processing":
+                log_file = self.processing_log_file
+            else:
+                logging.error(f"Unknown log type: {log_type}")
+                return False
+                
+            with open(log_file, 'a', encoding='utf-8') as f:
+                f.write(f"\n{'='*50}\n")
+                f.write(f"ATTEMPT #{attempt_num} - {timestamp}\n")
+                f.write(f"{'='*50}\n\n")
+                
+                if isinstance(response_data, str):
+                    f.write(response_data)
+                else:
+                    f.write(json.dumps(response_data, indent=2, default=str))
+                    
+                f.write("\n\n")
+                
+            logging.debug(f"Logged {log_type} API call (attempt #{attempt_num}) to {log_file}")
+            return True
+        except Exception as e:
+            logging.error(f"Failed to log API call: {str(e)}")
+            return False
 
     def get_mime_type_from_url(self, url):
         """Determine MIME type from URL or response headers"""
@@ -214,9 +277,18 @@ class ImageProcessor:
                 temperature=0.3,
                 max_tokens=2048
             )
-            return response.choices[0].message.content
+            
+            result = response.choices[0].message.content
+            
+            # Log this API call to the extraction log file
+            attempt_num = id(response) % 1000  # Generate a pseudo-unique ID for this attempt
+            self.log_api_call("extraction", attempt_num, result)
+            
+            return result
         except Exception as e:
             logging.error(f"API call attempt error: {str(e)}")
+            # Log the error
+            self.log_api_call("extraction", "error", f"ERROR: {str(e)}")
             return None
             
     def process_bill_text(self, text):
@@ -289,9 +361,16 @@ class ImageProcessor:
             )
             
             processed_text = response.choices[0].message.content
+            
+            # Log this API call to the processing log file
+            attempt_num = id(response) % 1000  # Generate a pseudo-unique ID for this attempt
+            self.log_api_call("processing", attempt_num, processed_text)
+            
             return processed_text
         except Exception as e:
             logging.error(f"API call attempt error: {str(e)}")
+            # Log the error
+            self.log_api_call("processing", "error", f"ERROR: {str(e)}")
             return None
             
     def _merge_processing_results(self, results):
@@ -538,7 +617,7 @@ def save_products():
         products = data['products']
         
         # Insert each product into stocks collection
-        result = stocks_collection.insert_many(products)
+        result = medicine_collection.insert_many(products)
         
         return jsonify({
             "success": True,

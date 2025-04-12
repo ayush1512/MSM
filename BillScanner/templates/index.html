@@ -121,6 +121,57 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Helper functions for expiry date validation and formatting
+            function isValidExpiryFormat(dateStr) {
+                // Check if the date is in MM/YY format
+                const regex = /^(0[1-9]|1[0-2])\/\d{2}$/;
+                return regex.test(dateStr);
+            }
+            
+            function formatExpiryDate(dateStr) {
+                if (!dateStr) return '';
+                
+                // If already in MM/YY format, return as is
+                if (isValidExpiryFormat(dateStr)) {
+                    return dateStr;
+                }
+                
+                // Try to parse different formats and convert to MM/YY
+                
+                // Try MM/YYYY format
+                let match = dateStr.match(/^(\d{1,2})\/(\d{4})$/);
+                if (match) {
+                    const month = match[1].padStart(2, '0');
+                    const year = match[2].slice(-2);
+                    return `${month}/${year}`;
+                }
+                
+                // Try MM-YY format
+                match = dateStr.match(/^(\d{1,2})-(\d{2})$/);
+                if (match) {
+                    const month = match[1].padStart(2, '0');
+                    return `${month}/${match[2]}`;
+                }
+                
+                // Try MM-YYYY format
+                match = dateStr.match(/^(\d{1,2})-(\d{4})$/);
+                if (match) {
+                    const month = match[1].padStart(2, '0');
+                    const year = match[2].slice(-2);
+                    return `${month}/${year}`;
+                }
+                
+                // Try to extract date from other formats (like "Exp: MM/YY")
+                match = dateStr.match(/(\d{1,2})[\/\-](\d{2}|\d{4})/);
+                if (match) {
+                    const month = match[1].padStart(2, '0');
+                    const year = match[2].length === 4 ? match[2].slice(-2) : match[2];
+                    return `${month}/${year}`;
+                }
+                
+                return dateStr; // Return original if no pattern matched
+            }
+
             const uploadForm = document.getElementById('uploadForm');
             const processingLoader = document.getElementById('processingLoader');
             const resultsContainer = document.getElementById('resultsContainer');
@@ -379,6 +430,9 @@
                 qtyInput.type = 'number';
                 qtyInput.value = product.quantity || '';
                 qtyInput.dataset.field = 'quantity';
+                qtyInput.addEventListener('change', function() {
+                    updateTotalPrice(row);
+                });
                 qtyCell.appendChild(qtyInput);
                 
                 // Batch number cell
@@ -393,28 +447,50 @@
                 const expDateCell = document.createElement('td');
                 const expDateInput = document.createElement('input');
                 expDateInput.type = 'text';
-                expDateInput.value = product.exp_date || '';
+                expDateInput.value = formatExpiryDate(product.exp_date || '');
                 expDateInput.dataset.field = 'exp_date';
+                expDateInput.placeholder = 'MM/YY';
+                // Add validation to ensure MM/YY format
+                expDateInput.addEventListener('blur', function() {
+                    const value = this.value.trim();
+                    if (value && !isValidExpiryFormat(value)) {
+                        alert('Please enter expiry date in MM/YY format');
+                        this.focus();
+                    }
+                });
                 expDateCell.appendChild(expDateInput);
                 
-                // Price cell
+                // Price cell - use MRP as the default price (should be the second largest value)
                 const priceCell = document.createElement('td');
                 const priceInput = document.createElement('input');
                 priceInput.type = 'number';
                 priceInput.step = '0.01';
-                priceInput.value = product.price || '';
+                
+                // Determine the price (MRP) from available values
+                const mrp = parseFloat(product.mrp) || 0;
+                const rate = parseFloat(product.rate) || 0;
+                const amount = parseFloat(product.amount) || 0;
+                
+                // Use MRP as the price (if available)
+                priceInput.value = mrp || rate || '';
                 priceInput.dataset.field = 'price';
                 priceInput.addEventListener('change', function() {
                     updateTotalPrice(row);
                 });
                 priceCell.appendChild(priceInput);
                 
-                // Total price cell
+                // Total price cell - should be the highest value amongst the values
                 const totalCell = document.createElement('td');
                 const totalInput = document.createElement('input');
                 totalInput.type = 'number';
                 totalInput.step = '0.01';
-                totalInput.value = product.total_price || '';
+                
+                // Determine total price (use the highest value or calculate from quantity * price)
+                let totalPrice = product.total_price || product.amount || 0;
+                if (!totalPrice && priceInput.value) {
+                    totalPrice = (parseFloat(qtyInput.value) || 1) * parseFloat(priceInput.value);
+                }
+                totalInput.value = totalPrice;
                 totalInput.dataset.field = 'total_price';
                 totalCell.appendChild(totalInput);
                 
@@ -436,6 +512,7 @@
                 row.appendChild(nameCell);
                 row.appendChild(qtyCell);
                 row.appendChild(batchCell);
+                row.appendChild(expDateCell);
                 row.appendChild(priceCell);
                 row.appendChild(totalCell);
                 row.appendChild(actionsCell);
