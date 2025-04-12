@@ -1,4 +1,5 @@
 Flask
+flask-cors
 together
 python-dotenv
 requests
@@ -13,3 +14,7 @@ numpy
 datasets 
 accelerate
 dnspython
+gunicorn
+authlib
+werkzeug
+jwt
