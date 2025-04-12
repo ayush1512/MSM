@@ -22,7 +22,7 @@ const Banner = (props) => {
           onClick={() => setIsEditProfileOpen(true)}
           className="flex items-center justify-center gap-1 px-3 py-1 
           rounded-full transition-colors duration-200
-          border border-white bg-white/20 backdrop-blur-sm text-white hover:bg-white/0
+          border border-white bg-white/20 backdrop-blur-sm text-gray-900 hover:bg-white/0
           dark:border-white/20 dark:bg-navy-800/30 dark:backdrop-blur-sm dark:text-white dark:hover:bg-white/10">
           <MdModeEditOutline className="h-4 w-4" />
           <span className="font-medium text-sm">Edit</span>
