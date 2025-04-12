@@ -26,17 +26,11 @@
     margin-top: 2%;
 }
 .container {
-    font-family: 'Poppins', sans-serif;
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-
-    height: 100vh;
     overflow: hidden;
-
     position: relative;
-    min-height: 100vh;
-    overflow: hidden;
 }
 
 .row {
@@ -72,6 +66,48 @@
     transition-delay: 1s;
 }
 
+/* Add dark mode support for form inputs */
+:global(.dark) .input-group input {
+    background-color: var(--navy-color);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+:global(.dark) .input-group input:focus {
+    border-color: var(--accent-color);
+}
+
+:global(.dark) .input-group i {
+    color: #a0aec0;
+}
+
+:global(.dark) .form {
+    box-shadow: rgba(0, 0, 0, 0.5) 0px 5px 15px;
+}
+
+:global(.dark) .error-message {
+    background-color: rgba(198, 40, 40, 0.2);
+    color: #f56565;
+}
+
+:global(.dark) .success-message {
+    background-color: rgba(46, 125, 50, 0.2);
+    color: #48bb78;
+}
+
+:global(.dark) .social-divider::before,
+:global(.dark) .social-divider::after {
+    border-bottom: 1px solid #2d3748;
+}
+
+:global(.dark) .social-divider span {
+    color: #a0aec0;
+}
+
+:global(.dark) .auth-help-text {
+    color: #a0aec0;
+}
+
 .input-group {
     position: relative;
     width: 100%;
@@ -92,7 +128,7 @@
     padding: 1rem 3rem;
     font-size: 1rem;
     background-color: var(--gray);
-    border-radius: .5rem;
+    border-radius: .75rem;
     border: 0.125rem solid var(--white);
     outline: none;
 }
@@ -373,36 +409,6 @@
     margin-bottom: 1rem;
     font-size: 0.9rem;
     text-align: left;
-}
-
-/* Google button styling */
-.google-btn {
-  width: 100%;
-  background-color: white;
-  border: 1px solid #dadce0;
-  color: #3c4043;
-  font-weight: 500;
-  font-size: 14px;
-  height: 40px;
-  border-radius: 4px;
-  cursor: pointer;
-  margin: 10px 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  transition: background-color 0.3s;
-}
-
-.google-btn:hover {
-  background-color: #f6f9fe;
-  border-color: #d2e3fc;
-}
-
-.google-btn img {
-  width: 18px;
-  height: 18px;
-  margin-right: 8px;
 }
 
 .social-divider {

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import axios from "axios";
-import styles from "./LoginPage.module.css";
 
 export default function LogIn(){
     const [formData, setFormData] = useState({
@@ -31,7 +30,7 @@ export default function LogIn(){
             <input className='h-12 border rounded-xl bg-white border-gray-300 p-3 mb-3 flex items-center justify-center text-sm outline-none dark:!border-white/10 dark:text-white' name="email" type="email" placeholder="Email" value={formData.email} onChange={handleChange} required />
             <input className='h-12 border rounded-xl bg-white border-gray-300 p-3 mb-3 flex items-center justify-center text-sm outline-none dark:!border-white/10 dark:text-white' type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} required />
             <button 
-                className="w-full py-2.5 px-4 bg-gray-800 text-white font-medium rounded-lg transition duration-200 ease-in-out"
+                className="linear mt-2 w-full rounded-xl bg-brand-900 py-[12px] text-base font-medium text-white transition duration-200 hover:bg-brand-600 active:bg-brand-700 dark:bg-brand-400 dark:text-white dark:hover:bg-brand-300 dark:active:bg-brand-200"
                 type="submit"
             >
                 Sign in

@@ -73,20 +73,20 @@ export default function LoginPopup({ isOpen, onClose }) {
                 {/* SIGN UP */}
                 <div className={`${styles.col} ${styles['align-items-center']} ${styles['flex-col']} ${styles['sign-up']}`}>
                   <div className={`${styles['form-wrapper']} ${styles['align-items-center']}`}>
-                    <div className={`${styles.form} ${styles['sign-up']}`}>
-                      <SignUp />
-                      <div className={styles['social-divider']}>
+                    <div className={`${styles.form} ${styles['sign-up']} dark:bg-navy-800 dark:text-white dark:border-navy-700`}>
+                      <button className="mb-6 flex h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-lightPrimary hover:cursor-pointer dark:bg-navy-700 transition-colors" onClick={handleGoogleAuth} type="button">
+                        <img className='rounded-full text-xl w-[18px] h-[18px] mr-[8px]' src={googleLogo} alt="Google" />
+                        <h5 className="text-sm font-medium text-navy-700 dark:text-white">Sign In with Google</h5>
+                      </button>
+                      <div className={`${styles['social-divider']} dark:text-gray-400 before:dark:border-gray-700 after:dark:border-gray-700`}>
                         <span>OR</span>
                       </div>
-                      <button className={`${styles['google-btn']} hover:bg-gray-100`} onClick={handleGoogleAuth} type="button">
-                        <img src={googleLogo} alt="Google" />
-                        Continue with Google
-                      </button>
-                      <p>
+                      <SignUp />
+                      <p className="dark:text-gray-400">
                         <span>
                           Already have an account?
                         </span>
-                        <b onClick={toggle} className={styles.pointer}>
+                        <b onClick={toggle} className={`${styles.pointer} text-brand-500 dark:text-brand-400 ml-1 hover:underline`}>
                           Sign in here
                         </b>
                       </p>
@@ -98,25 +98,25 @@ export default function LoginPopup({ isOpen, onClose }) {
                 {/* SIGN IN */}
                 <div className={`${styles.col} ${styles['align-items-center']} ${styles['flex-col']} ${styles['sign-in']}`}>
                   <div className={`${styles['form-wrapper']} ${styles['align-items-center']}`}>
-                    <div className={`${styles.form} ${styles['sign-in']}`}>
-                      <LogIn />
-                      <div className={styles['social-divider']}>
+                    <div className={`${styles.form} ${styles['sign-in']} dark:bg-navy-800 dark:text-white dark:border-navy-700`}>
+                      <button className="mb-6 flex h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-lightPrimary hover:cursor-pointer dark:bg-navy-700 transition-colors" onClick={handleGoogleAuth} type="button">
+                        <img className='rounded-full text-xl w-[18px] h-[18px] mr-[8px]' src={googleLogo} alt="Google" />
+                        <h5 className="text-sm font-medium text-navy-700 dark:text-white">Sign In with Google</h5>
+                      </button>
+                      <div className={`${styles['social-divider']} dark:text-gray-400 before:dark:border-gray-700 after:dark:border-gray-700`}>
                         <span>OR</span>
                       </div>
-                      <button className={`${styles['google-btn']} hover:bg-gray-100`} onClick={handleGoogleAuth} type="button">
-                        <img src={googleLogo} alt="Google" />
-                        Continue with Google
-                      </button>
-                      <p>
-                        <b>
+                      <LogIn />
+                      <p className="dark:text-gray-400">
+                        <b className="text-brand-500 dark:text-brand-400 hover:underline cursor-pointer">
                           Forgot password?
                         </b>
                       </p>
-                      <p>
+                      <p className="dark:text-gray-400">
                         <span>
                           Don't have an account?
                         </span>
-                        <b onClick={toggle} className={styles.pointer}>
+                        <b onClick={toggle} className={`${styles.pointer} text-brand-500 dark:text-brand-400 ml-1 hover:underline`}>
                           Sign up here
                         </b>
                       </p>
@@ -132,7 +132,7 @@ export default function LoginPopup({ isOpen, onClose }) {
                 {/* SIGN IN CONTENT */}
                 <div className={`${styles.col} ${styles['align-items-center']} ${styles['flex-col']}`}>
                   <div className={`${styles.text} ${styles['sign-in']}`}>
-                    <h2>
+                    <h2 className="dark:text-white">
                       Welcome Back
                     </h2>
                   </div>
@@ -146,7 +146,7 @@ export default function LoginPopup({ isOpen, onClose }) {
                   <div className={`${styles.img} ${styles['sign-up']}`}>
                   </div>
                   <div className={`${styles.text} ${styles['sign-up']}`}>
-                    <h2>
+                    <h2 className="dark:text-white">
                       Join with us
                     </h2>
                   </div>
