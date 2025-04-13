@@ -24,7 +24,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})  # Add CORS support

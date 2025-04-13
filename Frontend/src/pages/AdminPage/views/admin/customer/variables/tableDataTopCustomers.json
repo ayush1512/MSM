@@ -1,0 +1,38 @@
+[
+  {
+    "name": "John Doe",
+    "orders": 35,
+    "value": "8,750.25",
+    "image": null
+  },
+  {
+    "name": "Jane Smith",
+    "orders": 27,
+    "value": "6,320.75",
+    "image": null 
+  },
+  {
+    "name": "Robert Brown",
+    "orders": 23,
+    "value": "5,890.50",
+    "image": null
+  },
+  {
+    "name": "Emily Johnson",
+    "orders": 19,
+    "value": "4,230.80",
+    "image": null
+  },
+  {
+    "name": "Michael Wilson",
+    "orders": 18,
+    "value": "3,980.40",
+    "image": null
+  },
+  {
+    "name": "Amanda Davis",
+    "orders": 15,
+    "value": "3,450.25",
+    "image": null
+  }
+]

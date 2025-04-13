@@ -37,13 +37,43 @@ export default function Prescription({ externalOpen, onClose, hideButton }) {
     };
 
     // Process the uploaded image
-    const processImage = (imageData) => {
+    const processImage = async (imageData) => {
         setIsProcessing(true);
-        // Simulate processing delay
-        setTimeout(() => {
+        
+        try {
+            // Convert base64 image to a Blob
+            const base64Response = await fetch(imageData);
+            const blob = await base64Response.blob();
+            
+            // Create form data for API request
+            const formData = new FormData();
+            formData.append('image', blob, 'prescription.jpg');
+
+            // Make API call to backend
+            const response = await fetch('http://localhost:5000/prescription/process', {
+                method: 'POST',
+                body: formData,
+                credentials: 'include' // Include cookies for authentication
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to process prescription: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            // Set the result from the API
             setIsProcessing(false);
-            setResult("Prescription analysis complete! Drug: Paracetamol, Dosage: 500mg, Frequency: 3 times daily");
-        }, 3000);
+            setResult(`Successfully processed prescription: ${data.prescription_data?.data?.medications?.length || 0} medications found.`);
+        } catch (error) {
+            console.error('Error processing prescription:', error);
+            setIsProcessing(false);
+            setResult(`Error: ${error.message || 'Failed to process prescription'}`);
+        }
     };
 
     // Handle camera access

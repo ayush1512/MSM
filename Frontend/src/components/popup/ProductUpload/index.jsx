@@ -32,21 +32,35 @@ export default function ProductUpload({ externalOpen, onClose, hideButton }) {
         
         setIsSearching(true);
         try {
-            // Simulate API call for medicine search
-            setTimeout(() => {
-                const mockResults = [
-                    { id: 1, name: 'Paracetamol 500mg', manufacturer: 'GSK', category: 'Pain Relief' },
-                    { id: 2, name: 'Paracetamol 250mg', manufacturer: 'Cipla', category: 'Pain Relief' },
-                    { id: 3, name: 'Paracedol Extra', manufacturer: 'Sun Pharma', category: 'Pain Relief' }
-                ].filter(item => 
-                    item.name.toLowerCase().includes(searchQuery.toLowerCase())
-                );
-                
-                setSearchResults(mockResults);
-                setIsSearching(false);
-            }, 1000);
+            // Make API call to search endpoint
+            const response = await fetch(`http://localhost:5000/medicine/search?term=${encodeURIComponent(searchQuery)}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to search products: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            
+            // Transform the API response to match our component's expected format
+            const results = data.map(item => ({
+                id: item._id,
+                name: item.product_name,
+                manufacturer: item.product_manufactured,
+                category: item.sub_category || 'General'
+            }));
+            
+            setSearchResults(results);
         } catch (error) {
             console.error('Error searching products:', error);
+            // Show empty results on error
+            setSearchResults([]);
+        } finally {
             setIsSearching(false);
         }
     };
@@ -71,13 +85,55 @@ export default function ProductUpload({ externalOpen, onClose, hideButton }) {
     };
 
     // Process the uploaded image
-    const processImage = (imageData) => {
+    const processImage = async (imageData) => {
         setIsProcessing(true);
-        // Simulate processing delay
-        setTimeout(() => {
-            setIsProcessing(false);
+        
+        try {
+            // Convert base64 image to a Blob
+            const base64Response = await fetch(imageData);
+            const blob = await base64Response.blob();
             
-            // Generate mock data based on selected product
+            // Create form data for API request
+            const formData = new FormData();
+            formData.append('image', blob, 'product.jpg');
+            formData.append('product_id', selectedProduct.id);
+
+            // Make API call to backend
+            const response = await fetch('http://localhost:5000/process_product', {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to process product image: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            
+            // Transform the API response into our product data format
+            const productData = {
+                productId: selectedProduct.id,
+                productName: selectedProduct.name,
+                manufacturer: selectedProduct.manufacturer,
+                category: selectedProduct.category,
+                batchNumber: data.extracted_info?.batch_no || 'N/A',
+                expiryDate: data.extracted_info?.exp_date || '',
+                mfgDate: data.extracted_info?.mfg_date || '',
+                price: data.extracted_info?.price || '₹0.00',
+                quantity: data.extracted_info?.quantity || 10,
+                composition: data.extracted_info?.composition || selectedProduct.composition || '',
+                description: data.extracted_info?.description || 'No description available',
+                storage: data.extracted_info?.storage || 'Store in a cool, dry place',
+                imageUrl: imageData
+            };
+            
+            setProductData(productData);
+            setCurrentStep('form');
+        } catch (error) {
+            console.error('Error processing product image:', error);
+            alert(`Error: ${error.message || 'Failed to process product image'}`);
+            // Fallback to mock data in case of error
             const mockData = {
                 productId: selectedProduct.id,
                 productName: selectedProduct.name,
@@ -96,7 +152,9 @@ export default function ProductUpload({ externalOpen, onClose, hideButton }) {
             
             setProductData(mockData);
             setCurrentStep('form');
-        }, 2000);
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
     // Handle camera access
@@ -234,11 +292,31 @@ export default function ProductUpload({ externalOpen, onClose, hideButton }) {
     };
 
     // Save product data
-    const handleSaveProduct = () => {
-        console.log("Saving product data:", productData);
-        // Here you would typically send the data to the API
-        alert("Product saved successfully!");
-        resetPopup();
+    const handleSaveProduct = async () => {
+        try {
+            // API call to save product data
+            const response = await fetch('http://localhost:5000/save_product', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(productData),
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to save product: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            
+            alert(data.message || "Product saved successfully!");
+            resetPopup();
+        } catch (error) {
+            console.error('Error saving product:', error);
+            alert(`Error: ${error.message || 'Failed to save product'}`);
+        }
     };
 
     // Go back to previous step

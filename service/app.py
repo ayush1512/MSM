@@ -31,6 +31,8 @@ logging.basicConfig(level=logging.ERROR)
 # Disable pymongo debug logs specifically
 logging.getLogger("pymongo").setLevel(logging.WARNING)
 logging.getLogger("pymongo.topology").setLevel(logging.ERROR)
+logging.getLogger('together').setLevel(logging.ERROR)
+logging.getLogger('urllib3').setLevel(logging.ERROR)
 
 app = Flask(__name__)
 

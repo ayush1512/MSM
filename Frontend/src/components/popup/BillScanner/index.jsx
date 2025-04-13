@@ -36,17 +36,59 @@ export default function BillScanner({ externalOpen, onClose, hideButton }) {
     };
 
     // Process the uploaded image
-    const processImage = (imageData, fileType) => {
+    const processImage = async (imageData, fileType) => {
         setIsProcessing(true);
         
-        // Determine if we're processing PDF or image
-        const fileFormat = fileType ? fileType.split('/')[1] : 'unknown';
-        
-        // For demo, simulate API call to backend
-        setTimeout(() => {
-            setIsProcessing(false);
+        try {
+            // Convert base64 image to a Blob
+            const base64Response = await fetch(imageData);
+            const blob = await base64Response.blob();
             
-            // Mock bill data
+            // Create form data for API request
+            const formData = new FormData();
+            formData.append('image', blob, 'bill.jpg');
+            
+            // Add file type if provided
+            if (fileType) {
+                formData.append('file_type', fileType);
+            }
+
+            // Make API call to backend
+            const response = await fetch('http://localhost:5000/scan_bill', {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to process bill: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            // Format the bill data from API response
+            const billData = {
+                vendor: data.vendor_name || "Unknown Vendor",
+                billNumber: data.bill_number || "N/A",
+                date: data.date || new Date().toISOString().split('T')[0],
+                items: data.items || [],
+                taxDetails: {
+                    subTotal: data.subtotal || "₹0.00",
+                    gst: data.tax || "₹0.00",
+                    total: data.total_amount || "₹0.00"
+                }
+            };
+            
+            setBillData(billData);
+            setResult(`Successfully processed bill from ${billData.vendor}`);
+        } catch (error) {
+            console.error('Error processing bill:', error);
+            
+            // Fallback to mock data in case of error for demo purposes
             const mockBillData = {
                 vendor: "Medical Supplies Co.",
                 billNumber: "INV-2025-1234",
@@ -67,8 +109,41 @@ export default function BillScanner({ externalOpen, onClose, hideButton }) {
             };
             
             setBillData(mockBillData);
-            setResult(`Successfully processed ${fileFormat} bill from ${mockBillData.vendor}`);
-        }, 2500);
+            setResult(`Error: ${error.message}. Using sample data for preview.`);
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    // Add function to save bill data
+    const saveBillData = async () => {
+        try {
+            // API call to save bill data
+            const response = await fetch('http://localhost:5000/save_bill', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    bill_data: billData,
+                    image: image
+                }),
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to save bill: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            
+            alert(data.message || "Bill saved successfully!");
+            resetPopup();
+        } catch (error) {
+            console.error('Error saving bill:', error);
+            alert(`Error: ${error.message || 'Failed to save bill'}`);
+        }
     };
 
     // Handle camera access
@@ -548,7 +623,7 @@ export default function BillScanner({ externalOpen, onClose, hideButton }) {
                                                 </motion.button>
                                                 
                                                 <motion.button 
-                                                    onClick={() => console.log("Save bill data:", billData)}
+                                                    onClick={saveBillData}
                                                     className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full shadow-md shadow-green-600/30"
                                                     whileHover={{ scale: 1.05 }}
                                                     whileTap={{ scale: 0.95 }}
