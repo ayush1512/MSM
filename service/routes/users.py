@@ -6,6 +6,7 @@ from datetime import datetime
 from bson import ObjectId
 from Prescription.services.db_service import DatabaseService
 from users.models.user import User
+from users.services.user_image_service import process_user_profile_image
 
 from dotenv import load_dotenv
 import logging
@@ -224,53 +225,66 @@ def user_info(email):
 # User Information Update
 # -----------------------------------
 
-@user_bp.route("/<email>/user_update", methods=["PUT"])
-def update_user_info(email):
-    """Update user information"""
-    if "user" not in session:
+@user_bp.route('/<email>/update_profile', methods=['PUT'])
+def update_profile(email):
+    """Update user profile, including profile image"""
+    if not session.get('user'):
         return jsonify({"error": "Not logged in"}), 401
-
+    
     if session["user"] != email:
-        return jsonify({"error": "Unauthorized access"}), 403
+        return jsonify({"error": "Not authorized"}), 403
 
+    
     try:
         data = request.get_json()
         if not data:
-            return jsonify({
-                "success": False,
-                "error": "No data provided"
-            }), 400
-
-        # Fields that are allowed to be updated
-        allowed_updates = {
-            key: value for key, value in data.items() 
-            if key in ["username", "shop_name", "phone_no"]
-        }
+            return jsonify({"error": "No data provided"}), 400
         
-        # Add updated timestamp
-        allowed_updates["updated_at"] = datetime.utcnow()
+        # Verify user exists
+        user = user_collection.find_one({"email": email})
+        if not user:
+            return jsonify({"error": "User not found"}), 404
         
-        # Update user in database
-        result = user_collection.update_one(
-            {"email": email},
-            {"$set": allowed_updates}
-        )
+        # Process update fields
+        update_data = {}
         
-        if result.modified_count > 0:
-            return jsonify({
-                "success": True,
-                "message": "User information updated successfully"
-            })
+        # Handle regular fields
+        for field in ['username', 'phone_no','shop_name']:
+            if field in data:
+                update_data[field] = data[field]
         
-        return jsonify({
-            "success": False,
-            "error": "No changes made to user information"
-        }), 404
-
+        # Handle profile image separately
+        if 'image_data' in data and data['image_data']:
+            existing_image_url = user.get('image_data').get('url')
+            image_result = process_user_profile_image(data['image_data']['url'], existing_image_url)
+            
+            if image_result:
+                update_data['image_data']={
+                    'url' : image_result['url'],
+                    'public_id' : image_result['public_id']
+                }
+            else:
+                logging.error(f"Failed to process profile image for user {email}")
+        
+        # Only update if we have data to update
+        if update_data:
+            result = user_collection.update_one(
+                {"email": email},
+                {"$set": update_data}
+            )
+            
+            if result.modified_count > 0:
+                # Get updated user data
+                updated_user = user_collection.find_one({"email": email})
+                # Remove sensitive information
+                if updated_user.get('password'):
+                    del updated_user['password']
+                updated_user['_id'] = str(updated_user['_id'])
+                
+                return jsonify({"success": True, "user": updated_user})
+            
+        return jsonify({"success": True, "message": "No changes made"})
+            
     except Exception as e:
-        logging.error(f"User update error: {str(e)}")
-        return jsonify({
-            "success": False,
-            "error": "Failed to update user information",
-            "details": str(e)
-        }), 500
+        logging.error(f"Update profile error: {str(e)}")
+        return jsonify({"error": str(e)}), 500

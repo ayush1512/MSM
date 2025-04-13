@@ -1,7 +1,9 @@
 import Card from "components/card";
 import React from "react";
+import { useUser } from "context/UserContext";
 
 const General = () => {
+  const {userInfo} =useUser()
   return (
     <Card extra={"w-full h-full p-3"}>
       {/* Header */}
@@ -20,23 +22,23 @@ const General = () => {
       {/* Cards */}
       <div className="grid grid-cols-2 gap-4 px-2">
         <div className="flex flex-col items-start justify-center rounded-2xl bg-white bg-clip-border px-3 py-4 shadow-3xl shadow-shadow-500 dark:!bg-navy-700 dark:shadow-none">
-          <p className="text-sm text-gray-600">Education</p>
+          <p className="text-sm text-gray-600">Shop Name</p>
           <p className="text-base font-medium text-navy-700 dark:text-white">
-            Stanford University
+            {userInfo.shop_name}
           </p>
         </div>
 
         <div className="flex flex-col justify-center rounded-2xl bg-white bg-clip-border px-3 py-4 shadow-3xl shadow-shadow-500 dark:!bg-navy-700 dark:shadow-none">
-          <p className="text-sm text-gray-600">Languages</p>
+          <p className="text-sm text-gray-600">Email</p>
           <p className="text-base font-medium text-navy-700 dark:text-white">
-            English, Spanish, Italian
+            {userInfo.email}
           </p>
         </div>
 
         <div className="flex flex-col items-start justify-center rounded-2xl bg-white bg-clip-border px-3 py-4 shadow-3xl shadow-shadow-500 dark:!bg-navy-700 dark:shadow-none">
-          <p className="text-sm text-gray-600">Department</p>
+          <p className="text-sm text-gray-600">Phone Number</p>
           <p className="text-base font-medium text-navy-700 dark:text-white">
-            Product Design
+            {userInfo.phone_no}
           </p>
         </div>
 

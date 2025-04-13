@@ -180,7 +180,7 @@ const Navbar = (props) => {
                 button={
                   <img
                     className="h-10 w-10 rounded-full"
-                    src={userInfo?.image_data || avatar}
+                    src={userInfo?.image_data?.url || avatar}
                     alt="User Avatar"
                   />
                 }

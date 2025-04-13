@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Upload, User, Mail, Phone, MapPin, Loader, CheckCircle } from 'lucide-react';
+import { X, Save, Upload, User, Mail, Phone, Store, Loader, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUser } from 'context/UserContext';
+
 
 export default function ProfileEdit({ isOpen, onClose }) {
   const { user, userInfo, updateUserInfo } = useUser();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
-    phone: '',
+    phone_no: '',
     address: '',
     image_data: ''
   });
@@ -23,8 +24,9 @@ export default function ProfileEdit({ isOpen, onClose }) {
       setFormData({
         username: userInfo.username || '',
         email: user || '',
-        phone: userInfo.phone || '',
-        image_data: userInfo.image_data || ''
+        phone_no: userInfo.phone_no || '',
+        image_data: userInfo.image_data || '',
+        shop_name: userInfo.shop_name || ''
       });
       setError('');
       setSuccess(false);
@@ -45,7 +47,9 @@ export default function ProfileEdit({ isOpen, onClose }) {
       reader.onload = (e) => {
         setFormData({
           ...formData,
-          image_data: e.target.result
+          image_data: {
+            url:e.target.result
+          }
         });
       };
       reader.readAsDataURL(file);
@@ -62,9 +66,16 @@ export default function ProfileEdit({ isOpen, onClose }) {
       // Only send data that has changed
       const updateData = {};
       if (formData.username !== userInfo?.username) updateData.username = formData.username;
-      if (formData.phone !== userInfo?.phone) updateData.phone = formData.phone;
-      if (formData.address !== userInfo?.address) updateData.address = formData.address;
-      if (formData.image_data !== userInfo?.image_data) updateData.image_data = formData.image_data;
+      if (formData.phone_no !== userInfo?.phone_no) updateData.phone_no = formData.phone_no;
+      if (formData.shop_name !== userInfo?.shop_name) updateData.shop_name = formData.shop_name;
+      
+      // For image, include the current public_id if available to enable deletion of old image
+      if (formData.image_data !== userInfo?.image_data) {
+        updateData.image_data = formData.image_data;
+        if (userInfo?.image_data?.public_id) {
+          updateData.old_image_id = userInfo.image_data.public_id;
+        }
+      }
 
       // Only make API call if there are changes
       if (Object.keys(updateData).length > 0) {
@@ -144,7 +155,7 @@ export default function ProfileEdit({ isOpen, onClose }) {
                           <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-200 dark:border-navy-600">
                             {formData.image_data ? (
                               <img 
-                                src={formData.image_data} 
+                                src={formData.image_data.url} 
                                 alt="Profile" 
                                 className="w-full h-full object-cover"
                               />
@@ -227,11 +238,31 @@ export default function ProfileEdit({ isOpen, onClose }) {
                             </div>
                             <input
                               type="tel"
-                              name="phone"
-                              value={formData.phone}
+                              name="phone_no"
+                              value={formData.phone_no}
                               onChange={handleChange}
                               className="pl-10 w-full px-3 py-2 border border-gray-300 dark:border-navy-600 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500 dark:bg-navy-700 dark:text-white"
                               placeholder="Your phone number"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Shop name */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Shop name
+                          </label>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <Store size={18} className="text-gray-500 dark:text-gray-400" />
+                            </div>
+                            <input
+                              type="text"
+                              name="shop_name"
+                              value={formData.shop_name}
+                              onChange={handleChange}
+                              className="pl-10 w-full px-3 py-2 border border-gray-300 dark:border-navy-600 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500 dark:bg-navy-700 dark:text-white"
+                              placeholder="Your shop name"
                             />
                           </div>
                         </div>

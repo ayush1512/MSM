@@ -11,7 +11,7 @@ export const UserProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const API_URL = import.meta.env.VITE_API_URL;
 
   // Check if user is logged in
   useEffect(() => {
@@ -63,7 +63,7 @@ export const UserProvider = ({ children }) => {
     
     try {
       const response = await axios.put(
-        `${API_URL}/${user}/user_update`, 
+        `${API_URL}/${user}/update_profile`, 
         data,
         { withCredentials: true }
       );
