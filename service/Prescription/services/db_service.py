@@ -15,6 +15,7 @@ class DatabaseService:
             self.medicine_collection = self.db.Medicine
             self.stock_collection = self.db.Stock
             self.user_collection = self.db.User
+            self.bills_collection = self.db.Bills
 
         except Exception as e:
             logging.error(f"Database connection error: {str(e)}")

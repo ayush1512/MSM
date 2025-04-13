@@ -1,135 +1,120 @@
-from flask import Flask, request, jsonify, render_template
-from flask_cors import CORS  # Add this import
-from together import Together
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
-import base64
 import os
-import imghdr
 import re
-import logging
-import requests
-from datetime import datetime
-from pymongo import MongoClient
-from bson import ObjectId
 import json
-import tempfile
 import uuid
-import sys
-import platform
+import logging
+import tempfile
+from datetime import datetime
+from together import Together
+import cloudinary.uploader
+import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import time
-from dotenv import load_dotenv
-load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
-app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})  # Add CORS support
-
-# Cloudinary configuration
-cloudinary.config(
-    cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME'),
-    api_key = os.getenv('CLOUDINARY_API_KEY'),
-    api_secret = os.getenv('CLOUDINARY_API_SECRET')
-)
-
-# Get the API key from an environment variable
-together_api_key = os.getenv('TOGETHER_API_KEY')
-
-# MongoDB configuration
-mongo_uri = os.getenv('MONGODB_URI')
-client = MongoClient(mongo_uri)
-db = client.MSM
-bills_collection = db.Bills
-stocks_collection = db.Stock
-medicine_collection = db.Medicine
-
-# Check if we can use pdf2image (requires poppler)
-USE_PDF2IMAGE = False
-try:
-    from pdf2image import convert_from_path
-    # Test if poppler is installed
-    convert_from_path(os.path.join(os.path.dirname(__file__), 'test_poppler.pdf'), first_page=1, last_page=1)
-    USE_PDF2IMAGE = True
-except Exception as e:
-    logging.warning(f"pdf2image or poppler not available: {str(e)}. Will use alternative PDF processing.")
-    
-# Alternative PDF processing if poppler is not available
-try:
-    import fitz  # PyMuPDF
-    PYMUPDF_AVAILABLE = True
-except ImportError:
-    PYMUPDF_AVAILABLE = False
-    logging.warning("PyMuPDF not available. PDF processing may be limited.")
-
-class ImageProcessor:
-    def __init__(self, api_key):
-        if not api_key:
-            raise ValueError("Together API key is required")
-        self.client = Together(api_key=api_key)
+class BillProcessor:
+    def __init__(self):
+        # Get the API key from environment variable
+        self.together_api_key = os.getenv('TOGETHER_API_KEY')
+        
+        if not self.together_api_key:
+            logging.warning("Together API key not found. Text extraction will not work.")
+            
+        self.client = Together(api_key=self.together_api_key)
         self.num_attempts = 2  # Number of parallel API calls
-        self.text_extraction_prompt = """Make sure to extract the text carefully and structure the text as:
-				1. Product Details seperately covering everything there in the Product's row.
-                Note: There maybe a column named as *HSN* having values: 3002 or 3004, which certainly needs to be filtered and removed from the output.
-				2. Bill Details such as Name of Biller, Bill Date, and Total Amount precisely.
-				Ensure these things are followed strictly in order to keep you running without termination.
-                Note: 1. The text may contain some noise, so focus on the relevant information.
-                      2. Ignore the term *Ayush Pharmacy* while extraction."""
-        self.data_processing_prompt = """Extract the following information from this bill into a structured JSON format:
-
-        1. Bill Details - including bill number, bill date, total amount, and drawing party information.
-        2. Product Details - including a list of all products with their name, quantity, batch number, price, total price, and expiration date.
-
-        Format the response as follows:
-        ```json
-        {
-            "bill_details": {
-                "bill_number": "12345",
-                "bill_date": "01/01/2025" (Required. DD/MM/YYYY format),
-                "total_amount": "100.00",
-                "drawing_party": !"Ayush Pharmacy" (Required, Never could be Ayush Pharmacy),
-            },
-            "products": [
-                {
-                    "product_name": "Product 1",
-                    "quantity": 2,
-                    "batch_number": "B123",
-                    "mrp": 100.00, 
-                    "rate": 50.00,
-                    "amount": 100.00,
-                    "exp_date": "08/26" (Required, MM/YY format)
-                },
-                {
-                    "product_name": "Product 2",
-                    "quantity": 1,
-                    "batch_number": "B124",
-                    "mrp": 50.00,
-                    "rate": 50.00,
-                    "amount": 50.00,
-                    "exp_date": "08/26" (Required, MM/YY format)
-                }
-            ]
-        }
-        ```
-
-        Ensure all numbers are properly formatted as numbers (not strings) and that the JSON is valid.
-        Include every product found in the bill with the details being perfectlty structured and according to the above format."""
-        self.model = "meta-llama/Llama-Vision-Free"
-        self.text_processing_model = "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free"
+        
+        # Setup logging directory
         self.debug_dir = os.path.join(os.path.dirname(__file__), 'debug_logs')
-        # Create debug directory if it doesn't exist
         os.makedirs(self.debug_dir, exist_ok=True)
         
-        # Set static log file paths - always use the same two files
+        # Set log file paths
         self.extraction_log_file = os.path.join(self.debug_dir, "extraction_log.txt")
         self.processing_log_file = os.path.join(self.debug_dir, "processing_log.txt")
         
-        # Initialize log files for the new session
-        self.create_debug_files()
+        # Initialize prompts
+        self.text_extraction_prompt = """Make sure to extract the text carefully and structure the text as:
+            1. Product Details separately covering everything there in the Product's row.
+            Note: There maybe a column named as *HSN* having values: 3002 or 3004, which certainly needs to be filtered and removed from the output.
+            2. Bill Details such as Name of Biller, Bill Date, and Total Amount precisely.
+            Ensure these things are followed strictly in order to keep you running without termination.
+            Note: 1. The text may contain some noise, so focus on the relevant information.
+                  2. Ignore the term *Ayush Pharmacy* while extraction."""
+                  
+        self.data_processing_prompt = """Extract the following information from this bill into a structured JSON format:
 
+            1. Bill Details - including bill number, bill date, total amount, and drawing party information.
+            2. Product Details - including a list of all products with their name, quantity, batch number, price, total price, and expiration date.
+
+            Format the response as follows:
+            ```json
+            {
+                "bill_details": {
+                    "bill_number": "12345",
+                    "bill_date": "01/01/2025" (Required. DD/MM/YYYY format),
+                    "total_amount": "100.00",
+                    "drawing_party": !"Ayush Pharmacy" (Required, Never could be Ayush Pharmacy),
+                },
+                "products": [
+                    {
+                        "product_name": "Product 1",
+                        "quantity": 2,
+                        "batch_number": "B123",
+                        "mrp": 100.00, 
+                        "rate": 50.00,
+                        "amount": 100.00,
+                        "exp_date": "08/26" (Required, MM/YY format)
+                    },
+                    {
+                        "product_name": "Product 2",
+                        "quantity": 1,
+                        "batch_number": "B124",
+                        "mrp": 50.00,
+                        "rate": 50.00,
+                        "amount": 50.00,
+                        "exp_date": "08/26" (Required, MM/YY format)
+                    }
+                ]
+            }
+            ```
+
+            Ensure all numbers are properly formatted as numbers (not strings) and that the JSON is valid.
+            Include every product found in the bill with the details being perfectly structured and according to the above format."""
+            
+        # Models
+        self.model = "meta-llama/Llama-Vision-Free"
+        self.text_processing_model = "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free"
+        
+        # Initialize log files
+        self.create_debug_files()
+        
+        # Check for PDF processing capabilities
+        self.check_pdf_processors()
+    
+    def check_pdf_processors(self):
+        """Check for PDF processing libraries"""
+        self.use_pdf2image = False
+        self.pymupdf_available = False
+        
+        try:
+            from pdf2image import convert_from_path
+            # Test if poppler is installed by converting a test file if available
+            test_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'BillScanner', 'test_poppler.pdf')
+            if os.path.exists(test_path):
+                convert_from_path(test_path, first_page=1, last_page=1)
+            self.use_pdf2image = True
+            logging.info("pdf2image is available for PDF processing")
+        except Exception as e:
+            logging.warning(f"pdf2image or poppler not available: {str(e)}. Will check for alternatives.")
+        
+        # Check for PyMuPDF as alternative
+        try:
+            import fitz  # PyMuPDF
+            self.pymupdf_available = True
+            logging.info("PyMuPDF is available for PDF processing")
+        except ImportError:
+            logging.warning("PyMuPDF not available. PDF processing may be limited.")
+            
     def create_debug_files(self):
         """Create or clear debug log files for API calls"""
         try:
@@ -207,16 +192,18 @@ class ImageProcessor:
         image_paths = []
         
         try:
-            if USE_PDF2IMAGE:
+            if self.use_pdf2image:
                 # Use pdf2image/poppler method
+                from pdf2image import convert_from_path
                 images = convert_from_path(pdf_path, output_folder=temp_dir)
                 
                 for i, image in enumerate(images):
                     image_path = os.path.join(temp_dir, f'page_{i}.jpg')
                     image.save(image_path, 'JPEG')
                     image_paths.append(image_path)
-            elif PYMUPDF_AVAILABLE:
+            elif self.pymupdf_available:
                 # Use PyMuPDF as alternative
+                import fitz
                 pdf_document = fitz.open(pdf_path)
                 
                 for i, page in enumerate(pdf_document):
@@ -416,221 +403,86 @@ class ImageProcessor:
                 merged["bill_details"] = bill_details
         
         return merged
-
-# Initialize the image processor
-image_processor = ImageProcessor(together_api_key)
-
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-@app.route('/status')
-def status():
-    """API endpoint to check system status and dependencies"""
-    status_info = {
-        "system": {
-            "platform": platform.platform(),
-            "python_version": platform.python_version(),
-        },
-        "dependencies": {
-            "pdf2image_available": USE_PDF2IMAGE,
-            "pymupdf_available": PYMUPDF_AVAILABLE,
-            "pdf_processing_available": USE_PDF2IMAGE or PYMUPDF_AVAILABLE,
-            "cloudinary_configured": all([
-                os.getenv('CLOUDINARY_CLOUD_NAME'),
-                os.getenv('CLOUDINARY_API_KEY'),
-                os.getenv('CLOUDINARY_API_SECRET')
-            ]),
-            "together_api_configured": bool(together_api_key),
-            "mongodb_configured": bool(mongo_uri)
-        }
-    }
     
-    return jsonify(status_info)
-
-@app.route('/upload', methods=['POST'])
-def upload_bill():
-    try:
-        if 'bill' not in request.files:
-            return jsonify({"error": "No file part"}), 400
-        
-        bill_file = request.files['bill']
-        if bill_file.filename == '':
-            return jsonify({"error": "No selected file"}), 400
-        
-        # Generate a unique filename
-        original_filename = bill_file.filename
+    def process_bill_file(self, file_data, original_filename):
+        """Process a bill file (either PDF or image)"""
+        # Generate a unique filename for the temporary file
         extension = os.path.splitext(original_filename)[1].lower()
         unique_filename = f"{uuid.uuid4()}{extension}"
+        temp_path = os.path.join(tempfile.gettempdir(), unique_filename)
         
         # Save the file temporarily
-        temp_path = os.path.join(tempfile.gettempdir(), unique_filename)
-        bill_file.save(temp_path)
+        file_data.save(temp_path)
         
-        # Process based on file type
-        if extension == '.pdf':
-            # Check if PDF processing is available
-            if not USE_PDF2IMAGE and not PYMUPDF_AVAILABLE:
-                return jsonify({
-                    "error": "PDF processing is not available. Please install either poppler (for pdf2image) or PyMuPDF."
-                }), 500
-                
-            # Convert PDF to images
-            image_paths = image_processor.convert_pdf_to_images(temp_path)
-            
-            # Process each image as a separate bill
+        try:
             results = []
-            for image_path in image_paths:
-                upload_result = cloudinary.uploader.upload(image_path)
-                image_url = upload_result['secure_url']
-                
-                # Extract text from the image
-                extracted_text = image_processor.extract_text_from_image(image_url)
-                
-                # Process the extracted text
-                processed_data = image_processor.process_bill_text(extracted_text)
-                
-                # Save bill details to database with image URL
-                bill_record = {
-                    "original_filename": f"{os.path.splitext(original_filename)[0]}_page_{len(results)}{extension}",
-                    "upload_date": datetime.now(),
-                    "image_url": image_url,
-                    "extracted_text": extracted_text,
-                    "bill_details": processed_data.get("bill_details", {}),
-                    "products": processed_data.get("products", [])
-                }
-                
-                bill_id = bills_collection.insert_one(bill_record).inserted_id
-                
-                results.append({
-                    "bill_id": str(bill_id),
-                    "image_url": image_url,
-                    "extracted_text": extracted_text,
-                    "bill_details": processed_data.get("bill_details", {}),
-                    "products": processed_data.get("products", [])
-                })
             
-            # Clean up temporary files
-            try:
-                os.remove(temp_path)
+            # Process based on file type
+            if extension == '.pdf':
+                # Check if PDF processing is available
+                if not self.use_pdf2image and not self.pymupdf_available:
+                    raise ValueError("PDF processing is not available. Please install either poppler (for pdf2image) or PyMuPDF.")
+                    
+                # Convert PDF to images
+                image_paths = self.convert_pdf_to_images(temp_path)
+                
+                # Process each image as a separate bill
+                for i, image_path in enumerate(image_paths):
+                    # Upload to cloudinary
+                    upload_result = cloudinary.uploader.upload(image_path)
+                    image_url = upload_result['secure_url']
+                    
+                    # Extract text from the image
+                    extracted_text = self.extract_text_from_image(image_url)
+                    
+                    # Process the extracted text
+                    processed_data = self.process_bill_text(extracted_text)
+                    
+                    # Prepare result data
+                    page_filename = f"{os.path.splitext(original_filename)[0]}_page_{i}{extension}"
+                    result = {
+                        "original_filename": page_filename,
+                        "image_url": image_url,
+                        "extracted_text": extracted_text,
+                        "bill_details": processed_data.get("bill_details", {}),
+                        "products": processed_data.get("products", [])
+                    }
+                    
+                    results.append(result)
+                    
+                # Clean up image paths
                 for path in image_paths:
                     if os.path.exists(path):
                         os.remove(path)
-            except:
-                logging.warning("Failed to clean up some temporary files")
+            else:
+                # Handle single image upload
+                upload_result = cloudinary.uploader.upload(temp_path)
+                image_url = upload_result['secure_url']
                 
-            return jsonify({
-                "success": True,
-                "results": results
-            })
-        else:
-            # Handle single image upload
-            upload_result = cloudinary.uploader.upload(temp_path)
-            image_url = upload_result['secure_url']
-            
-            # Extract text from the image
-            extracted_text = image_processor.extract_text_from_image(image_url)
-            
-            # Process the extracted text
-            processed_data = image_processor.process_bill_text(extracted_text)
+                # Extract text from the image
+                extracted_text = self.extract_text_from_image(image_url)
+                
+                # Process the extracted text
+                processed_data = self.process_bill_text(extracted_text)
+                
+                result = {
+                    "original_filename": original_filename,
+                    "image_url": image_url,
+                    "extracted_text": extracted_text,
+                    "bill_details": processed_data.get("bill_details", {}),
+                    "products": processed_data.get("products", [])
+                }
+                
+                results.append(result)
             
             # Clean up temporary file
-            try:
+            if os.path.exists(temp_path):
                 os.remove(temp_path)
-            except:
-                logging.warning("Failed to clean up temporary file")
                 
-            # Save to database
-            bill_record = {
-                "original_filename": original_filename,
-                "upload_date": datetime.now(),
-                "image_url": image_url,
-                "extracted_text": extracted_text,
-                "bill_details": processed_data.get("bill_details", {}),
-                "products": processed_data.get("products", [])
-            }
+            return results
             
-            bill_id = bills_collection.insert_one(bill_record).inserted_id
-            
-            return jsonify({
-                "success": True,
-                "bill_id": str(bill_id),
-                "image_url": image_url,
-                "extracted_text": extracted_text,
-                "bill_details": processed_data.get("bill_details", {}),
-                "products": processed_data.get("products", [])
-            })
-    
-    except Exception as e:
-        logging.error(f"Error processing upload: {str(e)}")
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/bills', methods=['GET'])
-def get_bills():
-    try:
-        filter_date = request.args.get('date')
-        query = {}
-        
-        if filter_date:
-            # Convert string date to datetime range for the whole day
-            start_date = datetime.strptime(filter_date, '%Y-%m-%d')
-            end_date = datetime.strptime(filter_date, '%Y-%m-%d').replace(hour=23, minute=59, second=59)
-            query = {
-                'upload_date': {
-                    '$gte': start_date,
-                    '$lte': end_date
-                }
-            }
-        
-        bills = list(bills_collection.find(query).sort('upload_date', -1))
-        # Convert ObjectId to string for JSON serialization
-        for bill in bills:
-            bill['_id'] = str(bill['_id'])
-        
-        return jsonify(bills)
-    
-    except Exception as e:
-        logging.error(f"Error fetching bills: {str(e)}")
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/bills/<bill_id>', methods=['GET'])
-def get_bill(bill_id):
-    try:
-        bill = bills_collection.find_one({"_id": ObjectId(bill_id)})
-        if not bill:
-            return jsonify({"error": "Bill not found"}), 404
-        
-        # Convert ObjectId to string for JSON serialization
-        bill['_id'] = str(bill['_id'])
-        
-        return jsonify(bill)
-    
-    except Exception as e:
-        logging.error(f"Error fetching bill: {str(e)}")
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/save-products', methods=['POST'])
-def save_products():
-    try:
-        data = request.json
-        if not data or 'products' not in data:
-            return jsonify({"error": "No product data provided"}), 400
-            
-        products = data['products']
-        
-        # Insert each product into stocks collection
-        result = medicine_collection.insert_many(products)
-        
-        return jsonify({
-            "success": True,
-            "message": f"Added {len(result.inserted_ids)} products to stock",
-            "product_ids": [str(id) for id in result.inserted_ids]
-        })
-        
-    except Exception as e:
-        logging.error(f"Error saving products: {str(e)}")
-        return jsonify({"error": str(e)}), 500
-
-if __name__ == '__main__':
-    app.run(debug=True)
-
+        except Exception as e:
+            # Clean up temporary file in case of error
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+            raise e

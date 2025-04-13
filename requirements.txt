@@ -18,3 +18,4 @@ gunicorn
 authlib
 werkzeug
 jwt
+pymupdf

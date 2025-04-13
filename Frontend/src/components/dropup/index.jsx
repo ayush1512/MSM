@@ -1,14 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FaPills } from 'react-icons/fa';
-import { ScrollText } from 'lucide-react';
+import { ScrollText, Receipt } from 'lucide-react';
 import { BiBrain } from 'react-icons/bi';
 import Prescription from '../popup/Prescription';
 import ProductUpload from '../popup/ProductUpload';
+import BillScanner from '../popup/BillScanner';
 
 const UpwardDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isPrescriptionOpen, setIsPrescriptionOpen] = useState(false);
   const [isProductUploadOpen, setIsProductUploadOpen] = useState(false);
+  const [isBillScannerOpen, setIsBillScannerOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   const toggleDropdown = () => {
@@ -40,11 +42,17 @@ const UpwardDropdown = () => {
     setIsProductUploadOpen(true);
     setIsOpen(false);
   };
+  
+  // Open bill scanner popup and close dropdown
+  const handleOpenBillScanner = () => {
+    setIsBillScannerOpen(true);
+    setIsOpen(false);
+  };
 
   return (
     <>
       <div className="fixed bottom-6 right-6 z-50" ref={dropdownRef}>
-        <div className={!isPrescriptionOpen && !isProductUploadOpen? "hidden":"block"}>
+        <div className={!isPrescriptionOpen && !isProductUploadOpen && !isBillScannerOpen ? "hidden":"block"}>
           {/* Prescription popup */}
           <Prescription
             externalOpen={isPrescriptionOpen} 
@@ -56,6 +64,13 @@ const UpwardDropdown = () => {
           <ProductUpload
             externalOpen={isProductUploadOpen}
             onClose={() => setIsProductUploadOpen(false)}
+            hideButton={true}
+          />
+          
+          {/* Bill Scanner popup */}
+          <BillScanner
+            externalOpen={isBillScannerOpen}
+            onClose={() => setIsBillScannerOpen(false)}
             hideButton={true}
           />
         </div>
@@ -85,6 +100,13 @@ const UpwardDropdown = () => {
               >
                 <FaPills className="text-lg" />
                 <span>Products</span>
+              </button>
+              <button 
+                onClick={handleOpenBillScanner}
+                className="bg-gray-800 hover:bg-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800 text-white font-medium p-3 rounded-full shadow-lg shadow-gray-800/50 dark:shadow-gray-900/30 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-700 transition-all duration-200 flex items-center justify-center space-x-2"
+              >
+                <Receipt size={20} />
+                <span>Bill Scanner</span>
               </button>
               <button className="bg-gray-800 hover:bg-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800 text-white font-medium p-3 rounded-full shadow-lg shadow-gray-800/50 dark:shadow-gray-900/30 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-700 transition-all duration-200 flex items-center justify-center space-x-2">
                 <BiBrain className="text-lg" />
