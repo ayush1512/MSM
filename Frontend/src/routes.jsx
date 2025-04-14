@@ -9,6 +9,8 @@ import Productplace from "./pages/AdminPage/views/admin/product";
 import CustomerDashboard from "./pages/AdminPage/views/admin/customer";
 import CustomerDetails from "./pages/AdminPage/views/admin/customer/views/CustomerDetails";
 import StockManagement from "./pages/AdminPage/views/admin/stock";
+import PrescriptionPage from "pages/AdminPage/views/admin/prescription";
+import ProductPage from "pages/AdminPage/views/admin/productPage";
 
 // Icon Imports
 import {
@@ -18,6 +20,7 @@ import {
   MdPerson,
   MdPeople,
   MdInventory,
+  MdNoteAlt,
 } from "react-icons/md";
 import { GiMedicinePills } from "react-icons/gi";
 
@@ -53,6 +56,20 @@ const routes = [
     secondary: true,
   },
   {
+    name: "Prescription Details",
+    layout: "/admin",
+    path: "prescription",
+    component: <PrescriptionPage />,
+    hidden: true,
+  },
+  {
+    name: "Prescription Details",
+    layout: "/admin",
+    path: "prescription/:id",
+    component: <PrescriptionPage />,
+    hidden: true,
+  },
+  {
     name: "Product Place",
     layout: "/admin",
     path: "product-place",
@@ -65,6 +82,13 @@ const routes = [
     path: "stock",
     icon: <MdInventory className="h-6 w-6" />,
     component: <StockManagement />,
+  },
+  {
+    name: "Product Details",
+    layout: "/admin",
+    path: "product/:id",
+    component: <ProductPage />,
+    hidden: true,
   },
   {
     name: "Customers",
