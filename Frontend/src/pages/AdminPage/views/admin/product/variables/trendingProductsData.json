@@ -1,0 +1,142 @@
+[
+  {
+    "id": 1,
+    "name": "Azithromycin 500mg",
+    "category": "Tablets",
+    "price": "299.99",
+    "weeklyRevenue": [3200, 4500, 4800, 5100]
+  },
+  {
+    "id": 2,
+    "name": "Montelukast 10mg",
+    "category": "Tablets",
+    "price": "249.99",
+    "weeklyRevenue": [2800, 3200, 3900, 4200]
+  },
+  {
+    "id": 3,
+    "name": "Amoxicillin Suspension",
+    "category": "Syrup",
+    "price": "199.99",
+    "weeklyRevenue": [2100, 2600, 2900, 3400]
+  },
+  {
+    "id": 4,
+    "name": "Paracetamol 500mg",
+    "category": "Tablets",
+    "price": "129.99",
+    "weeklyRevenue": [1800, 2200, 2500, 2700]
+  },
+  {
+    "id": 5,
+    "name": "Vitamin D3 Supplement",
+    "category": "Capsules",
+    "price": "349.99",
+    "weeklyRevenue": [2900, 3300, 3700, 4100]
+  },
+  {
+    "id": 6,
+    "name": "Electrolyte Solution",
+    "category": "Powder",
+    "price": "79.99",
+    "weeklyRevenue": [1600, 1800, 2000, 2200]
+  },
+  {
+    "id": 7,
+    "name": "Ciprofloxacin 500mg",
+    "category": "Tablets",
+    "price": "129.99",
+    "weeklyRevenue": [1900, 2100, 2300, 2600]
+  },
+  {
+    "id": 8,
+    "name": "Insulin Glargine",
+    "category": "Injection",
+    "price": "89.99",
+    "weeklyRevenue": [1500, 1700, 1900, 2200]
+  },
+  {
+    "id": 9,
+    "name": "Omeprazole 20mg",
+    "category": "Capsules",
+    "price": "49.99",
+    "weeklyRevenue": [1200, 1400, 1600, 1800]
+  },
+  {
+    "id": 10,
+    "name": "Multivitamin Complex",
+    "category": "Syrup",
+    "price": "149.99",
+    "weeklyRevenue": [2200, 2400, 2700, 3000]
+  },
+  {
+    "id": 11,
+    "name": "Diclofenac 50mg",
+    "category": "Tablets",
+    "price": "399.99",
+    "weeklyRevenue": [3500, 3800, 4100, 4500]
+  },
+  {
+    "id": 12,
+    "name": "Salbutamol Inhaler",
+    "category": "Inhaler",
+    "price": "129.99",
+    "weeklyRevenue": [1800, 2100, 2300, 2500]
+  },
+  {
+    "id": 13,
+    "name": "Metformin 500mg",
+    "category": "Tablets",
+    "price": "59.99",
+    "weeklyRevenue": [1300, 1500, 1700, 1900]
+  },
+  {
+    "id": 14,
+    "name": "Calcium Supplement",
+    "category": "Powder",
+    "price": "39.99",
+    "weeklyRevenue": [1100, 1300, 1500, 1700]
+  },
+  {
+    "id": 15,
+    "name": "Ibuprofen 400mg",
+    "category": "Tablets",
+    "price": "69.99",
+    "weeklyRevenue": [1400, 1600, 1800, 2000]
+  },
+  {
+    "id": 16,
+    "name": "Cough Expectorant",
+    "category": "Syrup",
+    "price": "49.99",
+    "weeklyRevenue": [1200, 1400, 1600, 1800]
+  },
+  {
+    "id": 17,
+    "name": "Thyroid Medication",
+    "category": "Tablets",
+    "price": "199.99",
+    "weeklyRevenue": [2100, 2300, 2600, 2900]
+  },
+  {
+    "id": 18,
+    "name": "Antacid Suspension",
+    "category": "Syrup",
+    "price": "129.99",
+    "weeklyRevenue": [1800, 2000, 2200, 2500]
+  },
+  {
+    "id": 19,
+    "name": "Iron Supplement",
+    "category": "Tablets",
+    "price": "49.99",
+    "weeklyRevenue": [1200, 1400, 1600, 1800]
+  },
+  {
+    "id": 20,
+    "name": "Antihistamine",
+    "category": "Syrup",
+    "price": "29.99",
+    "weeklyRevenue": [800, 1000, 1200, 1400]
+  }
+]

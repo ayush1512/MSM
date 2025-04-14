@@ -1,0 +1,92 @@
+[
+  {
+    "name": "Ceftriaxone 1g",
+    "manufacturer": "MediPharma",
+    "category": "Injection",
+    "price": "$89.99",
+    "stock": "120",
+    "expiryDate": "2025/03/15",
+    "lastMonthRevenue": "$4,320"
+  },
+  {
+    "name": "Whey Protein Isolate",
+    "manufacturer": "NutriHealth",
+    "category": "Powder",
+    "price": "$42.99",
+    "stock": "75",
+    "expiryDate": "2024/08/15",
+    "lastMonthRevenue": "$2,150"
+  },
+  {
+    "name": "Retinol Cream",
+    "manufacturer": "DermaCare",
+    "category": "Topical",
+    "price": "$58.99",
+    "stock": "45",
+    "expiryDate": "2025/02/20",
+    "lastMonthRevenue": "$1,890"
+  },
+  {
+    "name": "Glucose Monitor",
+    "manufacturer": "MedTech",
+    "category": "Device",
+    "price": "$24.99",
+    "stock": "200",
+    "expiryDate": "N/A",
+    "lastMonthRevenue": "$3,250"
+  },
+  {
+    "name": "Vitamin D3 5000IU",
+    "manufacturer": "NatureHealth",
+    "category": "Capsules",
+    "price": "$19.99",
+    "stock": "150",
+    "expiryDate": "2024/12/10",
+    "lastMonthRevenue": "$1,450"
+  },
+  {
+    "name": "Blood Pressure Monitor",
+    "manufacturer": "MedEquip",
+    "category": "Device",
+    "price": "$79.99",
+    "stock": "60",
+    "expiryDate": "N/A",
+    "lastMonthRevenue": "$3,120"
+  },
+  {
+    "name": "Bandage Roll",
+    "manufacturer": "MedSupply",
+    "category": "First Aid",
+    "price": "$64.99",
+    "stock": "85",
+    "expiryDate": "N/A",
+    "lastMonthRevenue": "$2,730"
+  },
+  {
+    "name": "Probiotic Complex",
+    "manufacturer": "GutHealth",
+    "category": "Capsules",
+    "price": "$39.99",
+    "stock": "100",
+    "expiryDate": "2024/09/30",
+    "lastMonthRevenue": "$1,990"
+  },
+  {
+    "name": "Antiseptic Solution",
+    "manufacturer": "MediClean",
+    "category": "Liquid",
+    "price": "$15.99",
+    "stock": "120",
+    "expiryDate": "2024/06/30",
+    "lastMonthRevenue": "$1,240"
+  },
+  {
+    "name": "Insulin Pen",
+    "manufacturer": "DiabeCare",
+    "category": "Injection",
+    "price": "$199.99",
+    "stock": "40",
+    "expiryDate": "2024/11/15",
+    "lastMonthRevenue": "$5,200"
+  }
+]
