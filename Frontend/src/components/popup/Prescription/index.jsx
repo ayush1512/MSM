@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Upload, Camera, Loader, CheckCircle, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 export default function Prescription({ externalOpen, onClose, hideButton }) {
     // State management
@@ -22,6 +23,8 @@ export default function Prescription({ externalOpen, onClose, hideButton }) {
     
     // Determine if popup should be open based on internal or external state
     const isPopupOpen = externalOpen !== undefined ? externalOpen : isInternalOpen;
+
+    const navigate = useNavigate(); // Add this
 
     // Handle file upload
     const handleFileChange = (e) => {
@@ -66,9 +69,23 @@ export default function Prescription({ externalOpen, onClose, hideButton }) {
                 throw new Error(data.error);
             }
             
+            // Extract prescription ID for navigation
+            const prescriptionId = data.prescription_data?.data?._id;
+            
             // Set the result from the API
             setIsProcessing(false);
             setResult(`Successfully processed prescription: ${data.prescription_data?.data?.medications?.length || 0} medications found.`);
+            
+            // After a short delay, navigate to the prescription page
+            setTimeout(() => {
+                closePopup();
+                navigate('/admin/prescription', {
+                    state: { 
+                        prescriptionData: data.prescription_data,
+                        prescriptionId: prescriptionId 
+                    }
+                });
+            }, 1500);
         } catch (error) {
             console.error('Error processing prescription:', error);
             setIsProcessing(false);
