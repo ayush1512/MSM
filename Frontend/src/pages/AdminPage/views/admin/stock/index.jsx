@@ -4,7 +4,6 @@ import StockAlerts from "./components/StockAlerts";
 import StockFilter from "./components/StockFilter";
 import { MdDelete } from "react-icons/md";
 import { stockTableData } from "./variables/tableData";
-import InventoryMovementChart from "components/charts/InventoryMovementChart";
 
 const StockManagement = () => {
   const [selectedItems, setSelectedItems] = useState([]);
@@ -58,11 +57,6 @@ const StockManagement = () => {
             setSelectedItems={setSelectedItems}
             filter={filter}
           />
-        </div>
-
-        {/* Add Inventory Movement Chart below the stock table */}
-        <div className="mt-5">
-          <InventoryMovementChart />
         </div>
       </div>
 
