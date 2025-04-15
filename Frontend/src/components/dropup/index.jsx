@@ -85,34 +85,32 @@ const UpwardDropdown = () => {
 
         {/* Dropdown content that opens upward */}
         {isOpen && (
-          <div className="absolute bottom-full mb-2 w-48 -left-16">
-            <div className="flex flex-col space-y-3 p-2">
-              <button 
-                onClick={handleOpenPrescription}
-                className="bg-gray-800 hover:bg-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800 text-white font-medium p-3 rounded-full shadow-lg shadow-gray-800/50 dark:shadow-gray-900/30 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-700 transition-all duration-200 flex items-center justify-center space-x-2"
-              >
-                <ScrollText size={20} />
-                <span>Prescription</span>
-              </button>
-              <button 
-                onClick={handleOpenProductUpload}
-                className="bg-gray-800 hover:bg-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800 text-white font-medium p-3 rounded-full shadow-lg shadow-gray-800/50 dark:shadow-gray-900/30 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-700 transition-all duration-200 flex items-center justify-center space-x-2"
-              >
-                <FaPills className="text-lg" />
-                <span>Products</span>
-              </button>
-              <button 
-                onClick={handleOpenBillScanner}
-                className="bg-gray-800 hover:bg-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800 text-white font-medium p-3 rounded-full shadow-lg shadow-gray-800/50 dark:shadow-gray-900/30 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-700 transition-all duration-200 flex items-center justify-center space-x-2"
-              >
-                <Receipt size={20} />
-                <span>Bill Scanner</span>
-              </button>
-              <button className="bg-gray-800 hover:bg-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800 text-white font-medium p-3 rounded-full shadow-lg shadow-gray-800/50 dark:shadow-gray-900/30 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-700 transition-all duration-200 flex items-center justify-center space-x-2">
-                <BiBrain className="text-lg" />
-                <span>AI Assistant</span>
-              </button>
-            </div>
+          <div className="absolute bottom-full right-0 mb-2 flex flex-col space-y-2">
+            <button 
+              onClick={handleOpenPrescription}
+              className="bg-gray-800 hover:bg-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800 text-white font-medium p-3 rounded-full shadow-lg shadow-gray-800/50 dark:shadow-gray-900/30 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-700 transition-all duration-200 flex items-center justify-center space-x-2"
+            >
+              <ScrollText size={20} />
+              <span>Prescription</span>
+            </button>
+            <button 
+              onClick={handleOpenProductUpload}
+              className="bg-gray-800 hover:bg-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800 text-white font-medium p-3 rounded-full shadow-lg shadow-gray-800/50 dark:shadow-gray-900/30 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-700 transition-all duration-200 flex items-center justify-center space-x-2"
+            >
+              <FaPills className="text-lg" />
+              <span>Products</span>
+            </button>
+            <button 
+              onClick={handleOpenBillScanner}
+              className="bg-gray-800 hover:bg-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800 text-white font-medium p-3 rounded-full shadow-lg shadow-gray-800/50 dark:shadow-gray-900/30 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-700 transition-all duration-200 flex items-center justify-center space-x-2"
+            >
+              <Receipt size={20} />
+              <span>Bill Scanner</span>
+            </button>
+            <button className="bg-gray-800 hover:bg-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800 text-white font-medium p-3 rounded-full shadow-lg shadow-gray-800/50 dark:shadow-gray-900/30 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-700 transition-all duration-200 flex items-center justify-center space-x-2">
+              <BiBrain className="text-lg" />
+              <span>AI Assistant</span>
+            </button>
           </div>
         )}
       </div>
