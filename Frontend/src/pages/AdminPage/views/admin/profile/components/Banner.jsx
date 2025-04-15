@@ -36,7 +36,7 @@ const Banner = (props) => {
         style={{ backgroundImage: `url(${banner})` }}
       >
         <div className="absolute -bottom-12 flex h-[87px] w-[87px] items-center justify-center rounded-full border-[4px] border-white bg-pink-400 dark:!border-navy-700">
-          <img className="h-full w-full rounded-full" src={userInfo.image_data.url? userInfo.image_data.url : avatar} alt="" />
+          <img className="h-full w-full rounded-full" src={userInfo?.image_data?.url || avatar} alt="" />
         </div>
       </div>
 
