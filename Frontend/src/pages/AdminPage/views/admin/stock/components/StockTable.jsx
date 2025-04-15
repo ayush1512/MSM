@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import Card from "components/card";
 import Checkbox from "components/checkbox";
 import { MdEdit, MdDelete, MdWarning } from "react-icons/md";
@@ -290,7 +291,12 @@ const StockTable = ({ tableData, selectedItems, setSelectedItems, filter }) => {
                       />
                     </td>
                     <td className="py-3 px-3 font-medium">
-                      {product.name}
+                      <Link 
+                        to={`/admin/product/${product.id}`}
+                        className="font-medium text-brand-500 hover:underline"
+                      >
+                        {product.name}
+                      </Link>
                     </td>
                     <td className="py-3 px-3 text-sm">
                       {product.manufacturer}

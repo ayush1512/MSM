@@ -3,3 +3,4 @@ __pycache__/
 node_modules/
 *.pyc
 **/__pycache__/**
+/BillScanner/debug_logs

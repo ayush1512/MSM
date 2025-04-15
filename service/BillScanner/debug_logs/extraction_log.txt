@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 === Text Extraction API Calls Log ===
 Started at: 2025-04-15 00:21:53
 
@@ -10,3 +11,5 @@ Started at: 2025-04-14 07:40:20
 
 >>>>>>> parent of ba7f112 (fix middlenav overflowing issue)
 >>>>>>> parent of ca9b0cf (Revert "commit")
+=======
+>>>>>>> parent of f6c861d (Revert "Merge branch 'main' of https://github.com/ayush1512/MSM")
