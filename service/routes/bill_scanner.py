@@ -15,33 +15,6 @@ def init_bill_scanner(app):
     bill_processor = BillProcessor()
     bill_model = BillModel(app.db)
 
-@bill_scanner_bp.route('/status', methods=['GET'])
-def get_status():
-    """Check system status and dependencies for bill scanner"""
-    import platform
-    import os
-    
-    status_info = {
-        "system": {
-            "platform": platform.platform(),
-            "python_version": platform.python_version(),
-        },
-        "dependencies": {
-            "pdf2image_available": bill_processor.use_pdf2image,
-            "pymupdf_available": bill_processor.pymupdf_available,
-            "pdf_processing_available": bill_processor.use_pdf2image or bill_processor.pymupdf_available,
-            "cloudinary_configured": all([
-                os.getenv('CLOUDINARY_CLOUD_NAME'),
-                os.getenv('CLOUDINARY_API_KEY'),
-                os.getenv('CLOUDINARY_API_SECRET')
-            ]),
-            "together_api_configured": bool(bill_processor.together_api_key),
-            "mongodb_configured": True  # Already validated by the main app
-        }
-    }
-    
-    return jsonify(status_info)
-
 @bill_scanner_bp.route('/upload', methods=['POST'])
 def upload_bill():
     """Upload and process a bill image or PDF"""

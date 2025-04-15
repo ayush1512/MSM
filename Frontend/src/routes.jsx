@@ -11,6 +11,8 @@ import CustomerDetails from "./pages/AdminPage/views/admin/customer/views/Custom
 import StockManagement from "./pages/AdminPage/views/admin/stock";
 import PrescriptionPage from "pages/AdminPage/views/admin/prescription";
 import ProductPage from "pages/AdminPage/views/admin/productPage";
+import BillSection from "pages/AdminPage/views/admin/billSection";
+import BillPage from "pages/AdminPage/views/admin/billPage";
 
 // Icon Imports
 import {
@@ -21,6 +23,7 @@ import {
   MdPeople,
   MdInventory,
   MdNoteAlt,
+  MdReceipt,
 } from "react-icons/md";
 import { GiMedicinePills } from "react-icons/gi";
 
@@ -102,6 +105,20 @@ const routes = [
     layout: "/admin",
     path: "customers/:id",
     component: <CustomerDetails />,
+    hidden: true,
+  },
+  {
+    name: "Bills Management",
+    layout: "/admin",
+    path: "bills",
+    icon: <MdReceipt className="h-6 w-6" />,
+    component: <BillSection />,
+  },
+  {
+    name: "Bill Details",
+    layout: "/admin",
+    path: "bills/:id",
+    component: <BillPage />,
     hidden: true,
   },
   {

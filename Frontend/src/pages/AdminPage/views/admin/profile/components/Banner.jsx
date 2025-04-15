@@ -45,7 +45,7 @@ const Banner = (props) => {
         <h4 className="text-xl font-bold text-navy-700 dark:text-white">
           {userInfo.username}
         </h4>
-        <p className="text-base font-normal text-gray-600">{userInfo.shop_name}</p>
+        <p className="text-base font-normal text-gray-600">{userInfo?.shop_name || "No Name avlable"}</p>
       </div>
 
       {/* Post followers */}
