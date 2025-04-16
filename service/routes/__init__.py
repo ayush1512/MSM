@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from .prescription import prescription_bp
 from .users import user_bp, init_user_bp
 from .bill_scanner import bill_scanner_bp, init_bill_scanner
+from .product import product_bp, init_product_bp
 load_dotenv()
 
 # Create OAuth object to be used with the app
@@ -22,6 +23,9 @@ def init_routes(app):
     
     # Initialize bill scanner blueprint with app
     init_bill_scanner(app)
+    
+    # Initialize product blueprint with app
+    init_product_bp(app)
     
     # Register other blueprints
     app.register_blueprint(prescription_bp)

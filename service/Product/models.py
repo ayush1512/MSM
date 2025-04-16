@@ -2,7 +2,8 @@ from datetime import datetime
 
 class Medicine:
     def __init__(self, product_name, product_manufactured, salt_composition, sub_category=None, 
-                 product_price=None, medicine_desc=None, side_effects=None, drug_interactions=None):
+                 product_price=None, medicine_desc=None, side_effects=None, drug_interactions=None,
+                 image_url=None, additional_notes=None):
         self.product_name = product_name
         self.product_manufactured = product_manufactured
         self.salt_composition = salt_composition
@@ -11,6 +12,8 @@ class Medicine:
         self.medicine_desc = medicine_desc
         self.side_effects = side_effects.split(',') if isinstance(side_effects, str) else side_effects
         self.drug_interactions = drug_interactions
+        self.image_url = image_url
+        self.additional_notes = additional_notes
         self.created_at = datetime.utcnow()
         self.updated_at = datetime.utcnow()
 
@@ -24,6 +27,8 @@ class Medicine:
             "medicine_desc": self.medicine_desc,
             "side_effects": self.side_effects,
             "drug_interactions": self.drug_interactions,
+            "image_url": self.image_url,
+            "additional_notes": self.additional_notes,
             "created_at": self.created_at,
             "updated_at": self.updated_at
         }

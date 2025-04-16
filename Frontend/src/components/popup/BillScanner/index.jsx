@@ -44,9 +44,19 @@ export default function BillScanner({ externalOpen, onClose, hideButton }) {
             const base64Response = await fetch(imageData);
             const blob = await base64Response.blob();
             
+            
+            // Determine file extension from fileType
+            let extension = 'jpg'; // default
+            if (fileType) {
+                if (fileType === 'application/pdf') extension = 'pdf';
+                else if (fileType === 'image/png') extension = 'png';
+                else if (fileType === 'image/jpeg') extension = 'jpg';
+                // add more types if needed
+            }
+
             // Create form data for API request
             const formData = new FormData();
-            formData.append('image', blob, 'bill.jpg');
+            formData.append('bill', blob, `bill.${extension}`);
             
             // Add file type if provided
             if (fileType) {
@@ -54,7 +64,7 @@ export default function BillScanner({ externalOpen, onClose, hideButton }) {
             }
 
             // Make API call to backend
-            const response = await fetch('http://localhost:5000/scan_bill', {
+            const response = await fetch('http://localhost:5000/bill-scanner/upload', {
                 method: 'POST',
                 body: formData,
                 credentials: 'include'
@@ -87,28 +97,6 @@ export default function BillScanner({ externalOpen, onClose, hideButton }) {
             setResult(`Successfully processed bill from ${billData.vendor}`);
         } catch (error) {
             console.error('Error processing bill:', error);
-            
-            // Fallback to mock data in case of error for demo purposes
-            const mockBillData = {
-                vendor: "Medical Supplies Co.",
-                billNumber: "INV-2025-1234",
-                date: "2025-04-10",
-                totalAmount: "₹15,450.00",
-                items: [
-                    { name: "Surgical Mask (Box of 50)", quantity: 10, price: "₹250.00", total: "₹2,500.00" },
-                    { name: "Disposable Gloves (Box of 100)", quantity: 5, price: "₹650.00", total: "₹3,250.00" },
-                    { name: "Hand Sanitizer (500ml)", quantity: 15, price: "₹180.00", total: "₹2,700.00" },
-                    { name: "Digital Thermometer", quantity: 5, price: "₹1,200.00", total: "₹6,000.00" },
-                    { name: "Antiseptic Solution (1L)", quantity: 5, price: "₹200.00", total: "₹1,000.00" }
-                ],
-                taxDetails: {
-                    subTotal: "₹14,450.00",
-                    gst: "₹1,000.00",
-                    total: "₹15,450.00"
-                }
-            };
-            
-            setBillData(mockBillData);
             setResult(`Error: ${error.message}. Using sample data for preview.`);
         } finally {
             setIsProcessing(false);
@@ -119,13 +107,14 @@ export default function BillScanner({ externalOpen, onClose, hideButton }) {
     const saveBillData = async () => {
         try {
             // API call to save bill data
-            const response = await fetch('http://localhost:5000/save_bill', {
+            const response = await fetch('http://localhost:5000/bill-scanner/save-products', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
                 },
                 body: JSON.stringify({
+                    auto_enrich: true,
                     bill_data: billData,
                     image: image
                 }),

@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from BillScanner.bill_processor import BillProcessor
 from BillScanner.models import BillModel
+from Medicine.enrichment_service import MedicineEnrichmentService
 
 # Create Blueprint for bill scanner routes
 bill_scanner_bp = Blueprint('bill_scanner', __name__)
@@ -8,12 +9,14 @@ bill_scanner_bp = Blueprint('bill_scanner', __name__)
 # Initialize the bill processor
 bill_processor = None
 bill_model = None
+enrichment_service = None
 
 def init_bill_scanner(app):
     """Initialize bill scanner dependencies"""
-    global bill_processor, bill_model
+    global bill_processor, bill_model, enrichment_service
     bill_processor = BillProcessor()
     bill_model = BillModel(app.db)
+    enrichment_service = MedicineEnrichmentService(app.db)
 
 @bill_scanner_bp.route('/upload', methods=['POST'])
 def upload_bill():
@@ -85,8 +88,39 @@ def save_products():
             
         products = data['products']
         
-        # Insert each product into medicine collection
-        result = bill_model.db.Medicine.insert_many(products)
+        # Check auto-enrich flag
+        auto_enrich = data.get('auto_enrich', False)
+        
+        # Process each product - enrich data if needed
+        enriched_products = []
+        for product in products:
+            product_name = product.get('product_name')
+            
+            if auto_enrich and product_name:
+                # Try to find and enrich medicine data
+                result = enrichment_service.find_or_enrich_medicine(
+                    product_name,
+                    user_verification=False
+                )
+                
+                if result["status"] in ["found", "enriched"]:
+                    # Merge the enriched data with the original product
+                    enriched_data = result["medicine"]
+                    # Keep original product fields that aren't in enriched data
+                    for key, value in product.items():
+                        if key not in enriched_data or not enriched_data[key]:
+                            enriched_data[key] = value
+                    
+                    enriched_products.append(enriched_data)
+                else:
+                    # If enrichment failed, use the original product
+                    enriched_products.append(product)
+            else:
+                # No enrichment requested, use original product
+                enriched_products.append(product)
+        
+        # Insert into medicine collection
+        result = bill_model.db.Medicine.insert_many(enriched_products)
         
         return jsonify({
             "success": True,

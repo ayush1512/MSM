@@ -33,7 +33,7 @@ export default function ProductUpload({ externalOpen, onClose, hideButton }) {
         setIsSearching(true);
         try {
             // Make API call to search endpoint
-            const response = await fetch(`http://localhost:5000/medicine/search?term=${encodeURIComponent(searchQuery)}`, {
+            const response = await fetch(`http://localhost:5000/medicine/search?term=${encodeURIComponent(searchQuery)}&auto_enrich=true`, {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json',
@@ -99,7 +99,7 @@ export default function ProductUpload({ externalOpen, onClose, hideButton }) {
             formData.append('product_id', selectedProduct.id);
 
             // Make API call to backend
-            const response = await fetch('http://localhost:5000/process_product', {
+            const response = await fetch('http://localhost:5000/process_image', {
                 method: 'POST',
                 body: formData,
                 credentials: 'include'

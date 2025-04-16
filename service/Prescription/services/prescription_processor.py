@@ -2,6 +2,7 @@ from .cloudinary_service import upload_to_cloudinary
 from .together_ai_service import TogetherAIService
 from .text_process import TextProcess  # Fixed class name
 from .db_service import DatabaseService
+from Medicine.enrichment_service import MedicineEnrichmentService
 import logging
 import re
 
@@ -10,6 +11,7 @@ class PrescriptionProcessor:
         self.ai_service = TogetherAIService()
         self.extractor = TextProcess()  # Fixed class instantiation
         self.db_service = DatabaseService()
+        self.enrichment_service = MedicineEnrichmentService(self.db_service)
     
     def process_prescription_image(self, image_file, session=None):
         """Upload image and process prescription in one go"""
@@ -60,3 +62,50 @@ class PrescriptionProcessor:
         except Exception as e:
             logging.error(f"Prescription processing error: {str(e)}")
             return None
+
+    def enrich_prescription_medicines(self, prescription_data, auto_save=False):
+        """Enrich prescription medicine data from online sources"""
+        try:
+            if not prescription_data or "medications" not in prescription_data:
+                return {"error": "No medications found in prescription data"}
+                
+            medications = prescription_data["medications"]
+            enriched_medications = []
+            
+            for med in medications:
+                medicine_name = med.get("name")
+                if not medicine_name:
+                    enriched_medications.append(med)
+                    continue
+                    
+                # Try to find or enrich the medicine
+                result = self.enrichment_service.find_or_enrich_medicine(
+                    medicine_name,
+                    user_verification=not auto_save
+                )
+                
+                # Create enriched medication object
+                enriched_med = med.copy()
+                
+                if result["status"] in ["found", "enriched"]:
+                    # Add enriched details to the medication
+                    enriched_med["enriched_data"] = result["medicine"]
+                    enriched_med["enrichment_status"] = result["status"]
+                else:
+                    # Couldn't find or enrich
+                    enriched_med["enrichment_status"] = result["status"]
+                    enriched_med["enrichment_message"] = result["message"]
+                
+                enriched_medications.append(enriched_med)
+                
+            # Update the prescription data with enriched medications
+            enriched_prescription = prescription_data.copy()
+            enriched_prescription["medications"] = enriched_medications
+            
+            return enriched_prescription
+            
+        except Exception as e:
+            logging.error(f"Error enriching prescription medicines: {str(e)}")
+            return {
+                "error": f"Failed to enrich prescription medicines: {str(e)}"
+            }
