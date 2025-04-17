@@ -11,7 +11,16 @@ class PrescriptionProcessor:
         self.ai_service = TogetherAIService()
         self.extractor = TextProcess()  # Fixed class instantiation
         self.db_service = DatabaseService()
-        self.enrichment_service = MedicineEnrichmentService(self.db_service)
+        
+        # Pass debug flag based on environment
+        debug_mode = False
+        try:
+            import os
+            debug_mode = os.environ.get('DEBUG', 'false').lower() == 'true'
+        except:
+            pass
+            
+        self.enrichment_service = MedicineEnrichmentService(self.db_service, debug=debug_mode)
     
     def process_prescription_image(self, image_file, session=None):
         """Upload image and process prescription in one go"""

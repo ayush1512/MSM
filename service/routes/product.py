@@ -41,6 +41,9 @@ def search_medicine():
         # Check if auto-enrichment is requested
         auto_enrich = request.args.get('auto_enrich', 'false').lower() == 'true'
 
+        # Add debug logging
+        logging.debug(f"Searching for medicine: '{search_term}', auto_enrich={auto_enrich}")
+
         # First try normal database search
         medicines = list(medicine_collection.find({
             '$or': [
@@ -48,6 +51,8 @@ def search_medicine():
                 {'product_manufactured': {'$regex': search_term, '$options': 'i'}}
             ]
         }))
+        
+        logging.debug(f"Database search found {len(medicines)} results")
 
         # Convert ObjectId to string for JSON serialization
         for med in medicines:
@@ -59,10 +64,13 @@ def search_medicine():
             
         # If no medicines found and auto-enrich enabled, try to get from online sources
         if auto_enrich:
+            logging.debug(f"Attempting to enrich medicine: {search_term}")
             enrichment_result = enrichment_service.find_or_enrich_medicine(
                 search_term,
                 user_verification=False  # Auto-save without verification
             )
+            
+            logging.debug(f"Enrichment result status: {enrichment_result['status']}")
             
             if enrichment_result["status"] in ["found", "enriched"]:
                 return jsonify([enrichment_result["medicine"]]), 200
@@ -72,6 +80,8 @@ def search_medicine():
 
     except Exception as e:
         logging.error(f"Error searching medicines: {str(e)}")
+        # Add more detailed error information
+        logging.exception("Detailed exception information:")
         return jsonify({'error': str(e)}), 500
 
 @product_bp.route('/medicine', methods=['GET', 'POST'])
