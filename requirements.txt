@@ -19,3 +19,4 @@ authlib
 werkzeug
 jwt
 pymupdf
+bs4

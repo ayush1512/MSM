@@ -9,11 +9,23 @@ class MedicineEnrichmentService:
     def __init__(self, db_service, debug=False):
         """Initialize with database service"""
         self.db_service = db_service
-        self.medicine_collection = db_service.medicine_collection
+        
+        # Handle both direct MongoDB connection and DatabaseService objects
+        if hasattr(db_service, 'medicine_collection'):
+            # If it's a service object with medicine_collection attribute
+            self.medicine_collection = db_service.medicine_collection
+        elif hasattr(db_service, 'Medicine'):
+            # If it's a direct MongoDB connection with Medicine collection
+            self.medicine_collection = db_service.Medicine
+        else:
+            # Fallback - try with conventional collection name
+            logging.warning("Medicine collection not found in expected format. Trying fallback approach.")
+            self.medicine_collection = db_service.get_collection('Medicine')
+            
         self.scraper = MedicineWebScraper(debug=debug)
         self.debug = debug
         
-    def find_or_enrich_medicine(self, medicine_name, manufacturer=None, user_verification=False):
+    def find_or_enrich_medicine(self, medicine_name, manufacturer=None, user_verification=False, try_simplified=True):
         """
         Find a medicine in database or enrich from web sources
         
@@ -21,6 +33,7 @@ class MedicineEnrichmentService:
             medicine_name: Name of the medicine to search
             manufacturer: Optional manufacturer name to narrow search
             user_verification: Whether user verification is required before saving
+            try_simplified: Whether to try simplified product names if exact match fails
             
         Returns:
             Dict containing medicine information and status
@@ -48,22 +61,47 @@ class MedicineEnrichmentService:
             # Scrape medicine details from online sources
             medicine_data = self.scraper.search_and_scrape_medicine(medicine_name)
             
-            if not medicine_data:
-                return {
-                    "status": "not_found",
-                    "message": f"Could not find information for medicine '{medicine_name}'"
-                }
+            if medicine_data:
+                if user_verification:
+                    # Return without saving for user verification
+                    return {
+                        "status": "needs_verification",
+                        "medicine": medicine_data,
+                        "message": "Medicine found online. Verification required before saving."
+                    }
+                
+                # Save the enriched medicine data
+                return self._save_enriched_medicine(medicine_data)
             
-            if user_verification:
-                # Return without saving for user verification
-                return {
-                    "status": "needs_verification",
-                    "medicine": medicine_data,
-                    "message": "Medicine found online. Verification required before saving."
-                }
+            # Try simplified search if enabled and original search failed
+            if try_simplified and ' ' in medicine_name:
+                # Extract basic product name (first 3 words)
+                words = medicine_name.split()
+                simplified_name = ' '.join(words[:min(3, len(words))])
+                
+                if simplified_name != medicine_name:
+                    logging.info(f"Trying simplified search for '{simplified_name}'")
+                    
+                    # Recursive call with simplified name, but prevent further simplification
+                    simplified_result = self.find_or_enrich_medicine(
+                        simplified_name, 
+                        manufacturer=manufacturer,
+                        user_verification=user_verification,
+                        try_simplified=False  # Prevent infinite recursion
+                    )
+                    
+                    if simplified_result["status"] in ["found", "needs_verification", "enriched"]:
+                        medicine_data = simplified_result["medicine"]
+                        # Preserve original product name
+                        medicine_data["product_name"] = medicine_name
+                        medicine_data["simplified_search_term"] = simplified_name
+                        return simplified_result
             
-            # Save the enriched medicine data
-            return self._save_enriched_medicine(medicine_data)
+            # Nothing found
+            return {
+                "status": "not_found",
+                "message": f"Could not find information for medicine '{medicine_name}'"
+            }
             
         except Exception as e:
             logging.error(f"Error in medicine enrichment: {str(e)}")

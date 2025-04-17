@@ -2,6 +2,10 @@ from flask import Blueprint, request, jsonify
 from BillScanner.bill_processor import BillProcessor
 from BillScanner.models import BillModel
 from Medicine.enrichment_service import MedicineEnrichmentService
+from bson.objectid import ObjectId
+from datetime import datetime
+import logging
+logger = logging.getLogger(__name__)
 
 # Create Blueprint for bill scanner routes
 bill_scanner_bp = Blueprint('bill_scanner', __name__)
@@ -16,7 +20,16 @@ def init_bill_scanner(app):
     global bill_processor, bill_model, enrichment_service
     bill_processor = BillProcessor()
     bill_model = BillModel(app.db)
-    enrichment_service = MedicineEnrichmentService(app.db)
+    
+    # Initialize with debug mode from app configuration
+    debug_mode = app.config.get('DEBUG', False)
+    enrichment_service = MedicineEnrichmentService(app.db, debug=debug_mode)
+    
+    # Log the database structure for debugging
+    try:
+        logger.debug(f"Database collections available: {app.db.db.list_collection_names()}")
+    except Exception as e:
+        logger.warning(f"Could not list database collections: {e}")
 
 @bill_scanner_bp.route('/upload', methods=['POST'])
 def upload_bill():
@@ -78,55 +91,195 @@ def get_bill(bill_id):
     except Exception as e:
         return jsonify({"error": f"Failed to retrieve bill: {str(e)}"}), 500
 
-@bill_scanner_bp.route('/save-products', methods=['POST'])
+@bill_scanner_bp.route('/save-products', methods=['POST', 'OPTIONS'])
 def save_products():
-    """Save products extracted from a bill to medicine collection"""
+    """Save products extracted from a bill to medicine and stock collections"""
+
+    # Handle OPTIONS requests for CORS preflight
+    if request.method == 'OPTIONS':
+        response = jsonify({})
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:5173')  # Specify exact origin
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'POST,OPTIONS')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')  # Add this line
+        return response
+
     try:
         data = request.json
         if not data or 'products' not in data:
             return jsonify({"error": "No product data provided"}), 400
             
         products = data['products']
+
+        # Now it's safe to log products info
+        logger.info(f"Products data type: {type(products)}")
+        logger.info(f"Number of products: {len(products)}")
         
         # Check auto-enrich flag
         auto_enrich = data.get('auto_enrich', False)
         
-        # Process each product - enrich data if needed
-        enriched_products = []
-        for product in products:
-            product_name = product.get('product_name')
-            
-            if auto_enrich and product_name:
-                # Try to find and enrich medicine data
-                result = enrichment_service.find_or_enrich_medicine(
-                    product_name,
-                    user_verification=False
+        # Keep track of warnings and results
+        warnings = []
+        processed_results = []
+        
+        # Add bill_id if it was provided or created
+        bill_data = data.get('bill_data', {})
+        bill_id_obj = None
+        
+        # Update bill details if bill_id is provided
+        if bill_data.get('bill_id'):
+            try:
+                bill_id_obj = ObjectId(bill_data['bill_id'])
+                # Use bills_collection instead of Bills
+                bill_model.db.bills_collection.update_one(
+                    {'_id': bill_id_obj},
+                    {"$set": {"bill_details": bill_data.get('bill_details', {})}}
                 )
+            except Exception as e:
+                logger.error(f"Invalid bill_id format or bills collection error: {e}")
+                warnings.append(f"Could not update bill details: {str(e)}")
+        
+        # Process each product - enrich data if needed
+        for index, product in enumerate(products):
+            try:
+                logger.info(f"Processing product {index + 1}/{len(products)}: {product.get('product_name', 'Unknown')}")
+                product_name = product.get('product_name')
                 
-                if result["status"] in ["found", "enriched"]:
-                    # Merge the enriched data with the original product
-                    enriched_data = result["medicine"]
-                    # Keep original product fields that aren't in enriched data
-                    for key, value in product.items():
-                        if key not in enriched_data or not enriched_data[key]:
-                            enriched_data[key] = value
+                if not product_name:
+                    warnings.append(f"Skipped product at index {index} with no name")
+                    continue
                     
-                    enriched_products.append(enriched_data)
+                medicine_id = None
+                medicine_data = None
+                
+                if auto_enrich:
+                    # Try to find medicine in database or enrich from online sources
+                    result = enrichment_service.find_or_enrich_medicine(
+                        product_name,
+                        user_verification=False
+                    )
+                    
+                    # If exact match fails, try with a simplified product name
+                    if result["status"] == "not_found" and data.get('use_fallback_search', False):
+                        simplified_name = product_name.split(' ')
+                        simplified_name = ' '.join(simplified_name[:min(3, len(simplified_name))])
+                        
+                        # Try again with simplified name
+                        logger.info(f"Trying fallback search with simplified name: {simplified_name}")
+                        result = enrichment_service.find_or_enrich_medicine(
+                            simplified_name,
+                            user_verification=False
+                        )
+
+                    if result["status"] in ["found", "enriched"]:
+                        # We found or created the medicine
+                        medicine_data = result["medicine"]
+                        medicine_id = medicine_data.get("_id")
+                    else:
+                        warnings.append(f"Could not find detailed information for product: {product_name}")
+                
+                # If we couldn't find or enrich the medicine, we need to create a basic entry
+                if not medicine_id:
+                    # Create basic medicine entry with minimal information
+                    basic_medicine = {
+                        "product_name": product_name,
+                        "product_manufactured": product.get('manufacturer', "Unknown"),
+                        "salt_composition": "Not specified"
+                    }
+                    
+                    # Use medicine_collection instead of Medicine
+                    new_med_result = bill_model.db.medicine_collection.insert_one(basic_medicine)
+                    medicine_id = str(new_med_result.inserted_id)
+                    
+                    warnings.append(f"Created basic medicine entry for {product_name}")
+
+                # Now create a stock entry using the medicine_id
+                # Extract stock-specific fields from the product
+                mrp = 0
+                try:
+                    # Handle different price field names and potential conversion errors
+                    if product.get('mrp'):
+                        mrp = float(product.get('mrp'))
+                    elif product.get('rate'):
+                        mrp = float(product.get('rate'))
+                except (ValueError, TypeError):
+                    warnings.append(f"Invalid price for {product_name}, using 0")
+
+                quantity = 0
+                try:
+                    if product.get('quantity'):
+                        quantity = int(product.get('quantity'))
+                except (ValueError, TypeError):
+                    warnings.append(f"Invalid quantity for {product_name}, using 0")
+                
+                stock_entry = {
+                    "medicine_id": ObjectId(medicine_id),
+                    "bill_id": bill_id_obj,
+                    "batch_no": product.get('batch_number', ''),
+                    "mfg_date": product.get('mfg_date', ''),
+                    "exp_date": product.get('exp_date', ''),
+                    "mrp": mrp,
+                    "quantity": quantity,
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow()
+                }
+
+                # Use stock_collection instead of Stock for the check
+                existing_stock = None
+                if stock_entry['batch_no']:
+                    existing_stock = bill_model.db.stock_collection.find_one({
+                        'medicine_id': ObjectId(medicine_id),
+                        'batch_no': stock_entry['batch_no']
+                    })
+                
+                if existing_stock:
+                    # Update the existing stock by adding to the quantity
+                    bill_model.db.stock_collection.update_one(
+                        {'_id': existing_stock['_id']},
+                        {'$inc': {'quantity': stock_entry['quantity']},
+                         '$set': {'updated_at': stock_entry['updated_at']}}
+                    )
+                    stock_id = str(existing_stock['_id'])
+                    action = "updated"
                 else:
-                    # If enrichment failed, use the original product
-                    enriched_products.append(product)
-            else:
-                # No enrichment requested, use original product
-                enriched_products.append(product)
+                    # Insert new stock entry
+                    stock_result = bill_model.db.stock_collection.insert_one(stock_entry)
+                    stock_id = str(stock_result.inserted_id)
+                    action = "created"
+                
+                # Add to processed results
+                processed_results.append({
+                    "product_name": product_name,
+                    "medicine_id": medicine_id,
+                    "stock_id": stock_id,
+                    "action": action
+                })
+                logger.info(f"Successfully processed product: {product_name}")
+                
+            except Exception as e:
+                warnings.append(f"Error processing product '{product.get('product_name', 'Unknown')}': {str(e)}")
+                logger.error(f"Error processing product: {str(e)}")
+                # Continue with the next product instead of failing the entire request
         
-        # Insert into medicine collection
-        result = bill_model.db.Medicine.insert_many(enriched_products)
-        
-        return jsonify({
+        # Prepare response data
+        response_data = {
             "success": True,
-            "message": f"Added {len(result.inserted_ids)} products to stock",
-            "product_ids": [str(id) for id in result.inserted_ids]
-        })
+            "message": f"Processed {len(processed_results)} products to stock",
+            "results": processed_results
+        }
+        
+        # Add warnings if any products couldn't be enriched
+        if warnings:
+            response_data["warnings"] = warnings
+        
+        response = jsonify(response_data)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:5173')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        return response
         
     except Exception as e:
-        return jsonify({"error": f"Failed to save products: {str(e)}"}), 500
+        logger.error(f"Failed to save products: {str(e)}", exc_info=True)
+        error_response = jsonify({"error": f"Failed to save products: {str(e)}"}), 500
+        error_response[0].headers.add('Access-Control-Allow-Origin', 'http://localhost:5173')
+        error_response[0].headers.add('Access-Control-Allow-Credentials', 'true')
+        return error_response
