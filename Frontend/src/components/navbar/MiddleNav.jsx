@@ -31,25 +31,25 @@ const MiddleNav = () => {
       setActiveTab(activeIndex);
     }
   }, [location.pathname]);
-    // {/* Added bg-white and shadow styling to match search box */}
+
   return (
-      <nav className="relative mt-[3px] flex h-[61px] sm-max:w-full  xl:w-[465px] items-center justify-between rounded-full bg-white px-2 py-2 shadow-xl shadow-shadow-500 dark:!bg-navy-800 dark:shadow-none">
+      <nav className="relative mt-[3px] flex h-[61px] w-full max-w-[520px] items-center justify-between rounded-full bg-white px-2 py-2 shadow-xl shadow-shadow-500 dark:!bg-navy-800 dark:shadow-none overflow-hidden">
         {navItems.map((item, index) => (
-          <div key={index} className="relative">
+          <div key={index} className="flex-1 flex justify-center">
             <Link
               to={item.link}
-              className={`flex items-center justify-center rounded-full px-3 py-2 transition-colors ${
+              className={`flex items-center justify-center rounded-full px-2 py-2 transition-colors ${
                 activeTab === index 
                   ? 'bg-gray-800 text-white dark:bg-white dark:text-gray-800' 
-                  : 'text-gray-600 hover:text-gray-800 dark:hover:text-white '
+                  : 'text-gray-600 hover:text-gray-800 dark:hover:text-white'
               }`}
               onClick={() => setActiveTab(index)}
             >
               <span className="flex items-center">
                 {item.icon}
-                <span className={`ml-2 text-sm font-medium ${
-                  activeTab === index ? 'block' : 'hidden xl:block'
-                }`}>
+                <span className={`ml-1 text-xs sm:text-sm font-medium ${
+                  activeTab === index ? 'block' : 'hidden md:block'
+                } whitespace-nowrap`}>
                   {item.name}
                 </span>
               </span>
