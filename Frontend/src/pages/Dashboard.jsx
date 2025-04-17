@@ -1,4 +1,6 @@
 
+
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Pill, Stethoscope, TrendingUp, ScrollText, Phone, Users } from 'lucide-react';
@@ -54,6 +56,7 @@ const Dashboard = () => {
           muted
           loop
           playsInline
+          aria-label="Introductory video about modern healthcare"
         >
           <source src="/intro-video.mp4" type="video/mp4" />
         </video>
@@ -243,7 +246,7 @@ const Dashboard = () => {
                     onClick={() => navigate('/product-scanner')}
                     className="text-gray-400 hover:text-white transition-colors"
                   >
-                    Medicine Catalog
+                    Product Scanner
                   </button>
                 </li>
                 <li>
@@ -259,19 +262,44 @@ const Dashboard = () => {
 
             {/* Column 3 */}
             <div>
-              <h4 className="text-lg font-semibold mb-4">Contact Us</h4>
-              <p className="text-gray-400">
-                1234 Healthcare Drive, Cityville, State 56789
-              </p>
-              <p className="text-gray-400">Phone: (123) 456-7890</p>
-              <p className="text-gray-400">Email: support@modernhealthcare.com</p>
+              <h4 className="text-lg font-semibold mb-4">Follow Us</h4>
+              <ul className="space-y-2">
+                <li>
+                  <a
+                    href="https://www.facebook.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Facebook
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://www.twitter.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Twitter
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://www.instagram.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Instagram
+                  </a>
+                </li>
+              </ul>
             </div>
           </div>
 
-          <div className="mt-8 border-t border-gray-700 pt-4 text-center">
-            <p className="text-gray-500">
-              © {new Date().getFullYear()} Modern Healthcare. All rights reserved.
-            </p>
+          <div className="mt-8 text-center text-gray-400">
+            <p>&copy; {new Date().getFullYear()} Medical Shop Management. All Rights Reserved.</p>
           </div>
         </div>
       </motion.footer>
@@ -280,3 +308,5 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
+
