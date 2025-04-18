@@ -100,6 +100,7 @@ function AppContent(props) {
 
         {/* Admin Page Routes */}
         <Route path="/admin/*" element={<AdminLayout />} />
+        <Route path="/sales" element={<SalePage />} />
       </Routes>
       <UpwardDropdown />
     </>
