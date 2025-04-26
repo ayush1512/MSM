@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Printer, Save } from 'lucide-react';
 import { MdPercent } from 'react-icons/md';
+import axios from 'axios';
 
 const BillSummaryPage = ({ 
   customerDetails, 
@@ -17,6 +18,62 @@ const BillSummaryPage = ({
   onPrint, 
   formatCurrency 
 }) => {
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+  
+  // Get API URL from environment variables
+  const API_URL = import.meta.env.VITE_API_URL;
+  
+  const handleSubmit = async () => {
+    // Reset any previous errors
+    setSaveError(null);
+    setIsSaving(true);
+    
+    try {
+      // Format the data according to the backend expectations
+      const saleData = {
+        customerId: customerDetails.id || null,
+        customer: {
+          name: customerDetails.name || 'Walk-in Customer',
+          mobile: customerDetails.mobile || '',
+          email: customerDetails.email || '',
+          address: customerDetails.address || ''
+        },
+        medicines: medicines.map(med => ({
+          stock_id: med.id,
+          name: med.name,
+          batch: med.batch,
+          price: med.price,
+          quantity: med.quantity,
+        })),
+        subtotal: totalAmount,
+        discount: discount,
+        discountFormat: discountType,
+        totalAmount: finalAmount,
+        date: new Date().toISOString()
+      };
+      
+      // Send the data to the backend
+      const response = await axios.post(`${API_URL}/sales`, saleData, {
+        withCredentials: true, // Important for session cookies
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.status === 201) {
+        // Call the parent's onSubmit handler to handle UI state 
+        // (like closing popups, resetting state, etc.)
+        onSubmit(response.data);
+      }
+    } catch (error) {
+      console.error("Error saving sale:", error);
+      setSaveError(error.response?.data?.error || "Failed to save sale. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <motion.div
       key="bill-summary"
@@ -173,6 +230,13 @@ const BillSummaryPage = ({
         </div>
       </div>
       
+      {/* Display any save errors */}
+      {saveError && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 p-3 rounded-lg">
+          {saveError}
+        </div>
+      )}
+      
       {/* Action Buttons */}
       <div className="flex justify-between pt-4">
         <motion.button
@@ -180,6 +244,7 @@ const BillSummaryPage = ({
           className="flex items-center gap-2 bg-gray-100 dark:bg-navy-700 hover:bg-gray-200 dark:hover:bg-navy-600 text-gray-700 dark:text-white px-4 py-2 rounded-lg transition-colors"
           whileHover={{ scale: 1.01 }}
           whileTap={{ scale: 0.99 }}
+          disabled={isSaving}
         >
           <ArrowLeft size={16} />
           Back
@@ -191,19 +256,30 @@ const BillSummaryPage = ({
             className="flex items-center gap-2 bg-gray-100 dark:bg-navy-700 hover:bg-gray-200 dark:hover:bg-navy-600 text-gray-700 dark:text-white px-4 py-2 rounded-lg transition-colors"
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
+            disabled={isSaving}
           >
             <Printer size={18} />
             Print
           </motion.button>
           
           <motion.button
-            onClick={onSubmit}
-            className="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white px-6 py-2 rounded-lg transition-colors"
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
+            onClick={handleSubmit}
+            className={`flex items-center gap-2 ${isSaving ? 'bg-brand-400' : 'bg-brand-500 hover:bg-brand-600'} text-white px-6 py-2 rounded-lg transition-colors`}
+            whileHover={!isSaving ? { scale: 1.01 } : {}}
+            whileTap={!isSaving ? { scale: 0.99 } : {}}
+            disabled={isSaving}
           >
-            <Save size={18} />
-            Save Sale
+            {isSaving ? (
+              <>
+                <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save size={18} />
+                Save Sale
+              </>
+            )}
           </motion.button>
         </div>
       </div>

@@ -216,6 +216,7 @@ export default function Sales({ externalOpen, onClose, hideButton }) {
                       onExistingCustomer={handleExistingCustomer}
                       customerDetails={customerDetails}
                       handleCustomerChange={handleCustomerChange}
+                      setCustomerDetails={setCustomerDetails}
                     />
                   )}
                   

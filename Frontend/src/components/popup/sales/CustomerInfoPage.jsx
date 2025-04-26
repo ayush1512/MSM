@@ -1,11 +1,44 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { User, Phone, Mail, MapPin, ArrowLeft, ArrowRight } from 'lucide-react';
+import axios from 'axios';
 
 const CustomerInfoPage = ({ customerDetails, handleCustomerChange, onNext, onBack }) => {
-  const handleSubmit = (e) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  
+  // Get API URL from environment variables
+  const API_URL = import.meta.env.VITE_API_URL;
+  
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onNext();
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Format customer data for API
+      const customerData = {
+        customerName: customerDetails.name,
+        customerNumber: customerDetails.mobile,
+        customerEmail: customerDetails.email || '',
+        customerAddress: customerDetails.address || ''
+      };
+      
+      // Send API request to register customer
+      const response = await axios.post(`${API_URL}/customers`, customerData, {
+        withCredentials: true
+      });
+      
+      console.log('Customer registered successfully:', response.data);
+      
+      // Proceed to next step
+      onNext();
+    } catch (err) {
+      console.error('Error registering customer:', err);
+      setError(err.response?.data?.error || 'Failed to register customer. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -16,6 +49,12 @@ const CustomerInfoPage = ({ customerDetails, handleCustomerChange, onNext, onBac
       exit={{ opacity: 0 }}
       className="flex flex-col gap-4"
     >
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 p-3 rounded-lg text-sm">
+          {error}
+        </div>
+      )}
+      
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -101,9 +140,10 @@ const CustomerInfoPage = ({ customerDetails, handleCustomerChange, onNext, onBac
           <motion.button
             type="button"
             onClick={onBack}
-            className="flex items-center gap-2 bg-gray-100 dark:bg-navy-700 hover:bg-gray-200 dark:hover:bg-navy-600 text-gray-700 dark:text-white px-4 py-2 rounded-lg transition-colors"
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
+            disabled={loading}
+            className="flex items-center gap-2 bg-gray-100 dark:bg-navy-700 hover:bg-gray-200 dark:hover:bg-navy-600 text-gray-700 dark:text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+            whileHover={{ scale: loading ? 1 : 1.01 }}
+            whileTap={{ scale: loading ? 1 : 0.99 }}
           >
             <ArrowLeft size={16} />
             Back
@@ -111,12 +151,13 @@ const CustomerInfoPage = ({ customerDetails, handleCustomerChange, onNext, onBac
           
           <motion.button
             type="submit"
-            className="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-lg transition-colors"
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
+            disabled={loading}
+            className="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+            whileHover={{ scale: loading ? 1 : 1.01 }}
+            whileTap={{ scale: loading ? 1 : 0.99 }}
           >
-            Continue
-            <ArrowRight size={16} />
+            {loading ? 'Registering...' : 'Continue'}
+            {!loading && <ArrowRight size={16} />}
           </motion.button>
         </div>
       </form>

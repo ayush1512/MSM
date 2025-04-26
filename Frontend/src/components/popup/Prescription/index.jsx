@@ -2,8 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, Upload, Camera, Loader, CheckCircle, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import PrescriptionPreview from './PrescriptionPreview';
 
-export default function Prescription({ externalOpen, onClose, hideButton }) {
+export default function Prescription({ externalOpen, onClose, hideButton, onPrescriptionProcessed }) {
     // State management
     const [isInternalOpen, setIsInternalOpen] = useState(false);
     const [image, setImage] = useState(null);
@@ -20,6 +21,10 @@ export default function Prescription({ externalOpen, onClose, hideButton }) {
     // Add camera loading state
     const [isCameraLoading, setIsCameraLoading] = useState(false);
     const [cameraError, setCameraError] = useState(null);
+    
+    // Add state for the preview
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+    const [prescriptionPreviewData, setPrescriptionPreviewData] = useState(null);
     
     // Determine if popup should be open based on internal or external state
     const isPopupOpen = externalOpen !== undefined ? externalOpen : isInternalOpen;
@@ -76,16 +81,30 @@ export default function Prescription({ externalOpen, onClose, hideButton }) {
             setIsProcessing(false);
             setResult(`Successfully processed prescription: ${data.prescription_data?.data?.medications?.length || 0} medications found.`);
             
-            // After a short delay, navigate to the prescription page
-            setTimeout(() => {
-                closePopup();
-                navigate('/admin/prescription', {
-                    state: { 
-                        prescriptionData: data.prescription_data,
-                        prescriptionId: prescriptionId 
-                    }
-                });
-            }, 1500);
+            // Open the preview instead of immediately calling the callback
+            if (data.prescription_data) {
+                setPrescriptionPreviewData(data.prescription_data);
+                setIsPreviewOpen(true);
+                return;
+            }
+            
+            // If no callback and no preview, navigate after delay
+            if (!onPrescriptionProcessed && externalOpen === undefined) {
+                setTimeout(() => {
+                    closePopup();
+                    navigate('/admin/prescription', {
+                        state: { 
+                            prescriptionData: data.prescription_data,
+                            prescriptionId: prescriptionId 
+                        }
+                    });
+                }, 1500);
+            } else if (externalOpen !== undefined) {
+                // If we're in popup mode, just close after a delay
+                setTimeout(() => {
+                    closePopup();
+                }, 1500);
+            }
         } catch (error) {
             console.error('Error processing prescription:', error);
             setIsProcessing(false);
@@ -219,12 +238,34 @@ export default function Prescription({ externalOpen, onClose, hideButton }) {
         fileInputRef.current.click();
     };
 
+    // Handle saving the preview data
+    const handlePreviewSave = (editedPrescriptionData) => {
+        // Close the preview
+        setIsPreviewOpen(false);
+        
+        // Call the onPrescriptionProcessed callback with the edited data
+        if (onPrescriptionProcessed) {
+            onPrescriptionProcessed(editedPrescriptionData);
+        }
+        
+        // Reset the prescription preview data
+        setPrescriptionPreviewData(null);
+    };
+    
+    // Handle canceling the preview
+    const handlePreviewCancel = () => {
+        setIsPreviewOpen(false);
+        setPrescriptionPreviewData(null);
+    };
+
     // Reset the popup state
     const resetPopup = () => {
         setImage(null);
         setResult(null);
         setIsProcessing(false);
         stopCameraStream();
+        setIsPreviewOpen(false);
+        setPrescriptionPreviewData(null);
     };
 
     // Close the popup
@@ -515,6 +556,18 @@ export default function Prescription({ externalOpen, onClose, hideButton }) {
                             </div>
                         </motion.div>
                     </motion.div>
+                )}
+            </AnimatePresence>
+            
+            {/* Prescription Preview */}
+            <AnimatePresence>
+                {isPreviewOpen && prescriptionPreviewData && (
+                    <PrescriptionPreview
+                        prescriptionData={prescriptionPreviewData}
+                        onSave={handlePreviewSave}
+                        onCancel={handlePreviewCancel}
+                        onClose={handlePreviewCancel}
+                    />
                 )}
             </AnimatePresence>
         </div>

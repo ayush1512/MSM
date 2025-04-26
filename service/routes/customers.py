@@ -11,15 +11,15 @@ customers_bp = Blueprint('customers', __name__)
 
 # Database variables will be set up during init_app
 db_service = None
-user_collection = None
+customer_collection = None  # Changed from user_collection to customer_collection
 
 # Initialize the blueprint with the app's database
-def init_customers_bp(app, oauth):
-    global db_service, user_collection
+def init_customers_bp(app, oauth=None):  # Made oauth parameter optional
+    global db_service, customer_collection  # Changed to customer_collection
     
     # Set up database connection using app's database service
     db_service = app.db
-    customers_collection = db_service.customers_collection
+    customer_collection = db_service.customers_collection  # Assign to the global variable
     app.register_blueprint(customers_bp)
 
 
@@ -55,11 +55,45 @@ def customers_get():
         return jsonify({'error': "Not logged in"}), 401
 
     try:
-        customers = customer_collection.find_all()
-        return jsonify(list(customers))
+        # Get query parameters
+        name_query = request.args.get('name', '')
+        phone_query = request.args.get('phone', '')
+        shop_owner = session['user']
+        
+        # Build filter query
+        query = {'shop_owner': shop_owner}
+        
+        if name_query:
+            # Case-insensitive search on name
+            query['customer_name'] = {'$regex': name_query, '$options': 'i'}
+        
+        if phone_query:
+            # Search on phone number
+            query['customer_number'] = {'$regex': phone_query, '$options': 'i'}
+        
+        # If neither name nor phone provided, limit results
+        if not name_query and not phone_query:
+            customers = list(customer_collection.find(query).limit(100))
+        else:
+            customers = list(customer_collection.find(query))
+        
+        # Convert ObjectId to string for JSON serialization
+        for customer in customers:
+            if '_id' in customer:
+                customer['_id'] = str(customer['_id'])
+            
+            # Map database fields to expected frontend field names
+            customer['id'] = customer.get('_id')
+            customer['name'] = customer.get('customer_name')
+            customer['phone'] = customer.get('customer_number')
+            customer['email'] = customer.get('customer_email')
+            customer['address'] = customer.get('customer_address')
+        
+        return jsonify(customers)
     
     except Exception as e:
-        return jsonify({'error':"Not able to find customers right now"}), 404
+        logging.error(f"Error searching customers: {str(e)}")
+        return jsonify({'error': f"Not able to find customers right now: {str(e)}"}), 500
 
 @customers_bp.route('/customers/<id>', methods=['GET'])
 def customer_info_by_id(id):  # Renamed function to avoid conflict

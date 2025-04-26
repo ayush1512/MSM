@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Search, PlusCircle, ArrowLeft, ArrowRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Search, PlusCircle, ArrowLeft, ArrowRight, FileText, X, Save, Trash2 } from 'lucide-react';
 import { MdDelete } from 'react-icons/md';
+import axios from 'axios';
+import Prescription from 'components/popup/Prescription';
 
 const AddMedicinePage = ({ medicines, addMedicine, removeMedicine, onNext, onBack, formatCurrency }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -9,32 +11,30 @@ const AddMedicinePage = ({ medicines, addMedicine, removeMedicine, onNext, onBac
   const [selectedMedicine, setSelectedMedicine] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [isSearching, setIsSearching] = useState(false);
-  
+  const [isPrescriptionScannerOpen, setIsPrescriptionScannerOpen] = useState(false);
+
+  // Get API URL from environment variables
+  const API_URL = import.meta.env.VITE_API_URL;
+
   // Search medicines in database
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
-    
+
     setIsSearching(true);
     try {
-      // In a real app, replace with actual API call
-      // Mock API response for demonstration
-      setTimeout(() => {
-        const mockResults = [
-          { id: 1, name: "Paracetamol 500mg", manufacturer: "ABC Pharma", batch: "BT1234", price: 10.50, expiry: "2024-12-31", stock: 100 },
-          { id: 2, name: "Amoxicillin 250mg", manufacturer: "XYZ Meds", batch: "BT4321", price: 15.75, expiry: "2025-06-30", stock: 75 },
-          { id: 3, name: "Cetirizine 10mg", manufacturer: "Health Ltd", batch: "BT7890", price: 8.25, expiry: "2024-10-15", stock: 120 },
-        ].filter(med => med.name.toLowerCase().includes(searchQuery.toLowerCase()));
-        
-        setSearchResults(mockResults);
-        setIsSearching(false);
-      }, 500);
+      const response = await axios.get(`${API_URL}/stock`, {
+        params: { term: searchQuery },
+        withCredentials: true
+      });
+      setSearchResults(response.data);
     } catch (error) {
       console.error('Error searching medicines:', error);
       setSearchResults([]);
+    } finally {
       setIsSearching(false);
     }
   };
-  
+
   // Auto search when query changes
   useEffect(() => {
     const delaySearch = setTimeout(() => {
@@ -44,10 +44,10 @@ const AddMedicinePage = ({ medicines, addMedicine, removeMedicine, onNext, onBac
         setSearchResults([]);
       }
     }, 500);
-    
+
     return () => clearTimeout(delaySearch);
   }, [searchQuery]);
-  
+
   // Handle medicine selection
   const handleSelectMedicine = (medicine) => {
     setSelectedMedicine(medicine);
@@ -55,7 +55,7 @@ const AddMedicinePage = ({ medicines, addMedicine, removeMedicine, onNext, onBac
     setSearchQuery('');
     setSearchResults([]);
   };
-  
+
   // Handle quantity change
   const handleQuantityChange = (e) => {
     const value = parseInt(e.target.value);
@@ -63,7 +63,7 @@ const AddMedicinePage = ({ medicines, addMedicine, removeMedicine, onNext, onBac
       setQuantity(value);
     }
   };
-  
+
   // Add selected medicine to cart
   const handleAddMedicine = () => {
     if (selectedMedicine && quantity > 0) {
@@ -76,13 +76,99 @@ const AddMedicinePage = ({ medicines, addMedicine, removeMedicine, onNext, onBac
         expiry: selectedMedicine.expiry,
         total: selectedMedicine.price * quantity
       };
-      
+
       addMedicine(medicineToAdd);
       setSelectedMedicine(null);
       setQuantity(1);
     }
   };
-  
+
+  // Handle prescription scanning
+  const handlePrescriptionScan = () => {
+    setIsPrescriptionScannerOpen(true);
+  };
+
+  // Handle prescription close
+  const handlePrescriptionClose = () => {
+    setIsPrescriptionScannerOpen(false);
+  };
+
+  // Process prescription data - now directly add since editing happens in PrescriptionPreview
+  const processPrescriptionMedicines = (data) => {
+    if (!data || !data.data || !data.data.medications) {
+      return;
+    }
+
+    // Process each medication to find it in stock and add to cart
+    for (const med of data.data.medications) {
+      if (!med.name || med.name === "Not specified") continue;
+
+      try {
+        // Search for the medicine in stock (using async IIFE to handle async operations)
+        (async () => {
+          try {
+            const response = await axios.get(`${API_URL}/stock`, {
+              params: { term: med.name },
+              withCredentials: true
+            });
+
+            if (response.data && response.data.length > 0) {
+              // Find the best match
+              const medicine = response.data[0];
+
+              // Default quantity from prescription or 1
+              const defaultQty = med.dosage && med.duration
+                ? calculateQuantityFromPrescription(med)
+                : 1;
+
+              // Add to cart with quantity capped to available stock
+              const qty = Math.min(defaultQty, medicine.stock);
+
+              // Add the medicine to the cart
+              addMedicine({
+                id: medicine.id,
+                name: medicine.name,
+                batch: medicine.batch,
+                price: medicine.price,
+                quantity: qty,
+                expiry: medicine.expiry,
+                total: medicine.price * qty
+              });
+            }
+          } catch (error) {
+            console.error(`Error finding medicine "${med.name}" in stock:`, error);
+          }
+        })();
+      } catch (error) {
+        console.error(`Error processing medicine "${med.name}":`, error);
+      }
+    }
+
+    // Close prescription scanner popup
+    setIsPrescriptionScannerOpen(false);
+  };
+
+  // Helper to calculate quantity based on dosage and duration
+  const calculateQuantityFromPrescription = (medication) => {
+    try {
+      const dosageParts = medication.dosage.match(/(\d+)/);
+      const durationParts = medication.duration.match(/(\d+)/);
+      const frequencyParts = medication.frequency.match(/(\d+)/);
+
+      if (!durationParts) return 1;
+
+      const duration = parseInt(durationParts[1]);
+      const frequency = frequencyParts ? parseInt(frequencyParts[1]) :
+        medication.frequency.toLowerCase().includes('twice') ? 2 :
+          medication.frequency.toLowerCase().includes('thrice') ? 3 : 1;
+
+      return duration * frequency;
+    } catch (error) {
+      console.error("Error calculating quantity from prescription:", error);
+      return 1;
+    }
+  };
+
   return (
     <motion.div
       key="add-medicine"
@@ -93,8 +179,21 @@ const AddMedicinePage = ({ medicines, addMedicine, removeMedicine, onNext, onBac
     >
       {/* Medicine Search */}
       <div className="bg-white dark:bg-navy-900 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-navy-700">
-        <h3 className="text-lg font-semibold text-navy-700 dark:text-white mb-3">Search Medicines</h3>
-        
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="text-lg font-semibold text-navy-700 dark:text-white">Search Medicines</h3>
+
+          {/* Prescription Scanner Button */}
+          <motion.button
+            onClick={handlePrescriptionScan}
+            className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg transition-colors"
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
+          >
+            <FileText size={16} />
+            Scan Prescription
+          </motion.button>
+        </div>
+
         <div className="flex gap-2 mb-4">
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -109,7 +208,7 @@ const AddMedicinePage = ({ medicines, addMedicine, removeMedicine, onNext, onBac
             />
           </div>
         </div>
-        
+
         {/* Search Results */}
         {isSearching ? (
           <div className="flex justify-center py-4">
@@ -119,8 +218,8 @@ const AddMedicinePage = ({ medicines, addMedicine, removeMedicine, onNext, onBac
           <div className="max-h-40 overflow-y-auto mb-4">
             <ul className="divide-y divide-gray-200 dark:divide-navy-700">
               {searchResults.map((medicine) => (
-                <li 
-                  key={medicine.id} 
+                <li
+                  key={medicine.id}
                   className="py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-navy-800 px-2 rounded-lg"
                   onClick={() => handleSelectMedicine(medicine)}
                 >
@@ -141,7 +240,7 @@ const AddMedicinePage = ({ medicines, addMedicine, removeMedicine, onNext, onBac
         ) : searchQuery && (
           <p className="text-center py-2 text-gray-500 dark:text-gray-400">No medicines found</p>
         )}
-        
+
         {/* Selected Medicine */}
         {selectedMedicine && (
           <div className="bg-gray-50 dark:bg-navy-800 p-3 rounded-lg">
@@ -156,7 +255,7 @@ const AddMedicinePage = ({ medicines, addMedicine, removeMedicine, onNext, onBac
                 <p className="font-medium text-brand-500">{formatCurrency(selectedMedicine.price)}</p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-4">
               <div className="w-32">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -171,7 +270,7 @@ const AddMedicinePage = ({ medicines, addMedicine, removeMedicine, onNext, onBac
                   className="w-full px-3 py-1 border border-gray-300 dark:border-navy-600 rounded-lg shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500 dark:bg-navy-700 dark:text-white"
                 />
               </div>
-              
+
               <motion.button
                 onClick={handleAddMedicine}
                 className="mt-auto flex items-center gap-1 bg-brand-500 hover:bg-brand-600 text-white px-3 py-1 rounded-lg transition-colors"
@@ -185,11 +284,11 @@ const AddMedicinePage = ({ medicines, addMedicine, removeMedicine, onNext, onBac
           </div>
         )}
       </div>
-      
+
       {/* Medicines Table */}
       <div className="bg-white dark:bg-navy-900 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-navy-700">
         <h3 className="text-lg font-semibold text-navy-700 dark:text-white mb-3">Added Medicines</h3>
-        
+
         {medicines.length === 0 ? (
           <div className="text-center py-6 text-gray-500 dark:text-gray-400">
             No medicines added yet. Search and add medicines above.
@@ -257,7 +356,7 @@ const AddMedicinePage = ({ medicines, addMedicine, removeMedicine, onNext, onBac
           </div>
         )}
       </div>
-      
+
       {/* Navigation Buttons */}
       <div className="flex justify-between pt-4">
         <motion.button
@@ -269,13 +368,13 @@ const AddMedicinePage = ({ medicines, addMedicine, removeMedicine, onNext, onBac
           <ArrowLeft size={16} />
           Back
         </motion.button>
-        
+
         <motion.button
           onClick={onNext}
           disabled={medicines.length === 0}
           className={`flex items-center gap-2 ${
-            medicines.length === 0 
-              ? 'bg-gray-300 dark:bg-gray-700 cursor-not-allowed' 
+            medicines.length === 0
+              ? 'bg-gray-300 dark:bg-gray-700 cursor-not-allowed'
               : 'bg-brand-500 hover:bg-brand-600'
           } text-white px-4 py-2 rounded-lg transition-colors`}
           whileHover={medicines.length > 0 ? { scale: 1.01 } : {}}
@@ -285,6 +384,14 @@ const AddMedicinePage = ({ medicines, addMedicine, removeMedicine, onNext, onBac
           <ArrowRight size={16} />
         </motion.button>
       </div>
+
+      {/* Prescription Scanner Popup */}
+      <Prescription
+        externalOpen={isPrescriptionScannerOpen}
+        onClose={handlePrescriptionClose}
+        hideButton={true}
+        onPrescriptionProcessed={processPrescriptionMedicines}
+      />
     </motion.div>
   );
 };

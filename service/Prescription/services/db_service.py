@@ -16,6 +16,8 @@ class DatabaseService:
             self.stock_collection = self.db.Stock
             self.user_collection = self.db.User
             self.bills_collection = self.db.Bills
+            self.customers_collection= self.db.Customers
+            self.sales_collection=self.db.Sales
 
         except Exception as e:
             logging.error(f"Database connection error: {str(e)}")

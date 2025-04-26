@@ -280,32 +280,76 @@ def update_stock():
 @product_bp.route('/stock', methods=['GET'])
 def get_stock():
     try:
-        # Get all stock entries with medicine details
-        stocks = list(stock_collection.find())
+        # Check if search term is provided (for AddMedicinePage search)
+        search_term = request.args.get('term', '').strip()
+        is_search = bool(search_term)
         
-        # Process the results for JSON serialization
-        for stock in stocks:
-            stock['_id'] = str(stock['_id'])
+        if is_search:
+            # For search, we need to log and debug the query
+            logging.info(f"Searching stock with term: '{search_term}'")
             
-            # Check if medicine_id exists and convert it to string if it does
-            if 'medicine_id' in stock and stock['medicine_id']:
-                stock['medicine_id'] = str(stock['medicine_id'])
+            # First try to find medicines matching the search term
+            matching_medicines = list(medicine_collection.find({
+                '$or': [
+                    {'product_name': {'$regex': search_term, '$options': 'i'}},
+                    {'product_manufactured': {'$regex': search_term, '$options': 'i'}}
+                ]
+            }))
+            
+            # Get the IDs of matching medicines
+            matching_medicine_ids = [med['_id'] for med in matching_medicines]
+            logging.info(f"Found {len(matching_medicine_ids)} matching medicines")
+            
+            # If we found matching medicines, find all stocks for those medicines
+            result_stocks = []
+            if matching_medicine_ids:
+                stocks = list(stock_collection.find({'medicine_id': {'$in': matching_medicine_ids}}))
                 
-                # Try to fetch the associated medicine
-                try:
-                    medicine = medicine_collection.find_one({'_id': ObjectId(stock['medicine_id'])})
+                # Process each stock and add necessary medicine information
+                for stock in stocks:
+                    medicine = next((m for m in matching_medicines if m['_id'] == stock['medicine_id']), None)
                     if medicine:
-                        medicine['_id'] = str(medicine['_id'])
-                        stock['medicine'] = medicine
-                except Exception as e:
-                    stock['medicine'] = None
-            else:
-                stock['medicine'] = None
+                        stock_data = {
+                            'id': str(stock['_id']),
+                            'name': medicine['product_name'],
+                            'manufacturer': medicine.get('product_manufactured', 'Unknown'),
+                            'batch': stock.get('batch_no', 'N/A'),
+                            'price': stock.get('mrp', 0),
+                            'expiry': stock.get('exp_date', ''),
+                            'stock': stock.get('quantity', 0)
+                        }
+                        result_stocks.append(stock_data)
+            
+            logging.info(f"Returning {len(result_stocks)} stock items")
+            return jsonify(result_stocks), 200
+        else:
+            # Original functionality for standard stock listing
+            stocks = list(stock_collection.find())
+            
+            # Process the results for JSON serialization
+            for stock in stocks:
+                stock['_id'] = str(stock['_id'])
                 
-        return jsonify(stocks), 200
+                # Check if medicine_id exists and convert it to string if it does
+                if 'medicine_id' in stock and stock['medicine_id']:
+                    stock['medicine_id'] = str(stock['medicine_id'])
+                    
+                    # Try to fetch the associated medicine
+                    try:
+                        medicine = medicine_collection.find_one({'_id': ObjectId(stock['medicine_id'])})
+                        if medicine:
+                            medicine['_id'] = str(medicine['_id'])
+                            stock['medicine'] = medicine
+                    except Exception as e:
+                        stock['medicine'] = None
+                else:
+                    stock['medicine'] = None
+                    
+            return jsonify(stocks), 200
 
     except Exception as e:
         logging.error(f"Error fetching stock data: {str(e)}")
+        logging.exception("Full exception details:")
         return jsonify({'error': str(e)}), 500
 
 @product_bp.route('/stock/<stock_id>', methods=['DELETE'])
