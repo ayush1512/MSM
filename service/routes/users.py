@@ -53,9 +53,6 @@ def user_signup():
     email = data.get("email")
     password = data.get("password")
 
-    # Debug the session to see what's happening
-    print("Current session:", session)
-    print("User in session:", "user" in session)
     
     # Fix session check and improve error message
     if "user" in session:
@@ -161,7 +158,7 @@ def google_callback():
                 user_collection.insert_one(user_data.to_dict())
 
             session["user"] = email
-            return redirect(os.getenv('FRONTEND_URL'))
+            return redirect(f"{os.getenv('FRONTEND_URL')}admin/default")
         else:
             return jsonify({"error": "Nonce not found in session."}), 400
     return jsonify({"error": "Google authentication failed."}), 400

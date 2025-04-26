@@ -4,6 +4,7 @@ import Dashboard from "./pages/Dashboard";
 import ContactUs from './pages/ContactUs';
 import PrescriptionReader from "./pages/Prescription";
 import ProductScanner from "./pages/ProductScanner";
+import SalePage from "pages/SalePage"
 
 // Admin Page Imports
 import AdminLayout from "./pages/AdminPage/layouts/admin";
