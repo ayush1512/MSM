@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, render_template, current_app
+from flask import Blueprint, request, jsonify, render_template, current_app, session
 import logging
 from datetime import datetime
 from bson import ObjectId
@@ -15,6 +15,19 @@ product_bp = Blueprint('product', __name__)
 medicine_collection = None
 stock_collection = None
 enrichment_service = None
+
+# Helper function to recursively convert MongoDB objects to JSON serializable format
+def convert_mongo_document(doc):
+    if isinstance(doc, ObjectId):
+        return str(doc)
+    elif isinstance(doc, list):
+        return [convert_mongo_document(item) for item in doc]
+    elif isinstance(doc, dict):
+        return {key: convert_mongo_document(value) for key, value in doc.items()}
+    elif isinstance(doc, datetime):
+        return doc.isoformat()
+    else:
+        return doc
 
 def init_product_bp(app):
     """Initialize product blueprint with app's database"""
@@ -177,49 +190,47 @@ def process_image():
             return jsonify({"error": "Failed to upload image to cloud storage"}), 500
 
         # Process the cropped image with Together API
-        cropped_image_file = request.files['cropped_image']
-        cropped_image_data = cropped_image_file.read()
-        cropped_image_base64 = base64.b64encode(cropped_image_data).decode('utf-8')
-        cropped_image_url = f"data:image/jpeg;base64,{cropped_image_base64}"
-
-        together_api_key = current_app.config.get('TOGETHER_API_KEY')
-        processor = ImageProcessor(together_api_key)
-        extracted_info = processor.analyze_image_url(cropped_image_url)
+        extracted_info = None
+        api_error = None
         
-        # Verify extracted_info contains valid data
-        if not extracted_info or not any(extracted_info.values()):
-            return jsonify({
-                "warning": "Could not extract information from the image",
-                "image_url": upload_result['secure_url'],
-                "public_id": upload_result['public_id'],
-                "extracted_info": None
-            }), 200
+        try:
+            cropped_image_file = request.files['image']
+            cropped_image_data = cropped_image_file.read()
+            cropped_image_base64 = base64.b64encode(cropped_image_data).decode('utf-8')
+            cropped_image_url = f"data:image/jpeg;base64,{cropped_image_base64}"
 
-        # Create stock entry
-        stock = Stock(
-            medicine_id=ObjectId(medicine_id),
-            batch_no=extracted_info['BNo'][0] if extracted_info['BNo'] else None,
-            mfg_date=extracted_info['MfgD'][0] if extracted_info['MfgD'] else None,
-            exp_date=extracted_info['ExpD'][0] if extracted_info['ExpD'] else None,
-            mrp=float(extracted_info['MRP'][0]) if extracted_info['MRP'] else None,
-            image_url=upload_result['secure_url']
-        )
+            together_api_key = current_app.config.get('TOGETHER_API_KEY')
+            processor = ImageProcessor(together_api_key)
+            extracted_info = processor.analyze_image_url(cropped_image_url)
+            
+        except Exception as api_ex:
+            logging.error(f"Together API error: {str(api_ex)}")
+            logging.exception("Detailed API exception:")
+            api_error = str(api_ex)
+            # Continue execution - we'll handle the missing extracted_info below
         
-        stock_result = stock_collection.insert_one(stock.to_dict())
 
-        # Return response with all information
+
+        # Prepare response
         response = {
             'image_url': upload_result['secure_url'],
             'public_id': upload_result['public_id'],
-            'extracted_info': extracted_info,
-            'stock_id': str(stock_result.inserted_id),
             'medicine_id': medicine_id
         }
         
-        return jsonify(response), 201
+        # Add extraction results or error information
+        if extracted_info:
+            response['extracted_info'] = extracted_info
+        else:
+            response['extraction_failed'] = True
+            response['error_message'] = api_error or "Failed to extract information from image"
+            response['manual_entry_required'] = True
+        
+        return jsonify(response), 200  # Return 200 even if extraction failed but stock was created
 
     except Exception as e:
         logging.error(f"Error processing image: {str(e)}")
+        logging.exception("Full exception details:")
         return jsonify({"error": "Failed to process image", "details": str(e)}), 500
 
 @product_bp.route('/update_stock', methods=['PUT'])
@@ -296,8 +307,11 @@ def get_stock():
                 ]
             }))
             
-            # Get the IDs of matching medicines
-            matching_medicine_ids = [med['_id'] for med in matching_medicines]
+            # Convert all ObjectId to string for JSON serialization
+            matching_medicines = convert_mongo_document(matching_medicines)
+            
+            # Get the IDs of matching medicines - now with string IDs
+            matching_medicine_ids = [ObjectId(med['_id']) for med in matching_medicines]
             logging.info(f"Found {len(matching_medicine_ids)} matching medicines")
             
             # If we found matching medicines, find all stocks for those medicines
@@ -307,10 +321,14 @@ def get_stock():
                 
                 # Process each stock and add necessary medicine information
                 for stock in stocks:
-                    medicine = next((m for m in matching_medicines if m['_id'] == stock['medicine_id']), None)
+                    # Convert ObjectId to string for safe comparison
+                    stock_id = str(stock['_id'])
+                    medicine_id = str(stock['medicine_id'])
+                    
+                    medicine = next((m for m in matching_medicines if m['_id'] == medicine_id), None)
                     if medicine:
                         stock_data = {
-                            'id': str(stock['_id']),
+                            'id': stock_id,
                             'name': medicine['product_name'],
                             'manufacturer': medicine.get('product_manufactured', 'Unknown'),
                             'batch': stock.get('batch_no', 'N/A'),
@@ -323,29 +341,54 @@ def get_stock():
             logging.info(f"Returning {len(result_stocks)} stock items")
             return jsonify(result_stocks), 200
         else:
-            # Original functionality for standard stock listing
+            # Standard stock listing mode
+            # Fetch all stocks
             stocks = list(stock_collection.find())
             
-            # Process the results for JSON serialization
+            # Prepare the result in the same format as the search mode
+            result_stocks = []
+            
             for stock in stocks:
-                stock['_id'] = str(stock['_id'])
-                
-                # Check if medicine_id exists and convert it to string if it does
-                if 'medicine_id' in stock and stock['medicine_id']:
-                    stock['medicine_id'] = str(stock['medicine_id'])
+                try:
+                    # Convert ObjectIds to strings
+                    stock_id = str(stock['_id'])
+                    medicine_id = str(stock['medicine_id']) if 'medicine_id' in stock else None
                     
-                    # Try to fetch the associated medicine
-                    try:
-                        medicine = medicine_collection.find_one({'_id': ObjectId(stock['medicine_id'])})
+                    if medicine_id:
+                        # Fetch the associated medicine
+                        medicine = medicine_collection.find_one({'_id': ObjectId(medicine_id)})
                         if medicine:
-                            medicine['_id'] = str(medicine['_id'])
-                            stock['medicine'] = medicine
-                    except Exception as e:
-                        stock['medicine'] = None
-                else:
-                    stock['medicine'] = None
-                    
-            return jsonify(stocks), 200
+                            # Build the stock item in the same format as search mode
+                            stock_data = {
+                                'id': stock_id,
+                                'name': medicine.get('product_name', 'Unknown Product'),
+                                'manufacturer': medicine.get('product_manufactured', 'Unknown'),
+                                'category': medicine.get('sub_category', 'Uncategorized'),
+                                'batch': stock.get('batch_no', 'N/A'),
+                                'price': float(stock.get('mrp', 0)),
+                                'expiry': stock.get('exp_date', ''),
+                                'stock': int(stock.get('quantity', 0))
+                            }
+                            result_stocks.append(stock_data)
+                        else:
+                            # Medicine not found but we still want to show the stock
+                            stock_data = {
+                                'id': stock_id,
+                                'name': f"Unknown (ID: {medicine_id})",
+                                'manufacturer': 'Unknown',
+                                'category': 'Uncategorized',
+                                'batch': stock.get('batch_no', 'N/A'),
+                                'price': float(stock.get('mrp', 0)),
+                                'expiry': stock.get('exp_date', ''),
+                                'stock': int(stock.get('quantity', 0))
+                            }
+                            result_stocks.append(stock_data)
+                except Exception as e:
+                    logging.error(f"Error processing stock item: {str(e)}")
+                    # Continue to next stock item
+            
+            logging.info(f"Returning {len(result_stocks)} stock items from standard listing")
+            return jsonify(result_stocks), 200
 
     except Exception as e:
         logging.error(f"Error fetching stock data: {str(e)}")
@@ -418,4 +461,62 @@ def verify_medicine():
         return jsonify(result), 200
     except Exception as e:
         logging.error(f"Error verifying medicine: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@product_bp.route('/save_product', methods=['POST'])
+def save_product():
+    try:
+        data = request.json
+        
+        # Check required fields
+        required_fields = ['productId', 'batchNumber', 'mfgDate', 'expiryDate', 'price']
+        missing_fields = [field for field in required_fields if field not in data or not data[field]]
+        
+        if missing_fields:
+            return jsonify({
+                'error': f"Missing required fields: {', '.join(missing_fields)}"
+            }), 400
+            
+        # Prepare stock data with optional fields
+        stock_data = {
+            'medicine_id': ObjectId(data['productId']),
+            'batch_no': data['batchNumber'],
+            'mfg_date': data['mfgDate'],
+            'exp_date': data['expiryDate'],
+            'mrp': float(data['price']),
+            'quantity': int(data.get('quantity', 0)),
+            'image_url': data.get('imageUrl'),
+            'shop_owner': session['user']
+        }
+        
+        # Check if medicine exists
+        medicine = medicine_collection.find_one({'_id': ObjectId(data['productId'])})
+        if not medicine:
+            return jsonify({'error': 'Medicine not found'}), 404
+            
+        # Check if stock with same batch number exists
+        existing_stock = stock_collection.find_one({
+            'medicine_id': ObjectId(data['productId']),
+            'batch_no': data['batchNumber']
+        })
+        
+        if existing_stock:
+            return jsonify({
+                'error': 'Stock with this batch number already exists',
+                'stock_id': str(existing_stock['_id'])
+            }), 409  # Conflict
+        
+        # Create and save new stock
+        stock = Stock(**stock_data)
+        stock_dict = stock.to_dict()
+        result = stock_collection.insert_one(stock_dict)
+        
+        return jsonify({
+            'message': 'Product saved to stock successfully',
+            'stock_id': str(result.inserted_id)
+        }), 201
+
+    except Exception as e:
+        logging.error(f"Error saving product to stock: {str(e)}")
+        logging.exception("Full exception details:")
         return jsonify({'error': str(e)}), 500

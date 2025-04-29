@@ -1,3 +1,705 @@
 === Text Processing API Calls Log ===
-Started at: 2025-04-26 14:40:33
+Started at: 2025-04-29 15:34:39
+
+
+==================================================
+ATTEMPT #112 - 2025-04-29 15:36:19
+==================================================
+
+```json
+{
+    "bill_details": {
+        "bill_number": "SAYZ3742",
+        "bill_date": "24/03/2025",
+        "total_amount": 1105.00,
+        "drawing_party": "Ayush Pharmacy"
+    },
+    "products": [
+        {
+            "product_name": "MUNCH Maha 18(50x8.9g) N1 IN",
+            "quantity": 50,
+            "batch_number": "50560454P1",
+            "mrp": 5.00,
+            "rate": 3.80,
+            "amount": 190.01,
+            "exp_date": "Not Available"
+        },
+        {
+            "product_name": "LACTOGEN PRO 2 BIB 24x400g INLEB086 IN",
+            "quantity": 1,
+            "batch_number": "50400453L3",
+            "mrp": 485.00,
+            "rate": 377.08,
+            "amount": 377.08,
+            "exp_date": "Not Available"
+        },
+        {
+            "product_name": "LACTOGEN PRO 3 BIB 24x400g INJE087 IN",
+            "quantity": 1,
+            "batch_number": "50360453J1",
+            "mrp": 480.00,
+            "rate": 373.19,
+            "amount": 373.19,
+            "exp_date": "Not Available"
+        }
+    ]
+}
+```
+
+
+==================================================
+ATTEMPT #392 - 2025-04-29 15:36:20
+==================================================
+
+```json
+{
+    "bill_details": {
+        "bill_number": "SAYZ3742",
+        "bill_date": "24/03/2025",
+        "total_amount": 1105.00,
+        "drawing_party": "Ayush Pharmacy"
+    },
+    "products": [
+        {
+            "product_name": "MUNCH Maha 18(50x8.9g) N1 IN",
+            "quantity": 50,
+            "batch_number": "50560454P1",
+            "mrp": 5.00,
+            "rate": 3.80,
+            "amount": 190.01,
+            "exp_date": "Not Available"
+        },
+        {
+            "product_name": "LACTOGEN PRO 2 BIB 24x400g INLEB086 IN",
+            "quantity": 1,
+            "batch_number": "50400453L3",
+            "mrp": 485.00,
+            "rate": 377.08,
+            "amount": 377.08,
+            "exp_date": "Not Available"
+        },
+        {
+            "product_name": "LACTOGEN PRO 3 BIB 24x400g INJE087 IN",
+            "quantity": 1,
+            "batch_number": "50360453J1",
+            "mrp": 480.00,
+            "rate": 373.19,
+            "amount": 373.19,
+            "exp_date": "Not Available"
+        }
+    ]
+}
+```
+
+
+==================================================
+ATTEMPT #544 - 2025-04-29 15:37:03
+==================================================
+
+```json
+{
+    "bill_details": {
+        "bill_number": null,
+        "bill_date": "27/03/2025",
+        "total_amount": 762.00,
+        "drawing_party": "Divyanshi Pharma"
+    },
+    "products": [
+        {
+            "product_name": "KETOFRESH CT",
+            "quantity": 6,
+            "batch_number": "K004",
+            "mrp": 99.00,
+            "rate": 25.00,
+            "amount": 125.00,
+            "exp_date": null
+        },
+        {
+            "product_name": "AMLIP 5MG",
+            "quantity": 10,
+            "batch_number": "11238",
+            "mrp": 28.00,
+            "rate": 6.30,
+            "amount": 63.00,
+            "exp_date": null
+        },
+        {
+            "product_name": "SUMOGEL 30GM",
+            "quantity": 2,
+            "batch_number": "D141E",
+            "mrp": 165.00,
+            "rate": 20.00,
+            "amount": 40.00,
+            "exp_date": null
+        },
+        {
+            "product_name": "KAYLITE OINT",
+            "quantity": 1,
+            "batch_number": "K014",
+            "mrp": 186.00,
+            "rate": 40.00,
+            "amount": 40.00,
+            "exp_date": null
+        },
+        {
+            "product_name": "ELOSONE HT CREAM",
+            "quantity": 1,
+            "batch_number": "4352",
+            "mrp": 145.00,
+            "rate": 34.00,
+            "amount": 34.00,
+            "exp_date": null
+        },
+        {
+            "product_name": "ELOSONE HT 25GM",
+            "quantity": 1,
+            "batch_number": "4156",
+            "mrp": 165.00,
+            "rate": 38.00,
+            "amount": 38.00,
+            "exp_date": null
+        },
+        {
+            "product_name": "MONTAS L TAB",
+            "quantity": 10,
+            "batch_number": "1278",
+            "mrp": 178.00,
+            "rate": 18.00,
+            "amount": 180.00,
+            "exp_date": null
+        },
+        {
+            "product_name": "INTAGESIC-MR",
+            "quantity": 8,
+            "batch_number": "24843",
+            "mrp": 113.00,
+            "rate": 16.00,
+            "amount": 128.00,
+            "exp_date": null
+        },
+        {
+            "product_name": "INTAGESIC-MR",
+            "quantity": 2,
+            "batch_number": "24443",
+            "mrp": 113.00,
+            "rate": 16.00,
+            "amount": 32.00,
+            "exp_date": null
+        }
+    ]
+}
+```
+
+
+==================================================
+ATTEMPT #424 - 2025-04-29 15:37:04
+==================================================
+
+```json
+{
+    "bill_details": {
+        "bill_number": null,
+        "bill_date": "27/03/2025",
+        "total_amount": 762.00,
+        "drawing_party": "Divyanshi Pharma"
+    },
+    "products": [
+        {
+            "product_name": "Ketofresh CT",
+            "quantity": 6,
+            "batch_number": "K004",
+            "mrp": 99.00,
+            "rate": 25.00,
+            "amount": 125.00,
+            "exp_date": null
+        },
+        {
+            "product_name": "Amlip 5MG",
+            "quantity": 10,
+            "batch_number": "11238",
+            "mrp": 28.00,
+            "rate": 6.30,
+            "amount": 63.00,
+            "exp_date": null
+        },
+        {
+            "product_name": "Sumogel 30GM",
+            "quantity": 2,
+            "batch_number": "D141E",
+            "mrp": 165.00,
+            "rate": 20.00,
+            "amount": 40.00,
+            "exp_date": null
+        },
+        {
+            "product_name": "Kaylite Oint",
+            "quantity": 1,
+            "batch_number": "K014",
+            "mrp": 186.00,
+            "rate": 40.00,
+            "amount": 40.00,
+            "exp_date": null
+        },
+        {
+            "product_name": "Eloson HT Cream",
+            "quantity": 1,
+            "batch_number": "4352",
+            "mrp": 145.00,
+            "rate": 34.00,
+            "amount": 34.00,
+            "exp_date": null
+        },
+        {
+            "product_name": "Eloson HT 25GM",
+            "quantity": 1,
+            "batch_number": "4156",
+            "mrp": 165.00,
+            "rate": 38.00,
+            "amount": 38.00,
+            "exp_date": null
+        },
+        {
+            "product_name": "Montas L Tab",
+            "quantity": 10,
+            "batch_number": "1278",
+            "mrp": 178.00,
+            "rate": 18.00,
+            "amount": 180.00,
+            "exp_date": null
+        },
+        {
+            "product_name": "Intagesic-MR",
+            "quantity": 8,
+            "batch_number": "24843",
+            "mrp": 113.00,
+            "rate": 16.00,
+            "amount": 128.00,
+            "exp_date": null
+        },
+        {
+            "product_name": "Intagesic-MR",
+            "quantity": 2,
+            "batch_number": "24443",
+            "mrp": 113.00,
+            "rate": 16.00,
+            "amount": 32.00,
+            "exp_date": null
+        }
+    ]
+}
+```
+
+
+==================================================
+ATTEMPT #424 - 2025-04-29 15:37:32
+==================================================
+
+```json
+{
+    "bill_details": {
+        "bill_number": null,
+        "bill_date": "29/03/2025",
+        "total_amount": 2404.96,
+        "drawing_party": "Aakrati Pharma"
+    },
+    "products": [
+        {
+            "product_name": "QUADRIDERM RF 5GM CREAM",
+            "quantity": 1,
+            "batch_number": "Z040224",
+            "mrp": 89.00,
+            "rate": 63.57,
+            "amount": 63.57,
+            "exp_date": "01/26"
+        },
+        {
+            "product_name": "APTIMUST SYP",
+            "quantity": 1,
+            "batch_number": "2AIX061",
+            "mrp": 159.00,
+            "rate": 113.57,
+            "amount": 113.57,
+            "exp_date": "11/26"
+        },
+        {
+            "product_name": "CLOPITAB A-75 TAB",
+            "quantity": 2,
+            "batch_number": "JA01076",
+            "mrp": 121.25,
+            "rate": 86.61,
+            "amount": 173.22,
+            "exp_date": "10/25"
+        },
+        {
+            "product_name": "EPILIVE-500MG TAB",
+            "quantity": 4,
+            "batch_number": "JA02708",
+            "mrp": 218.05,
+            "rate": 155.76,
+            "amount": 623.04,
+            "exp_date": "09/26"
+        },
+        {
+            "product_name": "ATORVA 40 TAB",
+            "quantity": 3,
+            "batch_number": "1405533",
+            "mrp": 216.16,
+            "rate": 154.41,
+            "amount": 463.23,
+            "exp_date": "10/27"
+        },
+        {
+            "product_name": "TELMA 40MG 30'S TAB",
+            "quantity": 2,
+            "batch_number": "18230654",
+            "mrp": 227.14,
+            "rate": 162.24,
+            "amount": 324.48,
+            "exp_date": "09/26"
+        },
+        {
+            "product_name": "MET-XL 12.5 TAB",
+            "quantity": 4,
+            "batch_number": "GT20654",
+            "mrp": 107.00,
+            "rate": 76.43,
+            "amount": 305.72,
+            "exp_date": "09/27"
+        },
+        {
+            "product_name": "CONCOR 5 TAB",
+            "quantity": 3,
+            "batch_number": "M07AM24056",
+            "mrp": 128.18,
+            "rate": 91.57,
+            "amount": 274.71,
+            "exp_date": "09/26"
+        },
+        {
+            "product_name": "EVION CREAM",
+            "quantity": 1,
+            "batch_number": "4164C83803",
+            "mrp": 93.50,
+            "rate": 63.42,
+            "amount": 63.42,
+            "exp_date": "05/26"
+        }
+    ]
+}
+```
+
+
+==================================================
+ATTEMPT #656 - 2025-04-29 15:37:34
+==================================================
+
+```json
+{
+    "bill_details": {
+        "bill_number": null,
+        "bill_date": "29/03/2025",
+        "total_amount": 2404.96,
+        "drawing_party": "Aakrati Pharma"
+    },
+    "products": [
+        {
+            "product_name": "QUADRIDERM RF 5GM CREAM",
+            "quantity": 1,
+            "batch_number": "Z040224",
+            "mrp": 89.00,
+            "rate": 63.57,
+            "amount": 63.57,
+            "exp_date": "01/26"
+        },
+        {
+            "product_name": "APTIMUST SYP",
+            "quantity": 1,
+            "batch_number": "2AIX061",
+            "mrp": 159.00,
+            "rate": 113.57,
+            "amount": 113.57,
+            "exp_date": "11/26"
+        },
+        {
+            "product_name": "CLOPITAB A-75 TAB",
+            "quantity": 2,
+            "batch_number": "JA01076",
+            "mrp": 121.25,
+            "rate": 86.61,
+            "amount": 173.22,
+            "exp_date": "10/25"
+        },
+        {
+            "product_name": "EPILIVE-500MG TAB",
+            "quantity": 4,
+            "batch_number": "JA02708",
+            "mrp": 218.05,
+            "rate": 155.76,
+            "amount": 623.04,
+            "exp_date": "09/26"
+        },
+        {
+            "product_name": "ATORVA 40 TAB",
+            "quantity": 3,
+            "batch_number": "1405533",
+            "mrp": 216.16,
+            "rate": 154.41,
+            "amount": 463.23,
+            "exp_date": "10/27"
+        },
+        {
+            "product_name": "TELMA 40MG 30'S TAB",
+            "quantity": 2,
+            "batch_number": "18230654",
+            "mrp": 227.14,
+            "rate": 162.24,
+            "amount": 324.48,
+            "exp_date": "09/26"
+        },
+        {
+            "product_name": "MET-XL 12.5 TAB",
+            "quantity": 4,
+            "batch_number": "GT20654",
+            "mrp": 107.00,
+            "rate": 76.43,
+            "amount": 305.72,
+            "exp_date": "09/27"
+        },
+        {
+            "product_name": "CONCOR 5 TAB",
+            "quantity": 3,
+            "batch_number": "M07AM24056",
+            "mrp": 128.18,
+            "rate": 91.57,
+            "amount": 274.71,
+            "exp_date": "09/26"
+        },
+        {
+            "product_name": "EVION CREAM",
+            "quantity": 1,
+            "batch_number": "4164C83803",
+            "mrp": 93.50,
+            "rate": 63.42,
+            "amount": 63.42,
+            "exp_date": "05/26"
+        }
+    ]
+}
+```
+
+
+==================================================
+ATTEMPT #976 - 2025-04-29 15:37:57
+==================================================
+
+```json
+{
+    "bill_details": {
+        "bill_number": null,
+        "bill_date": "29/03/2020",
+        "total_amount": 1040.00,
+        "drawing_party": "Ayush Pharmacy"
+    },
+    "products": [
+        {
+            "product_name": "Tazlive CH 40 Tab.",
+            "quantity": 2,
+            "batch_number": "409/194/06",
+            "mrp": 208.50,
+            "rate": 148.93,
+            "amount": 297.94,
+            "exp_date": "08/26"
+        },
+        {
+            "product_name": "Nicardia Retard 20",
+            "quantity": 6,
+            "batch_number": "4624933",
+            "mrp": 77.44,
+            "rate": 55.32,
+            "amount": 331.62,
+            "exp_date": "11/27"
+        },
+        {
+            "product_name": "Arkamin Tab.",
+            "quantity": 2,
+            "batch_number": "9HY2L045",
+            "mrp": 87.70,
+            "rate": 62.64,
+            "amount": 125.28,
+            "exp_date": "08/26"
+        },
+        {
+            "product_name": "Refresh Tears Drop",
+            "quantity": 2,
+            "batch_number": "115802",
+            "mrp": 137.64,
+            "rate": 105.94,
+            "amount": 211.82,
+            "exp_date": "09/26"
+        }
+    ]
+}
+```
+
+
+==================================================
+ATTEMPT #976 - 2025-04-29 15:37:58
+==================================================
+
+```json
+{
+    "bill_details": {
+        "bill_number": null,
+        "bill_date": "29/03/2020",
+        "total_amount": 1040.00,
+        "drawing_party": "Some Other Pharmacy"
+    },
+    "products": [
+        {
+            "product_name": "Tazlive CH 40 Tab.",
+            "quantity": 2,
+            "batch_number": "409/194/06",
+            "mrp": 208.50,
+            "rate": 148.93,
+            "amount": 297.94,
+            "exp_date": "08/26"
+        },
+        {
+            "product_name": "Nicardia Retard 20",
+            "quantity": 6,
+            "batch_number": "4624933",
+            "mrp": 77.44,
+            "rate": 55.32,
+            "amount": 331.62,
+            "exp_date": "11/27"
+        },
+        {
+            "product_name": "Arkamin Tab.",
+            "quantity": 2,
+            "batch_number": "9HY2L045",
+            "mrp": 87.70,
+            "rate": 62.64,
+            "amount": 125.28,
+            "exp_date": "08/26"
+        },
+        {
+            "product_name": "Refresh Tears Drop",
+            "quantity": 2,
+            "batch_number": "115802",
+            "mrp": 137.64,
+            "rate": 105.94,
+            "amount": 211.82,
+            "exp_date": "09/26"
+        }
+    ]
+}
+```
+
+
+==================================================
+ATTEMPT #864 - 2025-04-29 15:38:14
+==================================================
+
+```json
+{
+    "bill_details": {
+        "bill_number": null,
+        "bill_date": "29/03/2023",
+        "total_amount": 1040.00,
+        "drawing_party": "Jaiswal Pharmaceuticals Private Limited"
+    },
+    "products": [
+        {
+            "product_name": "Tazlive CH 40 Tab",
+            "quantity": 2,
+            "batch_number": "M09/19/06",
+            "mrp": 208.50,
+            "rate": 148.93,
+            "amount": 297.84,
+            "exp_date": "08/26"
+        },
+        {
+            "product_name": "Nicardia Retard 20",
+            "quantity": 4,
+            "batch_number": "N624933",
+            "mrp": 77.44,
+            "rate": 55.32,
+            "amount": 331.92,
+            "exp_date": "11/27"
+        },
+        {
+            "product_name": "Arkamin Tab",
+            "quantity": 2,
+            "batch_number": "9MY21045",
+            "mrp": 87.70,
+            "rate": 52.64,
+            "amount": 125.28,
+            "exp_date": "08/26"
+        },
+        {
+            "product_name": "Refresh Tears Drop",
+            "quantity": 2,
+            "batch_number": "115802",
+            "mrp": 137.64,
+            "rate": 105.94,
+            "amount": 211.52,
+            "exp_date": "09/26"
+        }
+    ]
+}
+```
+
+
+==================================================
+ATTEMPT #344 - 2025-04-29 15:41:05
+==================================================
+
+```json
+{
+    "bill_details": {
+        "bill_number": null,
+        "bill_date": "29/03/2023",
+        "total_amount": 1040.00,
+        "drawing_party": "Jaiswal Pharmaceuticals Private Limited"
+    },
+    "products": [
+        {
+            "product_name": "Tazlive CH 40 Tab",
+            "quantity": 2,
+            "batch_number": "M09/19/06",
+            "mrp": 208.50,
+            "rate": 148.93,
+            "amount": 297.84,
+            "exp_date": "08/26"
+        },
+        {
+            "product_name": "Nicardia Retard 20",
+            "quantity": 4,
+            "batch_number": "N624933",
+            "mrp": 77.44,
+            "rate": 55.32,
+            "amount": 331.92,
+            "exp_date": "11/27"
+        },
+        {
+            "product_name": "Arkamin Tab",
+            "quantity": 2,
+            "batch_number": "9MY21045",
+            "mrp": 87.70,
+            "rate": 52.64,
+            "amount": 125.28,
+            "exp_date": "08/26"
+        },
+        {
+            "product_name": "Refresh Tears Drop",
+            "quantity": 2,
+            "batch_number": "115802",
+            "mrp": 137.64,
+            "rate": 105.94,
+            "amount": 211.52,
+            "exp_date": "09/26"
+        }
+    ]
+}
+```
 

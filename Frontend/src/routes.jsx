@@ -2,9 +2,7 @@ import React from "react";
 
 // Admin Imports
 import MainDashboard from "./pages/AdminPage/views/admin/default";
-import NFTMarketplace from "./pages/AdminPage/views/admin/marketplace";
 import Profile from "./pages/AdminPage/views/admin/profile";
-import DataTables from "./pages/AdminPage/views/admin/tables";
 import Productplace from "./pages/AdminPage/views/admin/product";
 import CustomerDashboard from "./pages/AdminPage/views/admin/customer";
 import CustomerDetails from "./pages/AdminPage/views/admin/customer/views/CustomerDetails";
@@ -17,12 +15,9 @@ import BillPage from "pages/AdminPage/views/admin/billPage";
 // Icon Imports
 import {
   MdHome,
-  MdOutlineShoppingCart,
-  MdBarChart,
   MdPerson,
   MdPeople,
   MdInventory,
-  MdNoteAlt,
   MdReceipt,
 } from "react-icons/md";
 import { GiMedicinePills } from "react-icons/gi";
@@ -49,14 +44,6 @@ const routes = [
     path: "default",
     icon: <MdHome className="h-6 w-6" />,
     component: <MainDashboard />,
-  },
-  {
-    name: "NFT Marketplace",
-    layout: "/admin",
-    path: "nft-marketplace",
-    icon: <MdOutlineShoppingCart className="h-6 w-6" />,
-    component: <NFTMarketplace />,
-    secondary: true,
   },
   {
     name: "Prescription Details",
@@ -120,13 +107,6 @@ const routes = [
     path: "bills/:id",
     component: <BillPage />,
     hidden: true,
-  },
-  {
-    name: "Data Tables",
-    layout: "/admin",
-    icon: <MdBarChart className="h-6 w-6" />,
-    path: "data-tables",
-    component: <DataTables />,
   },
   {
     name: "Profile",

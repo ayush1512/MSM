@@ -96,7 +96,7 @@ export default function ProductUpload({ externalOpen, onClose, hideButton }) {
             // Create form data for API request
             const formData = new FormData();
             formData.append('image', blob, 'product.jpg');
-            formData.append('product_id', selectedProduct.id);
+            formData.append('medicine_id', selectedProduct.id);
 
             // Make API call to backend
             const response = await fetch('http://localhost:5000/process_image', {
@@ -121,7 +121,7 @@ export default function ProductUpload({ externalOpen, onClose, hideButton }) {
                 expiryDate: data.extracted_info?.exp_date || '',
                 mfgDate: data.extracted_info?.mfg_date || '',
                 price: data.extracted_info?.price || '₹0.00',
-                quantity: data.extracted_info?.quantity || 10,
+                quantity: data.extracted_info?.quantity || 1,
                 composition: data.extracted_info?.composition || selectedProduct.composition || '',
                 description: data.extracted_info?.description || 'No description available',
                 storage: data.extracted_info?.storage || 'Store in a cool, dry place',
