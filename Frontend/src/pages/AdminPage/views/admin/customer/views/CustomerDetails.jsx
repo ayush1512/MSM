@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
   MdArrowBack, 
@@ -27,114 +27,95 @@ const CustomerDetails = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   
-  // This would normally be fetched from an API based on the ID
-  const customer = {
-    id: 1,
-    name: "John Doe",
-    email: "john@example.com",
-    phone: "+1 123-456-7890",
-    address: "123 Main Street, Apt 4B",
-    city: "New York",
-    state: "NY",
-    zipCode: "10001",
-    country: "United States",
-    lastPurchase: "2023-04-15",
-    customerSince: "2021-08-10",
-    totalSpent: "2,345.00",
-    customerType: "Premium",
-    image: avatar1,
-    orders: [
-      { id: "#ORD-7893", date: "2023-04-15", amount: "345.00", status: "Completed" },
-      { id: "#ORD-6523", date: "2023-03-22", amount: "180.50", status: "Completed" },
-      { id: "#ORD-5219", date: "2023-02-18", amount: "420.75", status: "Completed" },
-      { id: "#ORD-4781", date: "2023-01-05", amount: "95.20", status: "Completed" }
-    ],
-    notes: "Prefers email communication. Allergic to penicillin.",
-    prescriptions: [
-      {
-        id: "PRE-001",
-        date: "2023-04-15",
-        doctor: "Dr. Sarah Miller",
-        hospital: "City Medical Center",
-        medications: [
-          { name: "Amoxicillin", dosage: "500mg", frequency: "3 times daily", days: 7 },
-          { name: "Ibuprofen", dosage: "400mg", frequency: "As needed", days: 5 }
-        ],
-        imageUrl: prescriptionSample
-      },
-      {
-        id: "PRE-002",
-        date: "2023-02-10",
-        doctor: "Dr. James Wilson",
-        hospital: "Downtown Clinic",
-        medications: [
-          { name: "Hydrocodone", dosage: "5mg", frequency: "Twice daily", days: 5 },
-          { name: "Promethazine", dosage: "25mg", frequency: "At bedtime", days: 5 }
-        ],
-        imageUrl: prescriptionSample
-      },
-      {
-        id: "PRE-003",
-        date: "2022-12-05",
-        doctor: "Dr. Robert Brown",
-        hospital: "Family Health Center",
-        medications: [
-          { name: "Lisinopril", dosage: "10mg", frequency: "Once daily", days: 30 },
-          { name: "Atorvastatin", dosage: "20mg", frequency: "Once daily", days: 30 }
-        ],
-        imageUrl: prescriptionSample
+  // Add state for API data
+  const [customer, setCustomer] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // Get API URL from environment variables
+  const API_URL = import.meta.env.VITE_API_URL;
+  
+  // Fetch customer data when component mounts
+  useEffect(() => {
+    const fetchCustomerData = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`${API_URL}/customers/${id}`, {
+          credentials: 'include' // Include cookies for authentication
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch customer: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        // Transform API response to match expected format in UI
+        // Note: Since the API doesn't provide orders, prescriptions, bills yet,
+        // we'll use placeholder data for demonstration
+        const formattedCustomer = {
+          id: data.id || data._id,
+          name: data.name || data.customer_name || "Unknown",
+          email: data.email || data.customer_email || "",
+          phone: data.phone || data.customer_number || "",
+          address: data.address || data.customer_address || "",
+          city: data.city || "",
+          state: data.state || "",
+          zipCode: data.zipCode || "",
+          country: data.country || "",
+          lastPurchase: data.lastPurchase || null,
+          customerSince: data.created_at || data.updated_at || new Date().toISOString(),
+          totalSpent: data.totalSpent || "0.00",
+          customerType: data.customerType || "Regular",
+          image: data.image || null,
+          notes: data.notes || data.customer_notes || "",
+          // Temporary placeholder data for orders, prescriptions, and bills
+          orders: [
+            { id: "#ORD-001", date: "2023-04-15", amount: "345.00", status: "Completed" },
+            { id: "#ORD-002", date: "2023-03-22", amount: "180.50", status: "Completed" }
+          ],
+          prescriptions: [
+            {
+              id: "PRE-001",
+              date: "2023-04-15",
+              doctor: "Dr. Sarah Miller",
+              hospital: "City Medical Center",
+              medications: [
+                { name: "Amoxicillin", dosage: "500mg", frequency: "3 times daily", days: 7 },
+                { name: "Ibuprofen", dosage: "400mg", frequency: "As needed", days: 5 }
+              ],
+              imageUrl: prescriptionSample
+            }
+          ],
+          bills: [
+            {
+              id: "BILL-001",
+              date: "2023-04-15",
+              items: [
+                { name: "Amoxicillin 500mg", quantity: 21, price: 175.00 },
+                { name: "Ibuprofen 400mg", quantity: 15, price: 65.00 }
+              ],
+              total: 240.00,
+              paymentMethod: "Cash",
+              prescriptionId: "PRE-001"
+            }
+          ]
+        };
+        
+        setCustomer(formattedCustomer);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching customer:', err);
+        setError('Failed to load customer data. Please try again later.');
+      } finally {
+        setLoading(false);
       }
-    ],
-    bills: [
-      {
-        id: "BILL-7893",
-        date: "2023-04-15",
-        items: [
-          { name: "Amoxicillin 500mg", quantity: 21, price: 175.00 },
-          { name: "Ibuprofen 400mg", quantity: 15, price: 65.00 },
-          { name: "Vitamin C", quantity: 1, price: 105.00 }
-        ],
-        total: 345.00,
-        paymentMethod: "Credit Card",
-        prescriptionId: "PRE-001"
-      },
-      {
-        id: "BILL-6523",
-        date: "2023-03-22",
-        items: [
-          { name: "Multivitamin", quantity: 1, price: 80.50 },
-          { name: "Band-Aids", quantity: 1, price: 45.00 },
-          { name: "Pain Relief Gel", quantity: 1, price: 55.00 }
-        ],
-        total: 180.50,
-        paymentMethod: "Cash",
-        prescriptionId: null
-      },
-      {
-        id: "BILL-5219",
-        date: "2023-02-18",
-        items: [
-          { name: "Hydrocodone 5mg", quantity: 10, price: 120.75 },
-          { name: "Promethazine 25mg", quantity: 5, price: 95.00 },
-          { name: "Cold & Flu Medicine", quantity: 1, price: 205.00 }
-        ],
-        total: 420.75,
-        paymentMethod: "Credit Card",
-        prescriptionId: "PRE-002"
-      },
-      {
-        id: "BILL-4781",
-        date: "2023-01-05",
-        items: [
-          { name: "Face Masks", quantity: 1, price: 45.20 },
-          { name: "Hand Sanitizer", quantity: 1, price: 50.00 }
-        ],
-        total: 95.20,
-        paymentMethod: "Cash",
-        prescriptionId: null
-      }
-    ]
-  };
+    };
+
+    if (id) {
+      fetchCustomerData();
+    }
+  }, [id, API_URL]);
   
   // Generate initials when no image is available
   const getInitials = (name) => {
@@ -156,6 +137,33 @@ const CustomerDetails = () => {
       day: 'numeric'
     });
   };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64 mt-3">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-500"></div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mt-3" role="alert">
+        <span className="block sm:inline">{error}</span>
+      </div>
+    );
+  }
+
+  // Show not found state
+  if (!customer) {
+    return (
+      <div className="text-center py-8 text-gray-500 dark:text-gray-400 mt-3">
+        Customer not found.
+      </div>
+    );
+  }
 
   return (
     <div className="mt-3">
@@ -273,7 +281,10 @@ const CustomerDetails = () => {
                 <div className="mb-3 flex items-center">
                   <MdLocationOn className="mr-2 text-gray-600 dark:text-gray-400" />
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    {customer.address}, {customer.city}, {customer.state} {customer.zipCode}
+                    {customer.address}
+                    {customer.city && `, ${customer.city}`}
+                    {customer.state && `, ${customer.state}`}
+                    {customer.zipCode && ` ${customer.zipCode}`}
                   </p>
                 </div>
                 
@@ -313,7 +324,7 @@ const CustomerDetails = () => {
                     </p>
                   </div>
                   <p className="mt-2 text-xl font-bold text-navy-700 dark:text-white">
-                    ${customer.totalSpent}
+                    ₹{customer.totalSpent}
                   </p>
                 </div>
                 
@@ -401,7 +412,7 @@ const CustomerDetails = () => {
                         </td>
                         <td className="py-3">
                           <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                            ${order.amount}
+                            ₹{order.amount}
                           </p>
                         </td>
                         <td className="py-3">

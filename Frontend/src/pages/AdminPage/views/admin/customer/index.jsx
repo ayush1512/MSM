@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import CustomerCard from "./components/CustomerCard";
 import TableTopCustomers from "./components/TableTopCustomers";
 import CustomerHistoryCard from "./components/CustomerHistoryCard";
@@ -21,171 +21,40 @@ const CustomerDashboard = () => {
     customerType: 'all'
   });
   
-  // Sample customers data with more entries to demonstrate pagination
-  const customers = [
-    {
-      id: 1,
-      name: "John Doe",
-      phone: "+1 123-456-7890",
-      email: "john@example.com",
-      lastPurchase: "2023-04-15",
-      totalSpent: "345.00",
-      image: avatar1 
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      phone: "+1 234-567-8901",
-      email: "jane@example.com",
-      lastPurchase: "2023-04-10",
-      totalSpent: "190.00",
-      image: null
-    },
-    {
-      id: 3,
-      name: "Robert Brown",
-      phone: "+1 345-678-9012",
-      email: "robert@example.com",
-      lastPurchase: "2023-04-05",
-      totalSpent: "567.00",
-      image: avatar2
-    },
-    {
-      id: 4,
-      name: "Emily Johnson",
-      phone: "+1 456-789-0123",
-      email: "emily@example.com", 
-      lastPurchase: "2023-03-28",
-      totalSpent: "87.00",
-      image: avatar3
-    },
-    {
-      id: 5,
-      name: "Michael Wilson",
-      phone: "+1 567-890-1234",
-      email: "michael@example.com",
-      lastPurchase: "2023-03-20",
-      totalSpent: "210.00",
-      image: null
-    },
-    {
-      id: 6,
-      name: "Amanda Davis",
-      phone: "+1 678-901-2345",
-      email: "amanda@example.com",
-      lastPurchase: "2023-03-15",
-      totalSpent: "145.00",
-      image: null
-    },
-    {
-      id: 7,
-      name: "David Miller",
-      phone: "+1 789-012-3456",
-      email: "david@example.com",
-      lastPurchase: "2023-03-12",
-      totalSpent: "320.00",
-      image: avatar1
-    },
-    {
-      id: 8,
-      name: "Sarah Thompson",
-      phone: "+1 890-123-4567",
-      email: "sarah@example.com",
-      lastPurchase: "2023-03-08",
-      totalSpent: "175.00",
-      image: null
-    },
-    {
-      id: 9,
-      name: "James Anderson",
-      phone: "+1 901-234-5678",
-      email: "james@example.com",
-      lastPurchase: "2023-03-05",
-      totalSpent: "430.00",
-      image: avatar2
-    },
-    {
-      id: 10,
-      name: "Jennifer Lee",
-      phone: "+1 012-345-6789",
-      email: "jennifer@example.com",
-      lastPurchase: "2023-03-01",
-      totalSpent: "265.00",
-      image: null
-    },
-    {
-      id: 11,
-      name: "Thomas Clark",
-      phone: "+1 123-456-7890",
-      email: "thomas@example.com",
-      lastPurchase: "2023-02-25",
-      totalSpent: "190.00",
-      image: avatar3
-    },
-    {
-      id: 12,
-      name: "Elizabeth White",
-      phone: "+1 234-567-8901",
-      email: "elizabeth@example.com",
-      lastPurchase: "2023-02-20",
-      totalSpent: "350.00",
-      image: null
-    },
-    {
-      id: 13,
-      name: "Daniel Lewis",
-      phone: "+1 345-678-9012",
-      email: "daniel@example.com",
-      lastPurchase: "2023-02-15",
-      totalSpent: "275.00",
-      image: null
-    },
-    {
-      id: 14,
-      name: "Patricia Walker",
-      phone: "+1 456-789-0123",
-      email: "patricia@example.com",
-      lastPurchase: "2023-02-10",
-      totalSpent: "410.00",
-      image: avatar1
-    },
-    {
-      id: 15,
-      name: "Richard Hall",
-      phone: "+1 567-890-1234",
-      email: "richard@example.com",
-      lastPurchase: "2023-02-05",
-      totalSpent: "185.00",
-      image: null
-    },
-    {
-      id: 16,
-      name: "Linda Young",
-      phone: "+1 678-901-2345",
-      email: "linda@example.com",
-      lastPurchase: "2023-02-01",
-      totalSpent: "290.00",
-      image: avatar2
-    },
-    {
-      id: 17,
-      name: "William Turner",
-      phone: "+1 789-012-3456",
-      email: "william@example.com",
-      lastPurchase: "2023-01-28",
-      totalSpent: "230.00",
-      image: null
-    },
-    {
-      id: 18,
-      name: "Karen Allen",
-      phone: "+1 890-123-4567",
-      email: "karen@example.com",
-      lastPurchase: "2023-01-25",
-      totalSpent: "375.00",
-      image: avatar3
-    }
-  ];
+  // New state for API data
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // Get API URL from environment variables
+  const API_URL = import.meta.env.VITE_API_URL;
+  
+  // Fetch customer data on component mount
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`${API_URL}/customers`, {
+          credentials: 'include' // Include cookies for authentication
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch customers: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        setCustomers(data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching customers:', err);
+        setError('Failed to load customers. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCustomers();
+  }, [API_URL]); // Re-fetch if API URL changes
 
   // Items per page - changed from 6 to 9 to accommodate three rows
   const customersPerPage = 9;
@@ -209,35 +78,56 @@ const CustomerDashboard = () => {
           <CustomerFilter filter={filter} setFilter={setFilter} />
         </div>
 
-        {/* Customer Cards - kept the same grid layout but will show more per page */}
-        <div className="z-20 grid grid-cols-1 gap-5 md:grid-cols-3">
-          {currentCustomers.map((customer) => (
-            <CustomerCard 
-              key={customer.id}
-              name={customer.name}
-              phone={customer.phone}
-              lastPurchase={customer.lastPurchase}
-              totalSpent={customer.totalSpent}
-              image={customer.image}
-            />
-          ))}
-        </div>
+        {/* Loading and Error States */}
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-500"></div>
+          </div>
+        ) : error ? (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <span className="block sm:inline">{error}</span>
+          </div>
+        ) : (
+          <>
+            {/* Customer Cards */}
+            <div className="z-20 grid grid-cols-1 gap-5 md:grid-cols-3">
+              {currentCustomers.length > 0 ? (
+                currentCustomers.map((customer) => (
+                  <CustomerCard 
+                    key={customer.id}
+                    id={customer.id}
+                    name={customer.name}
+                    phone={customer.phone}
+                    lastPurchase={customer.lastPurchase || "N/A"}
+                    totalSpent={customer.totalSpent || "0.00"}
+                    image={customer.image}
+                  />
+                ))
+              ) : (
+                <div className="col-span-3 text-center py-8 text-gray-500 dark:text-gray-400">
+                  No customers found. Try adjusting your filters.
+                </div>
+              )}
+            </div>
 
-        {/* Pagination Component */}
-        <div className="mt-5 flex justify-center">
-          <Pagination 
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
-        </div>
+            {/* Pagination Component - only show if we have customers */}
+            {customers.length > 0 && (
+              <div className="mt-5 flex justify-center">
+                <Pagination 
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {/* right side section */}
       <div className="col-span-1 h-full w-full rounded-xl 2xl:col-span-1">
         <TableTopCustomers
           extra="mb-5"
-          tableData={tableDataTopCustomers}
           columnsData={tableColumnsTopCustomers}
         />
         <CustomerHistoryCard />
