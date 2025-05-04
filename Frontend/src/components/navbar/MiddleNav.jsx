@@ -8,8 +8,11 @@ const MiddleNav = () => {
   
   const navItems = [
     { icon: <Home size={20} />, name: 'Home', link: "/" },
-    { icon: <ScrollText size={20} />, name: 'Prescription', link: "/prescription-reader" },
-    { icon: <Barcode size={20} />, name: 'Product', link: "/product-scanner" },
+    // { icon: <ScrollText size={20} />, name: 'Prescription', link: "/prescription-reader" },
+    // { icon: <Barcode size={20} />, name: 'Product', link: "/product-scanner" },
+    { icon: <ScrollText size={20} />, name: 'About us', link: "/About-us" },
+    { icon: <ScrollText size={20} />, name: 'Contact us', link: "/Contact-us" },
+    { icon: <LayoutDashboard size={20} />, name: 'Demo', link: "/demo" },
     { icon: <LayoutDashboard size={20} />, name: 'Dashboard', link: "/admin" },
   ];
 

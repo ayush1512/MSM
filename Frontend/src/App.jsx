@@ -4,7 +4,11 @@ import Dashboard from "./pages/Dashboard";
 import ContactUs from './pages/ContactUs';
 import PrescriptionReader from "./pages/Prescription";
 import ProductScanner from "./pages/ProductScanner";
-import SalePage from "pages/SalePage"
+import SalePage from "pages/SalePage";
+import Demo from "./pages/Demo";
+
+import 'animate.css';
+
 
 // Admin Page Imports
 import AdminLayout from "./pages/AdminPage/layouts/admin";
@@ -13,6 +17,7 @@ import Navbar from "components/navbar";
 import { SidebarProvider } from './context/SidebarContext';
 import UpwardDropdown from 'components/dropup';
 import { UserProvider, useUser } from './context/UserContext';
+import AboutUs from "./pages/AboutUs";
 
 function AppContent(props) {
   const { ...rest } = props;
@@ -98,6 +103,8 @@ function AppContent(props) {
         <Route path="/prescription-reader" element={<PrescriptionReader />} />
         <Route path="/product-scanner" element={<ProductScanner />} />
         <Route path="/contact-us" element={<ContactUs/>}/>
+        <Route path="/about-us" element={<AboutUs/>}/>
+        <Route path="/demo" element={<Demo/>}/>
 
         {/* Admin Page Routes */}
         <Route path="/admin/*" element={<AdminLayout />} />
