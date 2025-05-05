@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, Home, ScrollText, Barcode } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { useUser } from 'context/UserContext';
 
 const MiddleNav = () => {
+  const { user } = useUser(); // Access user context
   const [activeTab, setActiveTab] = useState(0);
   const location = useLocation();
   
@@ -12,8 +14,9 @@ const MiddleNav = () => {
     // { icon: <Barcode size={20} />, name: 'Product', link: "/product-scanner" },
     { icon: <ScrollText size={20} />, name: 'About us', link: "/About-us" },
     { icon: <ScrollText size={20} />, name: 'Contact us', link: "/Contact-us" },
-    { icon: <LayoutDashboard size={20} />, name: 'Demo', link: "/demo" },
-    { icon: <LayoutDashboard size={20} />, name: 'Dashboard', link: "/admin" },
+    user
+      ? { icon: <LayoutDashboard size={20} />, name: 'Dashboard', link: "/admin" }
+      : { icon: <LayoutDashboard size={20} />, name: 'Demo', link: "/demo" },
   ];
 
    // Update active tab based on current path whenever location changes

@@ -72,7 +72,7 @@ const Banner = (props) => {
         <p className="text-base font-normal text-gray-600">{userInfo?.shop_name || "No Name available"}</p>
       </motion.div>
 
-      {/* Post followers */}
+      {/* Post followers
       <motion.div
         className="mt-6 mb-3 flex gap-4 md:!gap-14"
         initial={{ opacity: 0, y: 20 }}
@@ -100,7 +100,7 @@ const Banner = (props) => {
           <p className="text-2xl font-bold text-navy-700 dark:text-white">434</p>
           <p className="text-sm font-normal text-gray-600">Following</p>
         </motion.div>
-      </motion.div>
+      </motion.div> */}
 
       {/* Photo Popup */}
       {isPhotoPopupOpen && (
