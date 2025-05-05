@@ -160,7 +160,7 @@ const TrendingProducts = ({ products }) => {
                       </div>
                       <div className="bg-gray-100 dark:bg-navy-700 rounded-md px-2 py-1">
                         <p className="text-sm font-bold text-navy-700 dark:text-white">
-                          ${product.price}
+                          ₹{product.price}
                         </p>
                       </div>
                     </div>

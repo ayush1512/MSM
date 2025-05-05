@@ -37,7 +37,7 @@ const TopProductsCard = ({ title, data, extra }) => {
             </div>
             <div>
               <p className="text-sm font-bold text-navy-700 dark:text-white">
-                ${product.price}
+                ₹{product.price}
               </p>
               <p className="text-xs text-gray-600 dark:text-white">
                 {product.percentageOfTotal}% of total

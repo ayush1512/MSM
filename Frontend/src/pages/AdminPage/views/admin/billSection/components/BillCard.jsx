@@ -57,7 +57,6 @@ const BillCard = ({ bill, onClick, formatDate }) => {
           </span>
         </div>
         <div className="flex items-center">
-          <MdAttachMoney className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400" />
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
             ₹{totalAmount}
           </span>

@@ -17,12 +17,25 @@ const RecentlyAddedTable = ({ columnsData, tableData }) => {
     return columnsData.map(column => {
       return columnHelper.accessor(column.accessor, {
         header: column.Header,
-        cell: info => info.getValue()
+        cell: info => {
+          const value = info.getValue();
+          // Format price values to use ₹ instead of $
+          if (column.accessor === "price") {
+            return formatPrice(value);
+          }
+          return value;
+        }
       });
     });
   }, [columnsData, columnHelper]);
   
   const data = useMemo(() => tableData, [tableData]);
+
+  // Price formatter function
+  const formatPrice = (price) => {
+    // Change from $ to ₹
+    return price.startsWith('$') ? price.replace('$', '₹') : price;
+  };
 
   // Set up the table instance
   const table = useReactTable({

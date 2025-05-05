@@ -86,7 +86,7 @@ const CustomerCard = ({ id, name, phone, lastPurchase, totalSpent, image }) => {
           <div className="flex">
             <p className="mb-2 text-sm font-bold text-brand-500 dark:text-white">
               Recent Spent:<br />
-              ${totalSpent}
+              ₹{totalSpent}
             </p>
           </div>
           <button

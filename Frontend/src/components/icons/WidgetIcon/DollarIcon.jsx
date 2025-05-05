@@ -1,4 +1,4 @@
-const DollarIcon = () => {
+const RupeeIcon = () => {
   return (
     <svg
       width="15"
@@ -15,4 +15,4 @@ const DollarIcon = () => {
   );
 };
 
-export default DollarIcon;
+export default RupeeIcon;

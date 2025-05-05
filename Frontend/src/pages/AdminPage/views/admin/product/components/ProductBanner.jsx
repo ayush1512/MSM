@@ -11,7 +11,7 @@ const ProductBanner = () => {
       id: 1,
       name: "Azithromycin 500mg",
       category: "Tablets",
-      price: "$299.99",
+      price: "₹299.99",
       revenue: 45000,
       percentageOfTotal: 32,
       pieChartData: [32, 68],
@@ -22,7 +22,7 @@ const ProductBanner = () => {
       id: 2,
       name: "Cefixime Suspension",
       category: "Syrup",
-      price: "$249.99",
+      price: "₹249.99",
       revenue: 38000,
       percentageOfTotal: 27,
       pieChartData: [27, 73],
@@ -33,7 +33,7 @@ const ProductBanner = () => {
       id: 3,
       name: "Protein Supplement",
       category: "Powder",
-      price: "$199.99",
+      price: "₹199.99",
       revenue: 25000,
       percentageOfTotal: 18,
       pieChartData: [18, 82],
@@ -136,7 +136,7 @@ const ProductBanner = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-bold text-navy-700 dark:text-white">
-                    Revenue: ${(product.revenue/1000).toFixed(1)}K
+                    Revenue: ₹{(product.revenue/1000).toFixed(1)}K
                   </p>
                   <p className="text-sm text-gray-600 dark:text-white">
                     {product.percentageOfTotal}% of total

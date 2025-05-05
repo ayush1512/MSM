@@ -1,9 +1,41 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { MdShoppingCart, MdWarning } from "react-icons/md";
 import Card from "components/card";
-import { purchaseAlerts, expiryAlerts } from "../variables/tableData";
 
 const StockAlerts = () => {
+  const [purchaseAlerts, setPurchaseAlerts] = useState([]);
+  const [expiryAlerts, setExpiryAlerts] = useState([]);
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  useEffect(() => {
+    const fetchPurchaseAlerts = async () => {
+      try {
+        const response = await fetch(`${API_URL}/stock/products-to-purchase`, {
+          credentials: "include",
+        });
+        const data = await response.json();
+        setPurchaseAlerts(data);
+      } catch (error) {
+        console.error("Error fetching purchase alerts:", error);
+      }
+    };
+
+    const fetchExpiryAlerts = async () => {
+      try {
+        const response = await fetch(`${API_URL}/stock/expiring-soon`, {
+          credentials: "include",
+        });
+        const data = await response.json();
+        setExpiryAlerts(data);
+      } catch (error) {
+        console.error("Error fetching expiry alerts:", error);
+      }
+    };
+
+    fetchPurchaseAlerts();
+    fetchExpiryAlerts();
+  }, [API_URL]);
+
   return (
     <>
       {/* Products to Purchase */}
@@ -16,14 +48,13 @@ const StockAlerts = () => {
             </h4>
           </div>
         </div>
-        
         <div className="px-4 py-3">
           {purchaseAlerts.length === 0 ? (
             <p className="text-gray-500 dark:text-gray-400 text-center py-4">
               No products need to be purchased at this time
             </p>
           ) : (
-            <div className="divide-y divide-gray-200 dark:divide-navy-700">
+            <div className="max-h-[350px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-800 scrollbar-thumb-rounded-full scrollbar-track-rounded-full">
               {purchaseAlerts.map((item, index) => (
                 <div key={index} className="py-3 first:pt-0 last:pb-0">
                   <div className="flex justify-between items-center">
@@ -50,8 +81,8 @@ const StockAlerts = () => {
           )}
         </div>
       </Card>
-      
-      {/* Expiring Products */}
+
+      {/* Expiring Soon */}
       <Card extra="mb-5">
         <div className="p-4 border-b border-gray-200 dark:border-navy-700">
           <div className="flex items-center">
@@ -61,14 +92,13 @@ const StockAlerts = () => {
             </h4>
           </div>
         </div>
-        
         <div className="px-4 py-3">
           {expiryAlerts.length === 0 ? (
             <p className="text-gray-500 dark:text-gray-400 text-center py-4">
               No products are expiring soon
             </p>
           ) : (
-            <div className="divide-y divide-gray-200 dark:divide-navy-700">
+            <div className="max-h-[350px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-800 scrollbar-thumb-rounded-full scrollbar-track-rounded-full">
               {expiryAlerts.map((item, index) => (
                 <div key={index} className="py-3 first:pt-0 last:pb-0">
                   <div className="flex justify-between items-center">
@@ -81,7 +111,13 @@ const StockAlerts = () => {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className={`font-bold ${item.daysToExpiry <= 30 ? 'text-red-500' : 'text-yellow-500'}`}>
+                      <p
+                        className={`font-bold ${
+                          item.daysToExpiry <= 30
+                            ? "text-red-500"
+                            : "text-yellow-500"
+                        }`}
+                      >
                         Expires in {item.daysToExpiry} days
                       </p>
                       <p className="text-xs text-gray-500">
@@ -93,34 +129,6 @@ const StockAlerts = () => {
               ))}
             </div>
           )}
-        </div>
-      </Card>
-      
-      {/* Quick Stats */}
-      <Card>
-        <div className="p-4">
-          <h4 className="text-lg font-bold text-navy-700 dark:text-white mb-4">
-            Inventory Summary
-          </h4>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-gray-50 dark:bg-navy-700 p-3 rounded-lg text-center">
-              <p className="text-gray-600 dark:text-gray-400 text-sm">Total Products</p>
-              <p className="text-2xl font-bold text-navy-700 dark:text-white">327</p>
-            </div>
-            <div className="bg-gray-50 dark:bg-navy-700 p-3 rounded-lg text-center">
-              <p className="text-gray-600 dark:text-gray-400 text-sm">Categories</p>
-              <p className="text-2xl font-bold text-navy-700 dark:text-white">12</p>
-            </div>
-            <div className="bg-gray-50 dark:bg-navy-700 p-3 rounded-lg text-center">
-              <p className="text-gray-600 dark:text-gray-400 text-sm">Low Stock</p>
-              <p className="text-2xl font-bold text-red-500">18</p>
-            </div>
-            <div className="bg-gray-50 dark:bg-navy-700 p-3 rounded-lg text-center">
-              <p className="text-gray-600 dark:text-gray-400 text-sm">Expiring</p>
-              <p className="text-2xl font-bold text-yellow-500">23</p>
-            </div>
-          </div>
         </div>
       </Card>
     </>
