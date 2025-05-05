@@ -252,7 +252,11 @@ def update_profile(email):
         
         # Handle profile image separately
         if 'image_data' in data and data['image_data']:
-            existing_image_url = user.get('image_data').get('url')
+            # Fix: Properly handle None values in image_data
+            existing_image_url = None
+            if user.get('image_data') is not None and isinstance(user.get('image_data'), dict):
+                existing_image_url = user.get('image_data').get('url')
+                
             image_result = process_user_profile_image(data['image_data']['url'], existing_image_url)
             
             if image_result:
