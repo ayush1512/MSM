@@ -12,7 +12,7 @@ const AboutUs = () => {
         "Running the Company Operations for 4 years",
         "International Exposure with Cross-Industry Experience",
       ],
-      image: "/path-to-pallavi-image.jpg",
+      image: "/public/ayush.jpg",
     },
     {
       name: "Devendra Phadke",
@@ -112,3 +112,4 @@ const AboutUs = () => {
 };
 
 export default AboutUs;
+
