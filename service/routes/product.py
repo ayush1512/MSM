@@ -194,22 +194,29 @@ def process_image():
         api_error = None
         
         try:
-            cropped_image_file = request.files['image']
-            cropped_image_data = cropped_image_file.read()
-            cropped_image_base64 = base64.b64encode(cropped_image_data).decode('utf-8')
-            cropped_image_url = f"data:image/jpeg;base64,{cropped_image_base64}"
-
-            together_api_key = current_app.config.get('TOGETHER_API_KEY')
-            processor = ImageProcessor(together_api_key)
-            extracted_info = processor.analyze_image_url(cropped_image_url)
+            # Check if cropped image was provided
+            if 'cropped_image' in request.files:
+                cropped_image_file = request.files['cropped_image']
+                cropped_image_data = cropped_image_file.read()
+                cropped_image_base64 = base64.b64encode(cropped_image_data).decode('utf-8')
+                
+                # Initialize image processor with API key
+                together_api_key = current_app.config.get('TOGETHER_API_KEY')
+                processor = ImageProcessor(together_api_key)
+                
+                # Process the base64 image directly
+                extracted_info = processor.analyze_image_base64(cropped_image_base64)
+            else:
+                # Process the original image if no cropped version provided
+                together_api_key = current_app.config.get('TOGETHER_API_KEY')
+                processor = ImageProcessor(together_api_key)
+                extracted_info = processor.analyze_image_url(upload_result['secure_url'])
             
         except Exception as api_ex:
             logging.error(f"Together API error: {str(api_ex)}")
             logging.exception("Detailed API exception:")
             api_error = str(api_ex)
             # Continue execution - we'll handle the missing extracted_info below
-        
-
 
         # Prepare response
         response = {
