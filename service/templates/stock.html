@@ -389,6 +389,80 @@
             color: #ccc;
         }
 
+        body.dark-mode .form-select {
+            background-color: #363636;
+            color: #fff;
+            border-color: #444;
+        }
+
+        /* Mobile responsive styles */
+        @media screen and (max-width: 767px) {
+            .container {
+                padding: 0.75rem;
+            }
+            
+            /* Make sure the table is scrollable horizontally */
+            #stock-table-container {
+                overflow-x: auto;
+                width: 100%;
+            }
+            
+            /* Improved styles for action buttons */
+            .action-buttons {
+                display: flex;
+                justify-content: space-between;
+                width: 100%;
+            }
+            
+            .action-buttons button {
+                padding: 0.5rem;
+                flex: 1;
+                margin: 0 2px;
+            }
+            
+            /* Adjust filter and search elements for mobile */
+            .dataTables_filter,
+            .dataTables_length,
+            .dataTables_info,
+            .dataTables_paginate {
+                text-align: center;
+                float: none;
+                margin: 0.5rem 0;
+                width: 100%;
+            }
+            
+            .dataTables_filter input {
+                width: 80%;
+                margin: 0.5rem 0;
+            }
+            
+            /* Increase text size for better readability */
+            .medicine-name {
+                font-size: 1rem;
+                margin-bottom: 3px;
+            }
+            
+            /* Make each row more distinct */
+            .stock-table tr {
+                border-bottom: 2px solid #ddd;
+            }
+            
+            body.dark-mode .stock-table tr {
+                border-bottom-color: #444;
+            }
+            
+            /* Reduce padding in cells for tighter layout */
+            .stock-table td, 
+            .stock-table th {
+                padding: 0.5rem;
+            }
+            
+            /* Make entries more compact */
+            .batch-details {
+                margin: 2px 0;
+            }
+        }
+
         .mode-toggle {
             position: fixed;
             top: 1rem;
@@ -431,29 +505,36 @@
 
         body.light-mode .mode-toggle .icon.moon {
             display: inline;
-        }        .nav-container {
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: center;
             margin-bottom: 2rem;
         }
 
         .nav-tabs {
             display: flex;
+            gap: 1rem;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 0.5rem;
+        }
+
+        .nav-item {
             list-style: none;
-            padding: 0;
-            margin: 0;
-            border-bottom: 1px solid #ccc;
-        }        .nav-item {
-            margin-right: 1rem;
         }
 
         .nav-link {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            color: #666;
+            color: #6c757d;
             text-decoration: none;
-            border-bottom: 2px solid transparent;
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem 0.25rem 0 0;
             transition: all 0.2s ease;
-        }        .nav-link:hover {
+        }
+
+        .nav-link:hover {
             color: #0066cc;
+            background-color: #f8f9fa;
         }
 
         .nav-link.active {
@@ -463,8 +544,11 @@
 
         body.dark-mode .nav-link {
             color: #ccc;
-        }        body.dark-mode .nav-link:hover {
+        }
+
+        body.dark-mode .nav-link:hover {
             color: #66b0ff;
+            background-color: #363636;
         }
 
         body.dark-mode .nav-link.active {
@@ -516,13 +600,15 @@
     </button>
 
     <div class="container">
-        <h1 class="title">Stock Inventory</h1>        <div class="nav-container">
+        <h1 class="title">Stock Inventory</h1>
+
+        <div class="nav-container">
             <ul class="nav-tabs">
                 <li class="nav-item">
                     <a href="/" class="nav-link">Product Scanner</a>
                 </li>
                 <li class="nav-item">
-                    <a href="/stock_page" class="nav-link active">Stock Inventory</a>
+                    <a href="/stock" class="nav-link active">Stock Inventory</a>
                 </li>
             </ul>
         </div>
@@ -540,9 +626,7 @@
             <button id="refresh-btn" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-clockwise"></i> Refresh
             </button>
-        </div>
-
-        <div id="stock-table-container">
+        </div>        <div id="stock-table-container" class="table-responsive">
             <table id="stock-table" class="stock-table display" style="width:100%">
                 <thead>
                     <tr>
@@ -659,21 +743,25 @@
             document.body.classList.add(`${currentMode}-mode`);
             if (currentMode === 'dark') {
                 document.getElementById('mode-toggle').classList.add('dark');
-            }
-
-            // Initialize DataTable
+            }            // Initialize DataTable
             stockTable = $('#stock-table').DataTable({
-                responsive: true,
+                responsive: {
+                    details: false
+                },
+                scrollX: true,
+                scrollCollapse: true,
+                autoWidth: false,
                 columns: [
-                    { data: 'medicine_info' },
-                    { data: 'batch_info' },
-                    { data: 'mrp' },
-                    { data: 'quantity' },
-                    { data: 'actions', orderable: false }
+                    { data: 'medicine_info', width: '30%' },
+                    { data: 'batch_info', width: '30%' },
+                    { data: 'mrp', width: '10%' },
+                    { data: 'quantity', width: '10%' },
+                    { data: 'actions', orderable: false, width: '20%' }
                 ],
                 language: {
                     emptyTable: "No stock items found"
-                }
+                },
+                dom: '<"top"lf>rt<"bottom"ip>'
             });
 
             // Load stock data
@@ -696,23 +784,7 @@
             $('#expiry-filter').on('change', function() {
                 const filterValue = $(this).val();
                 filterByExpiry(filterValue);
-            });
-            
-            // Tab navigation functionality
-            $('.nav-link').on('click', function(e) {
-                // Only proceed with custom handling if it's not the active tab
-                if (!$(this).hasClass('active')) {
-                    // Check if we have unsaved edits
-                    if ($('#editModal').hasClass('show')) {
-                        if (!confirm('You have unsaved changes. Are you sure you want to leave this page?')) {
-                            e.preventDefault();
-                            return false;
-                        }
-                    }
-                }
-            });
-
-            // Edit modal
+            });            // Edit modal
             $('#editModal').on('show.bs.modal', function (event) {
                 const button = $(event.relatedTarget);
                 const stockId = button.data('stock-id');
@@ -931,4 +1003,3 @@
 </body>
 
 </html>
-``` 
