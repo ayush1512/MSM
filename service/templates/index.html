@@ -861,8 +861,14 @@
             if (e.dataTransfer.files.length) {
                 handleFile(e.dataTransfer.files[0]);
             }
+        });        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                handleFile(e.target.files[0]);
+            }
         });
-        fileInput.addEventListener('change', (e) => {
+        
+        // Add event listener for camera input
+        document.getElementById('camera-input').addEventListener('change', (e) => {
             if (e.target.files.length) {
                 handleFile(e.target.files[0]);
             }
@@ -1305,78 +1311,13 @@
         const captureCanvas = document.getElementById('capture-canvas');
         
         // File selection button handler
-        fileBtn.addEventListener('click', () => fileInput.click());
-          // Camera open button handler
-        cameraBtn.addEventListener('click', async () => {
-            try {
-                // First try the direct capture approach (works better on Android)
-                const cameraInput = document.getElementById('camera-input');
-                
-                // Use feature detection to determine the best approach
-                if (/Android/i.test(navigator.userAgent)) {
-                    console.log("Android detected, using direct capture approach");
-                    // Android direct capture approach
-                    cameraInput.click();
-                    
-                    // Set up a change event handler for the camera input
-                    cameraInput.onchange = function(e) {
-                        if (e.target.files && e.target.files.length > 0) {
-                            handleFile(e.target.files[0]);
-                        }
-                    };
-                    return;
-                }
-                
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    throw new Error('Your browser does not support camera access');
-                }
-                
-                // Clear any previous error
-                errorDiv.style.display = 'none';
-                
-                // Get camera with environment (rear) facing mode if available
-                const constraints = { 
-                    video: { 
-                        facingMode: { exact: 'environment' }, // Use exact to force back camera
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    },
-                    audio: false
-                };
-                
-                console.log('Requesting camera access with constraints:', constraints);
-                
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                
-                // Set the stream to the video element
-                cameraStream.srcObject = stream;
-                cameraStream.style.display = 'block';
-                captureBtn.style.display = 'block';
-                
-                // Hide the buttons when camera is active
-                document.querySelector('.upload-buttons').style.display = 'none';
-                
-                // Make sure video plays after metadata is loaded
-                cameraStream.onloadedmetadata = () => {
-                    cameraStream.play().catch(err => {
-                        console.error('Error starting video:', err);
-                        showError('Failed to start camera: ' + err.message);
-                    });
-                };
-                
-            }
-             catch (err) {
-                console.error('Camera access error:', err);
-                
-                // Fallback to direct capture on error
-                if (err.message && (err.name === 'NotAllowedError' || err.name === 'NotFoundError' || 
-                    err.message.includes('Permission denied') || err.message.includes('not found'))) {
-                    console.log("Falling back to direct capture approach");
-                    document.getElementById('camera-input').click();
-                } else {
-                    showError('Unable to access camera: ' + err.message + '. Please ensure camera permissions are granted and try again.');
-                }
-            }
+        fileBtn.addEventListener('click', () => fileInput.click());          // Camera open button handler - simplified approach
+        cameraBtn.addEventListener('click', () => {
+            // Clear any previous error
+            errorDiv.style.display = 'none';
+            
+            // Simply click the camera input to trigger the camera
+            document.getElementById('camera-input').click();
         });
         
         // Photo capture button handler
