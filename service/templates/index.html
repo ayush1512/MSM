@@ -663,6 +663,53 @@
         body.light-mode .medicine-details p {
             color: #1a1a1a;
         }
+
+        /* New upload section styling */
+        .upload-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: clamp(1rem, 3vw, 2rem);
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        body.dark-mode .upload-section {
+            background: #363636;
+            color: #fff;
+        }
+        
+        body.light-mode .upload-section {
+            background: #f8f9fa;
+            color: #1a1a1a;
+        }
+        
+        .upload-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        @media (max-width: 480px) {
+            .upload-buttons {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+        
+        #camera-stream {
+            background: #000;
+            border-radius: 8px;
+            max-width: 100%;
+        }
+        
+        body.dark-mode #camera-stream {
+            border: 1px solid #444;
+        }
+        
+        body.light-mode #camera-stream {
+            border: 1px solid #ccc;
+        }
     </style>
 </head>
 
@@ -709,12 +756,20 @@
             </div>
             <div class="medicine-error"></div>
             <button class="btn btn-primary" id="medicine-submit">Submit Medicine</button>
-        </div>
-
-        <div class="upload-container" id="upload-area">
-            <div class="upload-icon">📁</div>
-            <p>Click or drag and drop an image here</p>
-            <input type="file" id="file-input" accept="image/*" style="display: none;">
+        </div>        <div class="upload-section" id="upload-area" style="display: none;">
+            <h3>Upload Image</h3>
+            <div class="upload-buttons">
+                <button class="btn btn-primary" id="camera-btn">
+                    <span class="icon">📷</span> Open Camera
+                </button>
+                <button class="btn btn-primary" id="file-btn">
+                    <span class="icon">📁</span> Choose File
+                </button>
+            </div>            <input type="file" id="file-input" accept="image/*" style="display: none;">
+            <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
+            <video id="camera-stream" style="display: none; width: 100%; max-height: 300px; margin-top: 1rem;" autoplay playsinline></video>
+            <button class="btn btn-primary" id="capture-btn" style="display: none; margin-top: 1rem;">Take Photo</button>
+            <canvas id="capture-canvas" style="display: none;"></canvas>
         </div>
 
         <div class="image-preview-container">
@@ -889,24 +944,40 @@
                 processBtn.disabled = false;
                 processingDiv.style.display = 'none';
             }
-        });
-
-        resetBtn.addEventListener('click', () => {
+        });        resetBtn.addEventListener('click', () => {
             if (cropper) {
                 cropper.destroy();
                 cropper = null;
-            } else {
-                fileInput.value = '';
-                imagePreview.src = '';
-                previewContainer.style.display = 'none';
-                processBtn.style.display = 'none';
-                resetBtn.style.display = 'none';
-                resultsDiv.style.display = 'none';
-                errorDiv.style.display = 'none';
-                stopTimer();
-            }            if (resultsDiv.style.display === 'block') {
+            }
+            
+            // Reset file input and preview
+            fileInput.value = '';
+            imagePreview.src = '';
+            previewContainer.style.display = 'none';
+            processBtn.style.display = 'none';
+            resetBtn.style.display = 'none';
+            resultsDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+            stopTimer();
+            
+            // Reset camera elements
+            if (cameraStream.srcObject) {
+                const stream = cameraStream.srcObject;
+                const tracks = stream.getTracks();
+                tracks.forEach(track => track.stop());
+                cameraStream.srcObject = null;
+            }
+            cameraStream.style.display = 'none';
+            captureBtn.style.display = 'none';
+            
+            // Show upload buttons again
+            document.querySelector('.upload-buttons').style.display = 'flex';
+            uploadArea.style.display = 'block';
+            
+            if (resultsDiv.style.display === 'block') {
                 location.reload();
-            } 
+            }
+            
             // Reset medicine form
             document.querySelectorAll('.medicine-form input').forEach(input => {
                 input.disabled = false;
@@ -983,7 +1054,7 @@
         $(document).ready(function() {
             $("#medicine-name").autocomplete({
                 source: function(request, response) {
-                    $.get(`http://localhost:5000/medicine/search?term=${encodeURIComponent(request.term)}&auto_enrich=true`)
+                    $.get(`./medicine/search?term=${encodeURIComponent(request.term)}&auto_enrich=true`)
                         .done(function(data) {
                             response(data.map(medicine => ({
                                 label: `${medicine.product_name} - ${medicine.product_manufactured}`,
@@ -1225,8 +1296,125 @@
                 showError('Failed to update information: ' + error.message);
             }
         });
+
+        // Get camera elements
+        const cameraBtn = document.getElementById('camera-btn');
+        const fileBtn = document.getElementById('file-btn');
+        const cameraStream = document.getElementById('camera-stream');
+        const captureBtn = document.getElementById('capture-btn');
+        const captureCanvas = document.getElementById('capture-canvas');
+        
+        // File selection button handler
+        fileBtn.addEventListener('click', () => fileInput.click());
+          // Camera open button handler
+        cameraBtn.addEventListener('click', async () => {
+            try {
+                // First try the direct capture approach (works better on Android)
+                const cameraInput = document.getElementById('camera-input');
+                
+                // Use feature detection to determine the best approach
+                if (/Android/i.test(navigator.userAgent)) {
+                    console.log("Android detected, using direct capture approach");
+                    // Android direct capture approach
+                    cameraInput.click();
+                    
+                    // Set up a change event handler for the camera input
+                    cameraInput.onchange = function(e) {
+                        if (e.target.files && e.target.files.length > 0) {
+                            handleFile(e.target.files[0]);
+                        }
+                    };
+                    return;
+                }
+                
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error('Your browser does not support camera access');
+                }
+                
+                // Clear any previous error
+                errorDiv.style.display = 'none';
+                
+                // Get camera with environment (rear) facing mode if available
+                const constraints = { 
+                    video: { 
+                        facingMode: { exact: 'environment' }, // Use exact to force back camera
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false
+                };
+                
+                console.log('Requesting camera access with constraints:', constraints);
+                
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                
+                // Set the stream to the video element
+                cameraStream.srcObject = stream;
+                cameraStream.style.display = 'block';
+                captureBtn.style.display = 'block';
+                
+                // Hide the buttons when camera is active
+                document.querySelector('.upload-buttons').style.display = 'none';
+                
+                // Make sure video plays after metadata is loaded
+                cameraStream.onloadedmetadata = () => {
+                    cameraStream.play().catch(err => {
+                        console.error('Error starting video:', err);
+                        showError('Failed to start camera: ' + err.message);
+                    });
+                };
+                
+            }
+             catch (err) {
+                console.error('Camera access error:', err);
+                
+                // Fallback to direct capture on error
+                if (err.message && (err.name === 'NotAllowedError' || err.name === 'NotFoundError' || 
+                    err.message.includes('Permission denied') || err.message.includes('not found'))) {
+                    console.log("Falling back to direct capture approach");
+                    document.getElementById('camera-input').click();
+                } else {
+                    showError('Unable to access camera: ' + err.message + '. Please ensure camera permissions are granted and try again.');
+                }
+            }
+        });
+        
+        // Photo capture button handler
+        captureBtn.addEventListener('click', () => {
+            // Create a canvas to capture the image
+            const width = cameraStream.videoWidth;
+            const height = cameraStream.videoHeight;
+            
+            captureCanvas.width = width;
+            captureCanvas.height = height;
+            
+            // Draw the current video frame to the canvas
+            const context = captureCanvas.getContext('2d');
+            context.drawImage(cameraStream, 0, 0, width, height);
+            
+            // Convert canvas to blob/file
+            captureCanvas.toBlob((blob) => {
+                // Create a File object from the blob
+                const capturedImage = new File([blob], "captured-image.jpg", { type: "image/jpeg" });
+                handleFile(capturedImage);
+                
+                // Stop camera stream and release resources
+                const stream = cameraStream.srcObject;
+                if (stream) {
+                    const tracks = stream.getTracks();
+                    tracks.forEach(track => track.stop());
+                    cameraStream.srcObject = null;
+                }
+                
+                // Hide camera elements
+                cameraStream.style.display = 'none';
+                captureBtn.style.display = 'none';
+                
+                // Hide the upload area as we now have an image
+                uploadArea.style.display = 'none';
+            }, 'image/jpeg', 0.95);
+        });
     </script>
 </body>
 
 </html>
-`
