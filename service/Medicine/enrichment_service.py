@@ -38,13 +38,30 @@ class MedicineEnrichmentService:
         Returns:
             Dict containing medicine information and status
         """
-        try:
-            # First try to find in our database
-            query = {"product_name": {"$regex": f"^{medicine_name}$", "$options": "i"}}
+        try:            # First try to find in our database using a more flexible search
+            # Use a case-insensitive search that doesn't require exact match
+            query = {"product_name": {"$regex": medicine_name, "$options": "i"}}
             if manufacturer:
                 query["product_manufactured"] = {"$regex": manufacturer, "$options": "i"}
             
             existing_medicine = self.medicine_collection.find_one(query)
+            
+            # If not found with flexible search, try alternative approaches
+            if not existing_medicine:
+                # Try normalized name (remove extra spaces, convert to lowercase)
+                normalized_name = " ".join(medicine_name.lower().split())
+                alternative_queries = [
+                    {"product_name": {"$regex": f"{normalized_name}", "$options": "i"}},
+                    # Try with partial name matching
+                    {"product_name": {"$regex": f".*{normalized_name}.*", "$options": "i"}}
+                ]
+                
+                for alt_query in alternative_queries:
+                    if manufacturer:
+                        alt_query["product_manufactured"] = {"$regex": manufacturer, "$options": "i"}
+                    existing_medicine = self.medicine_collection.find_one(alt_query)
+                    if existing_medicine:
+                        break
             
             if existing_medicine:
                 # Medicine already exists

@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify, session, render_template
 from datetime import datetime, timedelta
 from bson import ObjectId
 import logging
@@ -310,4 +310,62 @@ def inventory_movement():
     except Exception as e:
         logging.error(f"Error fetching inventory movement: {str(e)}")
         logging.exception("Detailed exception info:")
+        return jsonify({'error': str(e)}), 500
+
+@stock_bp.route('/add-stock')
+def add_stock_page():
+    return render_template('add-stock.html')
+
+# Bulk add endpoint to handle multiple stock items at once
+@stock_bp.route('/bulk-add', methods=['POST'])
+def bulk_add_stock():
+    try:
+        data = request.json
+        items = data.get('items', [])
+        
+        if not items:
+            return jsonify({'error': 'No items provided'}), 400
+        
+        result = []
+        for item in items:
+            # Create a stock entry for each item
+            new_stock = {
+                'medicine_id': None,  # Will be set if medicine exists or created
+                'name': item.get('name'),
+                'manufacturer': item.get('manufacturer', 'Unknown'),
+                'category': item.get('category', 'Other'),
+                'batch': item.get('batch'),
+                'expiry': item.get('expiry'),
+                'price': item.get('price'),
+                'stock': item.get('stock'),
+                'created_at': datetime.now(),
+                'updated_at': datetime.now()
+            }
+            
+            # Check if medicine already exists
+            existing_medicine = medicine_collection.find_one({'name': item.get('name')})
+            
+            if existing_medicine:
+                new_stock['medicine_id'] = str(existing_medicine['_id'])
+            else:
+                # Create a new medicine entry
+                new_medicine = {
+                    'name': item.get('name'),
+                    'manufacturer': item.get('manufacturer', 'Unknown'),
+                    'category': item.get('category', 'Other'),
+                    'created_at': datetime.now(),
+                    'updated_at': datetime.now()
+                }
+                
+                medicine_id = medicine_collection.insert_one(new_medicine).inserted_id
+                new_stock['medicine_id'] = str(medicine_id)
+            
+            # Insert the stock entry
+            stock_id = stock_collection.insert_one(new_stock).inserted_id
+            result.append({'id': str(stock_id)})
+        
+        return jsonify({'message': 'Stock items added successfully', 'items': result}), 201
+    
+    except Exception as e:
+        logging.error(f"Error adding bulk stock: {str(e)}")
         return jsonify({'error': str(e)}), 500

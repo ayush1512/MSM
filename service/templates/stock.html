@@ -611,10 +611,8 @@
                     <a href="/stock" class="nav-link active">Stock Inventory</a>
                 </li>
             </ul>
-        </div>
-
-        <div class="top-actions">
-            <a href="/" class="btn btn-primary">Add New Stock</a>
+        </div>        <div class="top-actions">
+            <a href="/stock/add-stock" class="btn btn-primary">Add New Stock</a>
             <div class="filter-options">
                 <select id="expiry-filter" class="form-select">
                     <option value="all">All Stock</option>
@@ -626,7 +624,7 @@
             <button id="refresh-btn" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-clockwise"></i> Refresh
             </button>
-        </div>        <div id="stock-table-container" class="table-responsive">
+        </div><div id="stock-table-container" class="table-responsive">
             <table id="stock-table" class="stock-table display" style="width:100%">
                 <thead>
                     <tr>
@@ -641,12 +639,13 @@
                     <!-- Table will be populated with JavaScript -->
                 </tbody>
             </table>
-        </div>
-
-        <!-- No stock message (initially hidden) -->
+        </div>        <!-- No stock message (initially hidden) -->
         <div id="no-stock" class="no-stock" style="display:none;">
-            <p>No stock items found. Please add stock using the Product Scanner.</p>
-            <a href="/" class="btn btn-primary mt-3">Go to Product Scanner</a>
+            <p>No stock items found. Please add stock manually or using the Product Scanner.</p>
+            <div class="d-flex justify-content-center gap-3 mt-3">
+                <a href="/stock/add-stock" class="btn btn-primary">Add Stock Manually</a>
+                <a href="/" class="btn btn-secondary">Go to Product Scanner</a>
+            </div>
         </div>
     </div>
 
