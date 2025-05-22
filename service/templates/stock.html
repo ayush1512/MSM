@@ -431,36 +431,29 @@
 
         body.light-mode .mode-toggle .icon.moon {
             display: inline;
-        }
-
-        .nav-container {
-            display: flex;
-            justify-content: center;
+        }        .nav-container {
             margin-bottom: 2rem;
         }
 
         .nav-tabs {
             display: flex;
-            gap: 1rem;
-            border-bottom: 1px solid #dee2e6;
-            padding-bottom: 0.5rem;
-        }
-
-        .nav-item {
             list-style: none;
+            padding: 0;
+            margin: 0;
+            border-bottom: 1px solid #ccc;
+        }        .nav-item {
+            margin-right: 1rem;
         }
 
         .nav-link {
-            color: #6c757d;
-            text-decoration: none;
+            display: inline-block;
             padding: 0.5rem 1rem;
-            border-radius: 0.25rem 0.25rem 0 0;
+            color: #666;
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
             transition: all 0.2s ease;
-        }
-
-        .nav-link:hover {
+        }        .nav-link:hover {
             color: #0066cc;
-            background-color: #f8f9fa;
         }
 
         .nav-link.active {
@@ -470,11 +463,8 @@
 
         body.dark-mode .nav-link {
             color: #ccc;
-        }
-
-        body.dark-mode .nav-link:hover {
+        }        body.dark-mode .nav-link:hover {
             color: #66b0ff;
-            background-color: #363636;
         }
 
         body.dark-mode .nav-link.active {
@@ -526,15 +516,13 @@
     </button>
 
     <div class="container">
-        <h1 class="title">Stock Inventory</h1>
-
-        <div class="nav-container">
+        <h1 class="title">Stock Inventory</h1>        <div class="nav-container">
             <ul class="nav-tabs">
                 <li class="nav-item">
                     <a href="/" class="nav-link">Product Scanner</a>
                 </li>
                 <li class="nav-item">
-                    <a href="/stock" class="nav-link active">Stock Inventory</a>
+                    <a href="/stock_page" class="nav-link active">Stock Inventory</a>
                 </li>
             </ul>
         </div>
@@ -708,7 +696,23 @@
             $('#expiry-filter').on('change', function() {
                 const filterValue = $(this).val();
                 filterByExpiry(filterValue);
-            });            // Edit modal
+            });
+            
+            // Tab navigation functionality
+            $('.nav-link').on('click', function(e) {
+                // Only proceed with custom handling if it's not the active tab
+                if (!$(this).hasClass('active')) {
+                    // Check if we have unsaved edits
+                    if ($('#editModal').hasClass('show')) {
+                        if (!confirm('You have unsaved changes. Are you sure you want to leave this page?')) {
+                            e.preventDefault();
+                            return false;
+                        }
+                    }
+                }
+            });
+
+            // Edit modal
             $('#editModal').on('show.bs.modal', function (event) {
                 const button = $(event.relatedTarget);
                 const stockId = button.data('stock-id');
@@ -927,3 +931,4 @@
 </body>
 
 </html>
+``` 

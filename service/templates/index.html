@@ -457,6 +457,64 @@
             background-color: #ffe6e6;
         }
 
+        body.light-mode .medicine-details h4,
+        body.light-mode .medicine-details p {
+            color: #1a1a1a;
+        }
+
+        /* Add styles for navigation tabs */
+        .nav-container {
+            margin-bottom: 2rem;
+        }
+
+        .nav-tabs {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .nav-item {
+            margin-right: 1rem;
+        }
+
+        .nav-link {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            color: #666;
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover {
+            color: #0066cc;
+        }
+
+        .nav-link.active {
+            color: #0066cc;
+            border-bottom: 2px solid #0066cc;
+        }
+
+        /* Dark mode styles for navigation */
+        body.dark-mode .nav-tabs {
+            border-bottom-color: #444;
+        }
+
+        body.dark-mode .nav-link {
+            color: #ccc;
+        }
+
+        body.dark-mode .nav-link:hover {
+            color: #99c2ff;
+        }
+
+        body.dark-mode .nav-link.active {
+            color: #99c2ff;
+            border-bottom-color: #99c2ff;
+        }
+
         /* Add new styles for medicine form */
         .medicine-form {
             margin-bottom: 2rem;
@@ -846,8 +904,7 @@
                 resultsDiv.style.display = 'none';
                 errorDiv.style.display = 'none';
                 stopTimer();
-            }
-            if (resultsDiv.style.display === 'block') {
+            }            if (resultsDiv.style.display === 'block') {
                 location.reload();
             } 
             // Reset medicine form
@@ -858,6 +915,9 @@
             medicineSubmitBtn.disabled = false;
             currentMedicineId = null;
             medicineError.style.display = 'none';
+            
+            // Hide medicine details if visible
+            document.querySelector('.medicine-details').style.display = 'none';
         });
 
         function startTimer() {
@@ -1028,6 +1088,25 @@
         const editFields = document.querySelectorAll('.edit-field');
         const displayFields = document.querySelectorAll('.result-item p');
 
+        // Tab navigation functionality
+        document.querySelectorAll('.nav-link').forEach(tab => {
+            tab.addEventListener('click', function(e) {
+                // Only proceed with custom handling if it's not the active tab
+                if (!this.classList.contains('active')) {
+                    if (currentMedicineId || document.querySelector('.image-preview-container').style.display === 'block') {
+                        // If we have unsaved work or active session
+                        if (confirm('Switching tabs will lose your current progress. Continue?')) {
+                            // Allow the default navigation
+                            return true;
+                        } else {
+                            e.preventDefault();
+                            return false;
+                        }
+                    }
+                }
+            });
+        });
+
         editBtn.addEventListener('click', () => {
             editFields.forEach(field => field.style.display = 'block');
             displayFields.forEach(field => field.style.display = 'none');
@@ -1150,3 +1229,4 @@
 </body>
 
 </html>
+`
