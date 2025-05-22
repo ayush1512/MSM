@@ -15,8 +15,22 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans        function updateStock(stockId, stockData) {
+            $.ajax({
+                url: '/stock/' + stockId,
+                type: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(stockData),
+                success: function(data) {
+                    showSuccess('Stock updated successfully');
+                    fetchStockData(); // Refresh data
+                },
+                error: function(error) {
+                    console.error('Error updating stock:', error);
+                    showError('Failed to update stock. Please try again.');
+                }
+            });
+        } }
 
         body {
             background-color: #f0f2f5;
@@ -694,36 +708,29 @@
             $('#expiry-filter').on('change', function() {
                 const filterValue = $(this).val();
                 filterByExpiry(filterValue);
-            });
-
-            // Edit modal
+            });            // Edit modal
             $('#editModal').on('show.bs.modal', function (event) {
                 const button = $(event.relatedTarget);
                 const stockId = button.data('stock-id');
-                const stock = stockData.find(s => s._id === stockId);
+                const stock = stockData.find(s => s.id === stockId);
                 
                 if (stock) {
-                    $('#edit-stock-id').val(stock._id);
-                    $('#edit-medicine-id').val(stock.medicine_id);
-                    $('#edit-medicine-name').val(stock.medicine?.product_name || 'Unknown');
-                    $('#edit-batch-no').val(stock.batch_no);
-                    $('#edit-mfg-date').val(stock.mfg_date);
-                    $('#edit-exp-date').val(stock.exp_date);
-                    $('#edit-mrp').val(stock.mrp);
-                    $('#edit-quantity').val(stock.quantity);
-                    $('#edit-image-url').val(stock.image_url);
+                    $('#edit-stock-id').val(stock.id);
+                    $('#edit-medicine-name').val(stock.name || 'Unknown');
+                    $('#edit-batch-no').val(stock.batch);
+                    $('#edit-exp-date').val(stock.expiry);
+                    $('#edit-mrp').val(stock.price);
+                    $('#edit-quantity').val(stock.stock);
                 }
-            });
-
-            // Delete modal
+            });            // Delete modal
             $('#deleteModal').on('show.bs.modal', function (event) {
                 const button = $(event.relatedTarget);
                 const stockId = button.data('stock-id');
-                const stock = stockData.find(s => s._id === stockId);
+                const stock = stockData.find(s => s.id === stockId);
                 
                 if (stock) {
-                    $('#delete-medicine-name').text(stock.medicine?.product_name || 'Unknown');
-                    $('#delete-batch-no').text(`Batch: ${stock.batch_no}`);
+                    $('#delete-medicine-name').text(stock.name || 'Unknown');
+                    $('#delete-batch-no').text(`Batch: ${stock.batch}`);
                     $('#confirm-delete-btn').data('stock-id', stockId);
                 }
             });
@@ -731,16 +738,12 @@
             // Save changes button
             $('#save-changes-btn').on('click', function() {
                 if (!validateForm()) return;
-                
-                const stockId = $('#edit-stock-id').val();
+                  const stockId = $('#edit-stock-id').val();
                 const stockData = {
-                    medicine_id: $('#edit-medicine-id').val(),
-                    batch_no: $('#edit-batch-no').val(),
-                    mfg_date: $('#edit-mfg-date').val(),
-                    exp_date: $('#edit-exp-date').val(),
-                    mrp: parseFloat($('#edit-mrp').val()),
-                    quantity: parseInt($('#edit-quantity').val()),
-                    image_url: $('#edit-image-url').val()
+                    batch: $('#edit-batch-no').val(),
+                    expiry: $('#edit-exp-date').val(),
+                    price: parseFloat($('#edit-mrp').val()),
+                    stock: parseInt($('#edit-quantity').val())
                 };
 
                 updateStock(stockId, stockData);
@@ -779,13 +782,13 @@
             }
             
             return true;
-        }
-
-        function fetchStockData() {
+        }        function fetchStockData() {
             $.ajax({
                 url: '/stock',
                 type: 'GET',
+                dataType: 'json',
                 success: function(data) {
+                    console.log("Received data:", data);
                     stockData = data;
                     updateStockTable(data);
                 },
@@ -794,12 +797,10 @@
                     showError('Failed to fetch stock data. Please try again.');
                 }
             });
-        }
-
-        function updateStockTable(data) {
+        }        function updateStockTable(data) {
             stockTable.clear();
             
-            if (data.length === 0) {
+            if (!data || data.length === 0) {
                 $('#stock-table-container').hide();
                 $('#no-stock').show();
                 return;
@@ -809,34 +810,32 @@
             $('#no-stock').hide();
             
             data.forEach(function(stock) {
-                const medicineName = stock.medicine ? stock.medicine.product_name : 'Unknown';
-                const manufacturer = stock.medicine ? stock.medicine.product_manufactured : 'Unknown';
+                const medicineName = stock.name || 'Unknown';
+                const manufacturer = stock.manufacturer || 'Unknown';
                 
                 // Check if the product is expired or near expiry
                 let rowClass = '';
-                if (isExpired(stock.exp_date)) {
+                if (isExpired(stock.expiry)) {
                     rowClass = 'expired';
-                } else if (isNearExpiry(stock.exp_date)) {
+                } else if (isNearExpiry(stock.expiry)) {
                     rowClass = 'near-expiry';
                 }
                 
                 stockTable.row.add({
                     DT_RowClass: rowClass,
                     medicine_info: `<div class="medicine-name">${medicineName}</div><div>${manufacturer}</div>`,
-                    batch_info: `<div>Batch: ${stock.batch_no}</div><div class="batch-details">Mfg: ${stock.mfg_date}</div><div class="batch-details">Exp: ${stock.exp_date}</div>`,
-                    mrp: `₹${stock.mrp.toFixed(2)}`,
-                    quantity: `<span class="${stock.quantity <= 5 ? 'low-stock' : ''}">${stock.quantity}</span>`,
+                    batch_info: `<div>Batch: ${stock.batch}</div><div class="batch-details">Category: ${stock.category}</div><div class="batch-details">Exp: ${stock.expiry}</div>`,
+                    mrp: `₹${stock.price.toFixed(2)}`,
+                    quantity: `<span class="${stock.stock <= 5 ? 'low-stock' : ''}">${stock.stock}</span>`,
                     actions: `
                         <div class="action-buttons">
-                            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editModal" data-stock-id="${stock._id}">Edit</button>
-                            <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal" data-stock-id="${stock._id}">Delete</button>
+                            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editModal" data-stock-id="${stock.id}">Edit</button>
+                            <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal" data-stock-id="${stock.id}">Delete</button>
                         </div>
                     `
                 }).draw(false);
             });
-        }
-
-        function isExpired(expDate) {
+        }        function isExpired(expDate) {
             if (!expDate) return false;
             
             const parts = expDate.split('/');
@@ -865,9 +864,7 @@
             threeMonthsFromNow.setMonth(now.getMonth() + 3);
             
             return expiry <= threeMonthsFromNow;
-        }
-
-        function filterByExpiry(filter) {
+        }        function filterByExpiry(filter) {
             if (filter === 'all') {
                 updateStockTable(stockData);
                 return;
@@ -876,22 +873,20 @@
             const filteredData = stockData.filter(stock => {
                 switch(filter) {
                     case 'expired':
-                        return isExpired(stock.exp_date);
+                        return isExpired(stock.expiry);
                     case 'expiring-soon':
-                        return !isExpired(stock.exp_date) && isNearExpiry(stock.exp_date);
+                        return !isExpired(stock.expiry) && isNearExpiry(stock.expiry);
                     case 'valid':
-                        return !isExpired(stock.exp_date) && !isNearExpiry(stock.exp_date);
+                        return !isExpired(stock.expiry) && !isNearExpiry(stock.expiry);
                     default:
                         return true;
                 }
             });
             
             updateStockTable(filteredData);
-        }
-
-        function updateStock(stockId, stockData) {
+        }        function updateStock(stockId, stockData) {
             $.ajax({
-                url: '/update_stock',
+                url: '/stock/' + stockId,
                 type: 'PUT',
                 contentType: 'application/json',
                 data: JSON.stringify(stockData),
