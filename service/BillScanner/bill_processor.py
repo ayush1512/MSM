@@ -24,13 +24,13 @@ class BillProcessor:
         self.client = Together(api_key=self.together_api_key)
         self.num_attempts = 2  # Number of parallel API calls
         
-        # Setup logging directory
-        self.debug_dir = os.path.join(os.path.dirname(__file__), 'debug_logs')
-        os.makedirs(self.debug_dir, exist_ok=True)
+        # # Setup logging directory
+        # self.debug_dir = os.path.join(os.path.dirname(__file__), 'debug_logs')
+        # os.makedirs(self.debug_dir, exist_ok=True)
         
-        # Set log file paths
-        self.extraction_log_file = os.path.join(self.debug_dir, "extraction_log.txt")
-        self.processing_log_file = os.path.join(self.debug_dir, "processing_log.txt")
+        # # Set log file paths
+        # self.extraction_log_file = os.path.join(self.debug_dir, "extraction_log.txt")
+        # self.processing_log_file = os.path.join(self.debug_dir, "processing_log.txt")
         
         # Initialize prompts
         self.text_extraction_prompt = """Make sure to extract the text carefully and structure the text as:
@@ -86,7 +86,7 @@ class BillProcessor:
         self.text_processing_model = "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free"
         
         # Initialize log files
-        self.create_debug_files()
+        # self.create_debug_files()
         
         # Check for PDF processing capabilities
         self.check_pdf_processors()
@@ -115,24 +115,24 @@ class BillProcessor:
         except ImportError:
             logging.warning("PyMuPDF not available. PDF processing may be limited.")
             
-    def create_debug_files(self):
-        """Create or clear debug log files for API calls"""
-        try:
-            # Create or clear extraction log file
-            with open(self.extraction_log_file, 'w', encoding='utf-8') as f:
-                f.write(f"=== Text Extraction API Calls Log ===\n")
-                f.write(f"Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+    # def create_debug_files(self):
+    #     """Create or clear debug log files for API calls"""
+    #     try:
+    #         # Create or clear extraction log file
+    #         with open(self.extraction_log_file, 'w', encoding='utf-8') as f:
+    #             f.write(f"=== Text Extraction API Calls Log ===\n")
+    #             f.write(f"Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
             
-            # Create or clear processing log file
-            with open(self.processing_log_file, 'w', encoding='utf-8') as f:
-                f.write(f"=== Text Processing API Calls Log ===\n")
-                f.write(f"Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+    #         # Create or clear processing log file
+    #         with open(self.processing_log_file, 'w', encoding='utf-8') as f:
+    #             f.write(f"=== Text Processing API Calls Log ===\n")
+    #             f.write(f"Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
                 
-            logging.info("Debug log files refreshed for new session")
-            return True
-        except Exception as e:
-            logging.error(f"Failed to refresh debug files: {str(e)}")
-            return False
+    #         logging.info("Debug log files refreshed for new session")
+    #         return True
+    #     except Exception as e:
+    #         logging.error(f"Failed to refresh debug files: {str(e)}")
+    #         return False
 
     def log_api_call(self, log_type, attempt_num, response_data):
         """Append API call results to the appropriate log file"""
