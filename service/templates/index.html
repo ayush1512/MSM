@@ -362,6 +362,57 @@
             }
         }
 
+        /* Navigation styles */
+        .nav-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 1rem;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 0.5rem;
+        }
+
+        .nav-item {
+            list-style: none;
+        }
+
+        .nav-link {
+            color: #6c757d;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem 0.25rem 0 0;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover {
+            color: #0066cc;
+            background-color: #f8f9fa;
+        }
+
+        .nav-link.active {
+            color: #0066cc;
+            border-bottom: 2px solid #0066cc;
+        }
+
+        body.dark-mode .nav-link {
+            color: #ccc;
+        }
+
+        body.dark-mode .nav-link:hover {
+            color: #66b0ff;
+            background-color: #363636;
+        }
+
+        body.dark-mode .nav-link.active {
+            color: #66b0ff;
+            border-bottom: 2px solid #66b0ff;
+        }
+
+        /* Mode toggle button */
         .mode-toggle {
             position: fixed;
             top: 1rem;
@@ -376,6 +427,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            z-index: 1000;
         }
 
         .mode-toggle.dark {
@@ -398,6 +450,7 @@
             display: none;
         }
 
+        /* Mode toggle button in light mode */
         body.light-mode .mode-toggle .icon.sun {
             display: none;
         }
@@ -719,8 +772,7 @@
         <span class="icon moon">🌙</span>
     </button>
     <div class="container">
-        <h1 class="title">Product Scanner</h1>        <!-- Add navigation tabs -->
-        <div class="nav-container">
+        <h1 class="title">Product Scanner</h1>        <div class="nav-container">
             <ul class="nav-tabs">
                 <li class="nav-item">
                     <a href="/" class="nav-link active">Product Scanner</a>
