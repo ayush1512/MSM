@@ -87,13 +87,8 @@ class MedicineWebScraper:
                 response = requests.get(search_url, headers=headers, timeout=15)
                 if response.status_code != 200:
                     logging.warning(f"Request failed for {source['name']}: {response.status_code} status code")
-                    if self.debug and response.status_code != 404:
-                        with open(f"debug_{source['name']}_error.html", "w", encoding="utf-8") as f:
-                            f.write(response.text)
                     continue
-                if self.debug:
-                    with open(f"debug_{source['name']}_search.html", "w", encoding="utf-8") as f:
-                        f.write(response.text)
+                
                 product_url = self._parse_search_results(response.text, medicine_name, source['name'], base_url=response.url)
                 if not product_url:
                     logging.info(f"No results found on {source['name']} for {medicine_name}")
@@ -105,9 +100,7 @@ class MedicineWebScraper:
                 if product_response.status_code != 200:
                     logging.warning(f"Failed to fetch product page from {source['name']}: {product_response.status_code}")
                     continue
-                if self.debug:
-                    with open(f"debug_{source['name']}_product.html", "w", encoding="utf-8") as f:
-                        f.write(product_response.text)
+                
                 medicine_data = self._extract_medicine_details(
                     product_response.text, 
                     source['name'],
