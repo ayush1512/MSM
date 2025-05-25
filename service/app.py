@@ -3,11 +3,12 @@ from dotenv import load_dotenv
 from routes import init_routes
 from Prescription.services.db_service import DatabaseService
 from flask_cors import CORS
-from flask import Flask, render_template
+from flask import Flask, render_template, request, jsonify
 import cloudinary
 import cloudinary.uploader
 import logging
 import os
+from datetime import datetime
 
 # Load environment variables
 load_dotenv()
@@ -68,6 +69,11 @@ init_routes(app)
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/bulk_entry')
+def bulk_entry():
+    """Render the bulk entry page"""
+    return render_template('bulk_entry.html')
 
 if __name__ == '__main__':
     app.run(debug=True,host='0.0.0.0', port=5000)
