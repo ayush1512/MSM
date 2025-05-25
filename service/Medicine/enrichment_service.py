@@ -130,6 +130,20 @@ class MedicineEnrichmentService:
     def _save_enriched_medicine(self, medicine_data):
         """Save enriched medicine data to database"""
         try:
+            # Check if medicine with same product_name already exists
+            existing_medicine = self.medicine_collection.find_one({
+                "product_name": {"$regex": f"^{medicine_data.get('product_name')}$", "$options": "i"}
+            })
+            
+            if existing_medicine:
+                # Medicine already exists, return it instead of saving a duplicate
+                existing_medicine["_id"] = str(existing_medicine["_id"])
+                return {
+                    "status": "found",
+                    "medicine": existing_medicine,
+                    "message": "Medicine with same name already exists in database"
+                }
+            
             # Create Medicine object
             medicine = Medicine(
                 product_name=medicine_data.get("product_name"),
