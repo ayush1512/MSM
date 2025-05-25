@@ -15,22 +15,8 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans        function updateStock(stockId, stockData) {
-            $.ajax({
-                url: '/stock/' + stockId,
-                type: 'PUT',
-                contentType: 'application/json',
-                data: JSON.stringify(stockData),
-                success: function(data) {
-                    showSuccess('Stock updated successfully');
-                    fetchStockData(); // Refresh data
-                },
-                error: function(error) {
-                    console.error('Error updating stock:', error);
-                    showError('Failed to update stock. Please try again.');
-                }
-            });
-        } }
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans
+        }
 
         body {
             background-color: #f0f2f5;
@@ -400,26 +386,26 @@
             .container {
                 padding: 0.75rem;
             }
-            
+
             /* Make sure the table is scrollable horizontally */
             #stock-table-container {
                 overflow-x: auto;
                 width: 100%;
             }
-            
+
             /* Improved styles for action buttons */
             .action-buttons {
                 display: flex;
                 justify-content: space-between;
                 width: 100%;
             }
-            
+
             .action-buttons button {
                 padding: 0.5rem;
                 flex: 1;
                 margin: 0 2px;
             }
-            
+
             /* Adjust filter and search elements for mobile */
             .dataTables_filter,
             .dataTables_length,
@@ -430,33 +416,33 @@
                 margin: 0.5rem 0;
                 width: 100%;
             }
-            
+
             .dataTables_filter input {
                 width: 80%;
                 margin: 0.5rem 0;
             }
-            
+
             /* Increase text size for better readability */
             .medicine-name {
                 font-size: 1rem;
                 margin-bottom: 3px;
             }
-            
+
             /* Make each row more distinct */
             .stock-table tr {
                 border-bottom: 2px solid #ddd;
             }
-            
+
             body.dark-mode .stock-table tr {
                 border-bottom-color: #444;
             }
-            
+
             /* Reduce padding in cells for tighter layout */
-            .stock-table td, 
+            .stock-table td,
             .stock-table th {
                 padding: 0.5rem;
             }
-            
+
             /* Make entries more compact */
             .batch-details {
                 margin: 2px 0;
@@ -611,7 +597,8 @@
                     <a href="/stock" class="nav-link active">Stock Inventory</a>
                 </li>
             </ul>
-        </div>        <div class="top-actions">
+        </div>
+        <div class="top-actions">
             <a href="/stock/add-stock" class="btn btn-primary">Add New Stock</a>
             <div class="filter-options">
                 <select id="expiry-filter" class="form-select">
@@ -624,7 +611,8 @@
             <button id="refresh-btn" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-clockwise"></i> Refresh
             </button>
-        </div><div id="stock-table-container" class="table-responsive">
+        </div>
+        <div id="stock-table-container" class="table-responsive">
             <table id="stock-table" class="stock-table display" style="width:100%">
                 <thead>
                     <tr>
@@ -639,7 +627,7 @@
                     <!-- Table will be populated with JavaScript -->
                 </tbody>
             </table>
-        </div>        <!-- No stock message (initially hidden) -->
+        </div> <!-- No stock message (initially hidden) -->
         <div id="no-stock" class="no-stock" style="display:none;">
             <p>No stock items found. Please add stock manually or using the Product Scanner.</p>
             <div class="d-flex justify-content-center gap-3 mt-3">
@@ -770,7 +758,7 @@
             $('#refresh-btn').on('click', fetchStockData);
 
             // Mode toggle
-            $('#mode-toggle').on('click', function() {
+            $('#mode-toggle').on('click', function () {
                 document.body.classList.toggle('dark-mode');
                 document.body.classList.toggle('light-mode');
                 this.classList.toggle('dark');
@@ -780,7 +768,7 @@
             });
 
             // Add expiry filter change event
-            $('#expiry-filter').on('change', function() {
+            $('#expiry-filter').on('change', function () {
                 const filterValue = $(this).val();
                 filterByExpiry(filterValue);
             });            // Edit modal
@@ -788,7 +776,7 @@
                 const button = $(event.relatedTarget);
                 const stockId = button.data('stock-id');
                 const stock = stockData.find(s => s.id === stockId);
-                
+
                 if (stock) {
                     $('#edit-stock-id').val(stock.id);
                     $('#edit-medicine-name').val(stock.name || 'Unknown');
@@ -802,7 +790,7 @@
                 const button = $(event.relatedTarget);
                 const stockId = button.data('stock-id');
                 const stock = stockData.find(s => s.id === stockId);
-                
+
                 if (stock) {
                     $('#delete-medicine-name').text(stock.name || 'Unknown');
                     $('#delete-batch-no').text(`Batch: ${stock.batch}`);
@@ -811,9 +799,9 @@
             });
 
             // Save changes button
-            $('#save-changes-btn').on('click', function() {
+            $('#save-changes-btn').on('click', function () {
                 if (!validateForm()) return;
-                  const stockId = $('#edit-stock-id').val();
+                const stockId = $('#edit-stock-id').val();
                 const stockData = {
                     batch: $('#edit-batch-no').val(),
                     expiry: $('#edit-exp-date').val(),
@@ -826,7 +814,7 @@
             });
 
             // Confirm delete button
-            $('#confirm-delete-btn').on('click', function() {
+            $('#confirm-delete-btn').on('click', function () {
                 const stockId = $(this).data('stock-id');
                 deleteStock(stockId);
                 $('#deleteModal').modal('hide');
@@ -840,54 +828,54 @@
                 form.reportValidity();
                 return false;
             }
-            
+
             // Additional validation for date formats
             const mfgDate = $('#edit-mfg-date').val();
             const expDate = $('#edit-exp-date').val();
             const datePattern = /^(0[1-9]|1[0-2])\/\d{4}$/;
-            
+
             if (!datePattern.test(mfgDate)) {
                 alert('Manufacturing date should be in MM/YYYY format');
                 return false;
             }
-            
+
             if (!datePattern.test(expDate)) {
                 alert('Expiry date should be in MM/YYYY format');
                 return false;
             }
-            
+
             return true;
-        }        function fetchStockData() {
+        } function fetchStockData() {
             $.ajax({
                 url: '/stock',
                 type: 'GET',
                 dataType: 'json',
-                success: function(data) {
+                success: function (data) {
                     console.log("Received data:", data);
                     stockData = data;
                     updateStockTable(data);
                 },
-                error: function(error) {
+                error: function (error) {
                     console.error('Error fetching stock data:', error);
                     showError('Failed to fetch stock data. Please try again.');
                 }
             });
-        }        function updateStockTable(data) {
+        } function updateStockTable(data) {
             stockTable.clear();
-            
+
             if (!data || data.length === 0) {
                 $('#stock-table-container').hide();
                 $('#no-stock').show();
                 return;
             }
-            
+
             $('#stock-table-container').show();
             $('#no-stock').hide();
-            
-            data.forEach(function(stock) {
+
+            data.forEach(function (stock) {
                 const medicineName = stock.name || 'Unknown';
                 const manufacturer = stock.manufacturer || 'Unknown';
-                
+
                 // Check if the product is expired or near expiry
                 let rowClass = '';
                 if (isExpired(stock.expiry)) {
@@ -895,7 +883,7 @@
                 } else if (isNearExpiry(stock.expiry)) {
                     rowClass = 'near-expiry';
                 }
-                
+
                 stockTable.row.add({
                     DT_RowClass: rowClass,
                     medicine_info: `<div class="medicine-name">${medicineName}</div><div>${manufacturer}</div>`,
@@ -910,43 +898,43 @@
                     `
                 }).draw(false);
             });
-        }        function isExpired(expDate) {
+        } function isExpired(expDate) {
             if (!expDate) return false;
-            
+
             const parts = expDate.split('/');
             if (parts.length !== 2) return false;
-            
+
             const expMonth = parseInt(parts[0]) - 1; // JavaScript months are 0-based
             const expYear = parseInt(parts[1]);
             const expiry = new Date(expYear, expMonth + 1, 0); // Last day of expiry month
-            
+
             return expiry < new Date();
         }
 
         function isNearExpiry(expDate) {
             if (!expDate) return false;
             if (isExpired(expDate)) return false;
-            
+
             const parts = expDate.split('/');
             if (parts.length !== 2) return false;
-            
+
             const expMonth = parseInt(parts[0]) - 1; // JavaScript months are 0-based
             const expYear = parseInt(parts[1]);
             const expiry = new Date(expYear, expMonth + 1, 0); // Last day of expiry month
-            
+
             const now = new Date();
             const threeMonthsFromNow = new Date();
             threeMonthsFromNow.setMonth(now.getMonth() + 3);
-            
+
             return expiry <= threeMonthsFromNow;
-        }        function filterByExpiry(filter) {
+        } function filterByExpiry(filter) {
             if (filter === 'all') {
                 updateStockTable(stockData);
                 return;
             }
-            
+
             const filteredData = stockData.filter(stock => {
-                switch(filter) {
+                switch (filter) {
                     case 'expired':
                         return isExpired(stock.expiry);
                     case 'expiring-soon':
@@ -957,19 +945,19 @@
                         return true;
                 }
             });
-            
+
             updateStockTable(filteredData);
-        }        function updateStock(stockId, stockData) {
+        } function updateStock(stockId, stockData) {
             $.ajax({
                 url: '/stock/' + stockId,
                 type: 'PUT',
                 contentType: 'application/json',
                 data: JSON.stringify(stockData),
-                success: function(data) {
+                success: function (data) {
                     showSuccess('Stock updated successfully');
                     fetchStockData(); // Refresh data
                 },
-                error: function(error) {
+                error: function (error) {
                     console.error('Error updating stock:', error);
                     showError('Failed to update stock. Please try again.');
                 }
@@ -980,11 +968,11 @@
             $.ajax({
                 url: '/stock/' + stockId,
                 type: 'DELETE',
-                success: function() {
+                success: function () {
                     showSuccess('Stock deleted successfully');
                     fetchStockData(); // Refresh data
                 },
-                error: function(error) {
+                error: function (error) {
                     console.error('Error deleting stock:', error);
                     showError('Failed to delete stock. Please try again.');
                 }
