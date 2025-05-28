@@ -1113,7 +1113,7 @@
         $(document).ready(function() {
             $("#medicine-name").autocomplete({
                 source: function(request, response) {
-                    $.get(`./medicine/search?term=${encodeURIComponent(request.term)}&auto_enrich=true`)
+                    $.get(`./medicine/search?term=${encodeURIComponent(request.term)}`)
                         .done(function(data) {
                             response(data.map(medicine => ({
                                 label: `${medicine.product_name} - ${medicine.product_manufactured}`,

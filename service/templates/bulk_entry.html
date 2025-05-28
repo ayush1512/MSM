@@ -369,6 +369,52 @@
         body.light-mode .mode-toggle .icon.moon {
             display: inline;
         }
+
+        /* Responsive mobile styles */
+        @media screen and (max-width: 768px) {
+            .spreadsheet-table thead {
+                display: none;
+            }
+
+            .spreadsheet-table tbody tr {
+                display: block;
+                margin-bottom: 1rem;
+                border: 1px solid #ddd;
+                padding: 0.5rem;
+                border-radius: 4px;
+            }
+
+            .spreadsheet-table tbody td {
+                display: block;
+                border: none;
+                padding: 0.5rem 0;
+                position: relative;
+                padding-left: 50%;
+                text-align: left;
+            }
+
+            .spreadsheet-table tbody td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 0;
+                width: 45%;
+                font-weight: bold;
+            }
+
+            .action-cell {
+                padding-left: 0 !important;
+                display: flex;
+                justify-content: center;
+            }
+
+            .spreadsheet-table input {
+                width: 100%;
+            }
+        }
+
+        body.dark-mode .spreadsheet-table tbody tr {
+            border-color: #555;
+        }
     </style>
 </head>
 
@@ -451,16 +497,15 @@
             rowCounter++;
             const rowId = `row-${rowCounter}`;
             
-            const newRow = `
-                <tr id="${rowId}">
-                    <td><input type="text" class="medicine-name" placeholder="Enter medicine name" data-row="${rowId}"></td>
-                    <td><input type="text" class="manufacturer" placeholder="Manufacturer"></td>
-                    <td><input type="text" class="composition" placeholder="Salt composition"></td>
-                    <td><input type="text" class="batch-no" placeholder="Batch #"></td>
-                    <td><input type="text" class="mfg-date" placeholder="MM/YYYY"></td>
-                    <td><input type="text" class="exp-date" placeholder="MM/YYYY"></td>
-                    <td><input type="number" class="mrp" placeholder="MRP" step="0.01"></td>
-                    <td><input type="number" class="quantity" placeholder="Qty" min="0" value="0"></td>
+            const newRow = `                    <tr id="${rowId}">
+                    <td data-label="Medicine Name"><input type="text" class="medicine-name" placeholder="Enter medicine name" data-row="${rowId}"></td>
+                    <td data-label="Manufacturer"><input type="text" class="manufacturer" placeholder="Manufacturer"></td>
+                    <td data-label="Salt Composition"><input type="text" class="composition" placeholder="Salt composition"></td>
+                    <td data-label="Batch No."><input type="text" class="batch-no" placeholder="Batch #"></td>
+                    <td data-label="Mfg Date"><input type="text" class="mfg-date" placeholder="MM/YYYY"></td>
+                    <td data-label="Exp Date"><input type="text" class="exp-date" placeholder="MM/YYYY"></td>
+                    <td data-label="MRP"><input type="number" class="mrp" placeholder="MRP" step="0.01"></td>
+                    <td data-label="Quantity"><input type="number" class="quantity" placeholder="Qty" min="0" value="0"></td>
                     <td class="action-cell">
                         <button class="action-btn remove-row" title="Remove row">❌</button>
                     </td>
@@ -486,7 +531,7 @@
         function setupAutocomplete(inputElement) {
             $(inputElement).autocomplete({
                 source: function(request, response) {
-                    $.get(`./medicine/search?term=${encodeURIComponent(request.term)}&auto_enrich=true`)
+                    $.get(`./medicine/search?term=${encodeURIComponent(request.term)}`)
                         .done(function(data) {
                             response(data.map(medicine => ({
                                 label: `${medicine.product_name} - ${medicine.product_manufactured}`,
