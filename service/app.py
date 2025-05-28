@@ -76,4 +76,13 @@ def bulk_entry():
     return render_template('bulk_entry.html')
 
 if __name__ == '__main__':
-    app.run(debug=True,host='0.0.0.0', port=5000)
+    # Get port from environment variable or use default
+    port = int(os.getenv('PORT', 5000))
+    # Set debug mode based on environment
+    debug_mode = os.getenv('FLASK_ENV', 'production').lower() == 'development'
+    
+    app.run(
+        debug=debug_mode,
+        host='0.0.0.0', 
+        port=port
+    )

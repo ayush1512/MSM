@@ -4,6 +4,9 @@ import re
 import logging
 import requests
 import base64
+import time
+import random
+from requests.exceptions import Timeout, ConnectionError
 
 class ImageProcessor:
     def __init__(self, api_key):
@@ -12,6 +15,10 @@ class ImageProcessor:
         self.client = Together(api_key=api_key)
         self.prompt = "Extract text from the image and provide the following details: Batch No., Mfg. Date, Exp. Date, MRP. Make sure the dates are converted into numerical MM/YYYY format strictly. For Example: Batch No: 1234, Mfg Date: 12/2021, Exp Date: 12/2023, MRP: 100.00"
         self.model = "meta-llama/Llama-Vision-Free"
+        # Default request timeout in seconds
+        self.request_timeout = int(os.getenv('API_REQUEST_TIMEOUT', 30))
+        # Max retries for API requests
+        self.max_retries = int(os.getenv('API_MAX_RETRIES', 3))
 
     def get_mime_type_from_url(self, url):
         """Determine MIME type from URL or response headers"""
@@ -105,6 +112,48 @@ class ImageProcessor:
         ordered_info = {key: info[key] for key in ['BNo', 'MfgD', 'ExpD', 'MRP']}
         return ordered_info
 
+    def _make_api_request(self, messages):
+        """Make API request with exponential backoff retry logic"""
+        retry_count = 0
+        base_delay = 1  # Start with 1 second delay
+        
+        while retry_count < self.max_retries:
+            try:
+                stream = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    stream=True,
+                    timeout=self.request_timeout
+                )
+
+                response_text = ""
+                for chunk in stream:
+                    if hasattr(chunk, 'choices') and chunk.choices:
+                        content = chunk.choices[0].delta.content if hasattr(chunk.choices[0].delta, 'content') else None
+                        if content:
+                            response_text += content
+                
+                return response_text
+                
+            except (Timeout, ConnectionError) as e:
+                retry_count += 1
+                if retry_count >= self.max_retries:
+                    logging.error(f"Maximum retries reached. API request failed: {str(e)}")
+                    raise
+                
+                # Calculate exponential backoff with jitter
+                delay = min(base_delay * (2 ** (retry_count - 1)), 30)  # Cap at 30 seconds
+                jitter = delay * 0.1  # 10% jitter
+                sleep_time = delay + (jitter * (2 * random.random() - 1))
+                
+                logging.warning(f"API request failed. Retrying in {sleep_time:.2f} seconds. Error: {str(e)}")
+                time.sleep(sleep_time)
+            except Exception as e:
+                logging.error(f"Unexpected error in API request: {str(e)}")
+                raise
+
+        raise Exception("Failed to get valid response from Together API after retries")
+
     def analyze_image_base64(self, base64_data, num_requests=3):
         """Analyze an image from base64 data multiple times and aggregate results."""
         try:
@@ -122,26 +171,17 @@ class ImageProcessor:
                 try:
                     logging.debug(f"Making Together API request attempt {attempt + 1}")
                     
-                    stream = self.client.chat.completions.create(
-                        model=self.model,
-                        messages=[
-                            {
-                                "role": "user",
-                                "content": [
-                                    {"type": "text", "text": self.prompt},
-                                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_part}"}}
-                                ],
-                            }
-                        ],
-                        stream=True,
-                    )
-
-                    response_text = ""
-                    for chunk in stream:
-                        if hasattr(chunk, 'choices') and chunk.choices:
-                            content = chunk.choices[0].delta.content if hasattr(chunk.choices[0].delta, 'content') else None
-                            if content:
-                                response_text += content
+                    messages = [
+                        {
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": self.prompt},
+                                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_part}"}}
+                            ],
+                        }
+                    ]
+                    
+                    response_text = self._make_api_request(messages)
 
                     logging.debug(f"API response text: {response_text}")
                     
@@ -186,26 +226,17 @@ class ImageProcessor:
                 try:
                     logging.debug(f"Making Together API request attempt {attempt + 1}")
                     
-                    stream = self.client.chat.completions.create(
-                        model=self.model,
-                        messages=[
-                            {
-                                "role": "user",
-                                "content": [
-                                    {"type": "text", "text": self.prompt},
-                                    {"type": "image_url", "image_url": {"url": image_url}}
-                                ],
-                            }
-                        ],
-                        stream=True,
-                    )
-
-                    response_text = ""
-                    for chunk in stream:
-                        if hasattr(chunk, 'choices') and chunk.choices:
-                            content = chunk.choices[0].delta.content if hasattr(chunk.choices[0].delta, 'content') else None
-                            if content:
-                                response_text += content
+                    messages = [
+                        {
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": self.prompt},
+                                {"type": "image_url", "image_url": {"url": image_url}}
+                            ],
+                        }
+                    ]
+                    
+                    response_text = self._make_api_request(messages)
 
                     logging.debug(f"API response text: {response_text}")
                     
