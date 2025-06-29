@@ -8,6 +8,9 @@ import cloudinary
 import cloudinary.uploader
 import logging
 import os
+import threading
+import time
+import requests
 from datetime import datetime
 
 # Load environment variables
@@ -75,7 +78,39 @@ def bulk_entry():
     """Render the bulk entry page"""
     return render_template('bulk_entry.html')
 
+def keep_alive():
+    """Sends a request to the server to keep it awake and prevent spindown."""
+    def ping_server():
+        while True:
+            try:
+                # Get the port and construct the URL
+                port = int(os.getenv('PORT', 5000))
+                base_url = os.getenv('https://msm-sf21.onrender.com', f'http://localhost:{port}')
+                
+                # Send a lightweight ping request
+                response = requests.get(f"{base_url}/", timeout=30)
+                if response.status_code == 200:
+                    logging.info(f"Keep-alive ping successful at {datetime.now()}")
+                else:
+                    logging.warning(f"Keep-alive ping returned status {response.status_code}")
+                    
+            except requests.exceptions.RequestException as e:
+                logging.error(f"Keep-alive ping failed: {e}")
+            except Exception as e:
+                logging.error(f"Unexpected error in keep-alive ping: {e}")
+            
+            # Wait 14 minutes before next ping (Render free tier spins down after 15 minutes)
+            time.sleep(840)
+    
+    # Start the ping thread
+    ping_thread = threading.Thread(target=ping_server, daemon=True)
+    ping_thread.start()
+    logging.info("Keep-alive service started")
+
 if __name__ == '__main__':
+    # Start the keep-alive service to prevent spindown
+    keep_alive()
+
     # Get port from environment variable or use default
     port = int(os.getenv('PORT', 5000))
     # Set debug mode based on environment
