@@ -79,33 +79,37 @@ def bulk_entry():
     return render_template('bulk_entry.html')
 
 def keep_alive():
-    """Sends a request to the server to keep it awake and prevent spindown."""
+    """Sends a request to the server to keep it awake and prevent spindown. Only runs on Render."""
+    # Only run on Render
+    if not os.getenv('RENDER'):
+        return
+        
     def ping_server():
         while True:
             try:
-                # Get the port and construct the URL
-                port = int(os.getenv('PORT', 5000))
-                base_url = os.getenv('https://msm-sf21.onrender.com', f'http://localhost:{port}')
+                # Use RENDER_EXTERNAL_HOSTNAME or fallback to default
+                hostname = os.getenv('RENDER_EXTERNAL_HOSTNAME', 'msm-sf21.onrender.com')
+                url = f"https://{hostname}/"
                 
-                # Send a lightweight ping request
-                response = requests.get(f"{base_url}/", timeout=30)
+                # Send self-ping request
+                response = requests.get(url, timeout=30)
                 if response.status_code == 200:
-                    logging.info(f"Keep-alive ping successful at {datetime.now()}")
+                    print("Self-ping sent")
                 else:
-                    logging.warning(f"Keep-alive ping returned status {response.status_code}")
+                    print(f"Self-ping returned status {response.status_code}")
                     
             except requests.exceptions.RequestException as e:
-                logging.error(f"Keep-alive ping failed: {e}")
+                print(f"Self-ping failed: {e}")
             except Exception as e:
-                logging.error(f"Unexpected error in keep-alive ping: {e}")
+                print(f"Unexpected error in self-ping: {e}")
             
-            # Wait 4 minutes before next ping
-            time.sleep(240)
+            # Ping every 5 minutes
+            time.sleep(300)
     
     # Start the ping thread
     ping_thread = threading.Thread(target=ping_server, daemon=True)
     ping_thread.start()
-    logging.info("Keep-alive service started")
+    print("Keep-alive service started")
 
 if __name__ == '__main__':
     # Start the keep-alive service to prevent spindown
