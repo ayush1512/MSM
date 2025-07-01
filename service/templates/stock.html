@@ -836,11 +836,6 @@
             const expDate = $('#edit-exp-date').val();
             const datePattern = /^(0[1-9]|1[0-2])\/\d{4}$/;
 
-            if (!datePattern.test(mfgDate)) {
-                alert('Manufacturing date should be in MM/YYYY format');
-                return false;
-            }
-
             if (!datePattern.test(expDate)) {
                 alert('Expiry date should be in MM/YYYY format');
                 return false;

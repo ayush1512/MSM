@@ -6,13 +6,6 @@ requests
 Pillow
 cloudinary
 pymongo
-torch
-transformers
-torchvision
-pandas
-numpy
-datasets 
-accelerate
 dnspython
 gunicorn
 authlib
