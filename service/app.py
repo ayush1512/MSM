@@ -99,8 +99,8 @@ def keep_alive():
             except Exception as e:
                 logging.error(f"Unexpected error in keep-alive ping: {e}")
             
-            # Wait 5 minutes before next ping (Render free tier spins down after 15 minutes)
-            time.sleep(300)
+            # Wait 4 minutes before next ping
+            time.sleep(240)
     
     # Start the ping thread
     ping_thread = threading.Thread(target=ping_server, daemon=True)
